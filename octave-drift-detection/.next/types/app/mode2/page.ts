@@ -1,4 +1,4 @@
-// File: C:\Users\User\Downloads\db__-main\db__-main\octave-drift-detection\src\app\mode2\page.tsx
+// File: /workspaces/fe/octave-drift-detection/src/app/mode2/page.tsx
 import * as entry from '../../../../src/app/mode2/page.js'
 import type { ResolvingMetadata, ResolvingViewport } from 'next/dist/lib/metadata/types/metadata-interface.js'
 

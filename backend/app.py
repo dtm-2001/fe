@@ -372,39 +372,51 @@ def get_mode2_xai(business_unit=None):
         if conn:
             conn.close()
 
+@app.route('/api/ping')
+def ping():
+    return jsonify({"message": "pong"})
+
 @app.route('/api/metrics/3')
 @app.route('/api/metrics', methods=['GET'])
 @limiter.limit("10 per minute")
 def get_mode3_metrics():
+    app.logger.info("Received request for mode3 metrics")
     if request.args.get('mode') != 'mode3' and not request.path.endswith('/3'):
         return jsonify({"error": "Invalid mode parameter"}), 400
-    data = {
-        "kpis": [
-            {"rowKey": "alertTime", "value": datetime.now().strftime("%Y-%m-%d %H:%M")},
-            {"rowKey": "runtimeCount", "value": str(random.randint(100, 200))},
-            {"rowKey": "alertKeeper", "value": "System Admin"},
-            {"rowKey": "jensenShannon", "value": f"{random.uniform(0.1, 0.3):.3f}"},
-            {"rowKey": "psi", "value": f"{random.uniform(0.05, 0.2):.3f}"},
-            {"rowKey": "status", "value": random.choice(["Normal", "Warning", "Error"])},
-            {"rowKey": "refTrueA", "value": str(random.randint(800, 1200))},
-            {"rowKey": "refFalseB", "value": str(random.randint(30, 100))},
-            {"rowKey": "refTrueB", "value": str(random.randint(800, 1200))},
-            {"rowKey": "refFalseA", "value": str(random.randint(30, 100))},
-            {"rowKey": "refPrecision", "value": f"{random.uniform(0.85, 0.95):.3f}"},
-            {"rowKey": "refRecall", "value": f"{random.uniform(0.8, 0.9):.3f}"},
-            {"rowKey": "refF1", "value": f"{random.uniform(0.8, 0.9):.3f}"},
-            {"rowKey": "refAccuracy", "value": f"{random.uniform(0.85, 0.95):.3f}"},
-            {"rowKey": "currTrueA", "value": str(random.randint(800, 1200))},
-            {"rowKey": "currFalseB", "value": str(random.randint(30, 100))},
-            {"rowKey": "currTrueB", "value": str(random.randint(800, 1200))},
-            {"rowKey": "currFalseA", "value": str(random.randint(30, 100))},
-            {"rowKey": "currPrecision", "value": f"{random.uniform(0.85, 0.95):.3f}"},
-            {"rowKey": "currRecall", "value": f"{random.uniform(0.8, 0.9):.3f}"},
-            {"rowKey": "currF1", "value": f"{random.uniform(0.8, 0.9):.3f}"},
-            {"rowKey": "currAccuracy", "value": f"{random.uniform(0.85, 0.95):.3f}"}
-        ]
-    }
-    return jsonify(data)
+    def generate_alphanum_id():
+        chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'
+        return ''.join(random.choice(chars) for _ in range(6))
+    mock_data = [
+        {"rowKey": "alertTime", "value": datetime.now().strftime("%Y-%m-%d %H:%M")},
+        {"rowKey": "runtimeCount", "value": str(random.randint(100, 200))},
+        {"rowKey": "alertKeeper", "value": "System Admin"},
+        {"rowKey": "jensenShannon", "value": f"{random.uniform(0.1, 0.3):.3f}"},
+        {"rowKey": "psi", "value": f"{random.uniform(0.05, 0.2):.3f}"},
+        {"rowKey": "status", "value": random.choice(["Normal", "Warning", "Error"])},
+        {"rowKey": "refTrueA", "value": str(random.randint(800, 1200))},
+        {"rowKey": "refFalseB", "value": str(random.randint(30, 100))},
+        {"rowKey": "refTrueB", "value": str(random.randint(800, 1200))},
+        {"rowKey": "refFalseA", "value": str(random.randint(30, 100))},
+        {"rowKey": "refPrecision", "value": f"{random.uniform(0.85, 0.95):.3f}"},
+        {"rowKey": "refRecall", "value": f"{random.uniform(0.8, 0.9):.3f}"},
+        {"rowKey": "refF1", "value": f"{random.uniform(0.8, 0.9):.3f}"},
+        {"rowKey": "refAccuracy", "value": f"{random.uniform(0.85, 0.95):.3f}"},
+        {"rowKey": "currTrueA", "value": str(random.randint(800, 1200))},
+        {"rowKey": "currFalseB", "value": str(random.randint(30, 100))},
+        {"rowKey": "currTrueB", "value": str(random.randint(800, 1200))},
+        {"rowKey": "currFalseA", "value": str(random.randint(30, 100))},
+        {"rowKey": "currPrecision", "value": f"{random.uniform(0.85, 0.95):.3f}"},
+        {"rowKey": "currRecall", "value": f"{random.uniform(0.8, 0.9):.3f}"},
+        {"rowKey": "currF1", "value": f"{random.uniform(0.8, 0.9):.3f}"},
+        {"rowKey": "currAccuracy", "value": f"{random.uniform(0.85, 0.95):.3f}"},
+        {"rowKey": "xaiAnalysis", "value": "Model shows moderate drift in feature distributions with slight performance degradation."},
+        {"rowKey": "recommendation", "value": "Monitor closely and consider retraining if trend continues."}
+    ]
+    return jsonify({
+        'kpis': mock_data,
+        'status': 'success',
+        'message': 'Using complete mock mode3 data'
+    })
 
 @app.route('/api/mode4/metrics')
 @limiter.limit("10 per minute")
@@ -446,4 +458,4 @@ def get_mode4_metrics():
     return jsonify(mock_data)
 
 if __name__ == '__main__':
-    app.run(port=5000, debug=True)
+    app.run(host='0.0.0.0', port=5000, debug=True)

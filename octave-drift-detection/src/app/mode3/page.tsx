@@ -2,7 +2,7 @@
 import { useEffect, useState } from 'react'
 import 'chartjs-chart-matrix'
 import Head from 'next/head'
-import { getKPIs, getErrorData } from '../../services/dummyDbService'
+import { fetchMode3KPIs, fetchErrors } from '../../services/backendService'
 import D3ConfusionMatrix from '../../components/D3ConfusionMatrix'
 
 interface KPI {
@@ -64,14 +64,9 @@ export default function Mode3Page() {
   const [businessUnit, setBusinessUnit] = useState('CCS')
   const [useCase, setUseCase] = useState('CC-Di')
   const [kpis, setKpis] = useState<KPI[]>([])
-  const [errors, setErrors] = useState<ErrorDataResponse>({
-    tableData: [],
-    summary: {
-      totalErrors: 0,
-      errorRate: 0,
-      misclassificationRate: 0,
-      status: ''
-    }
+  const [errors, setErrors] = useState<{plotData: PlotDataPoint[], tableData: TableDataPoint[]}>({
+    plotData: [],
+    tableData: []
   })
   const [confusionMatrix, setConfusionMatrix] = useState<ConfusionMatrixData>({
     reference: {
@@ -95,65 +90,21 @@ export default function Mode3Page() {
 
   useEffect(() => {
     const initData = async () => {
-        try {
-          const savedBusinessUnit = localStorage.getItem('businessUnit')
-          const savedUseCase = localStorage.getItem('useCase')
-          if (savedBusinessUnit) setBusinessUnit(savedBusinessUnit)
-          if (savedUseCase) setUseCase(savedUseCase)
+      try {
+        const savedBusinessUnit = localStorage.getItem('businessUnit')
+        const savedUseCase = localStorage.getItem('useCase')
+        if (savedBusinessUnit) setBusinessUnit(savedBusinessUnit)
+        if (savedUseCase) setUseCase(savedUseCase)
 
-          const apiBase = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:5000';
-          console.log('Attempting to fetch from API base:', apiBase);
-          
-          const [metricsRes, errorsRes] = await Promise.all([
-            fetch(`${apiBase}/api/metrics?mode=3`).catch(err => {
-              console.error('Metrics fetch failed:', err);
-              throw new Error(`Failed to reach metrics API: ${err.message}`);
-            }),
-            fetch(`${apiBase}/api/errors`).catch(err => {
-              console.error('Errors fetch failed:', err);
-              throw new Error(`Failed to reach errors API: ${err.message}`);
-            })
-          ]);
+        const kpiData = await fetchMode3KPIs()
+        const errorData = await fetchErrors()
 
-          if (!metricsRes.ok) {
-            const errorText = await metricsRes.text();
-            console.error('Metrics API error response:', errorText);
-            throw new Error(`Metrics API error: ${metricsRes.status} - ${errorText}`);
-          }
-          if (!errorsRes.ok) {
-            const errorText = await errorsRes.text();
-            console.error('Errors API error response:', errorText);
-            throw new Error(`Errors API error: ${errorsRes.status} - ${errorText}`);
-          }
-
-          const metricsData = await metricsRes.json();
-          const errorsData = await errorsRes.json();
-          console.log('Successfully fetched data:', {metricsData, errorsData});
-
-        // Normalize KPIs data format
-        const normalizedKpis = (metricsData.kpis || Object.entries(metricsData).map(([rowKey, value]) => ({
-          rowKey,
-          value: String(value),
-          status: metricsData.status
-        }))).filter((k: any) => k.rowKey && k.value);
-
-        // Normalize errors data format
-        const normalizedErrors: ErrorDataResponse = {
-          tableData: (errorsData.tableData || []).filter((e: ErrorData) => e.predicted && e.actual),
-          summary: errorsData.summary || {
-            totalErrors: 0,
-            errorRate: 0,
-            misclassificationRate: 0,
-            status: ''
-          }
-        };
-
-        setKpis(normalizedKpis);
-        setErrors(normalizedErrors);
+        setKpis(kpiData)
+        setErrors(errorData)
 
         // Helper function to get numeric value from KPIs
         const getKpiNumberValue = (key: string): number => {
-          const kpi = normalizedKpis.find((k: any) => k.rowKey === key);
+          const kpi = kpiData.find((k: any) => k.rowKey === key);
           if (!kpi) return 0;
           const num = Number(kpi.value);
           return isNaN(num) ? 0 : num;

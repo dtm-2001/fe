@@ -250,18 +250,135 @@ async function fetchMode2KPIs(businessUnit) {
         throw new Error('Failed to fetch KPIs. Please try again later.');
     }
 }
-async function fetchMode3KPIs() {
-    try {
-        const response = await fetchWithRetry(`${API_BASE}/metrics/3`);
-        const data = await response.json();
-        if (!Array.isArray(data)) {
-            throw new Error('Invalid KPIs response format');
-        }
-        return data;
-    } catch (error) {
-        console.error('Failed to fetch mode3 KPIs:', error);
-        throw new Error('Failed to fetch KPIs. Please try again later.');
+const mockMode3KPIs = [
+    {
+        id: 'KPI-1',
+        rowKey: 'alertTime',
+        value: new Date().toISOString().slice(0, 16).replace('T', ' ')
+    },
+    {
+        id: 'KPI-2',
+        rowKey: 'runtimeCount',
+        value: '150'
+    },
+    {
+        id: 'KPI-3',
+        rowKey: 'alertKeeper',
+        value: 'System Admin'
+    },
+    {
+        id: 'KPI-4',
+        rowKey: 'jensenShannon',
+        value: '0.123'
+    },
+    {
+        id: 'KPI-5',
+        rowKey: 'psi',
+        value: '0.045'
+    },
+    {
+        id: 'KPI-6',
+        rowKey: 'status',
+        value: 'Normal'
+    },
+    {
+        id: 'KPI-7',
+        rowKey: 'refTrueA',
+        value: '1000'
+    },
+    {
+        id: 'KPI-8',
+        rowKey: 'refFalseB',
+        value: '50'
+    },
+    {
+        id: 'KPI-9',
+        rowKey: 'refTrueB',
+        value: '980'
+    },
+    {
+        id: 'KPI-10',
+        rowKey: 'refFalseA',
+        value: '40'
+    },
+    {
+        id: 'KPI-11',
+        rowKey: 'refPrecision',
+        value: '0.92'
+    },
+    {
+        id: 'KPI-12',
+        rowKey: 'refRecall',
+        value: '0.89'
+    },
+    {
+        id: 'KPI-13',
+        rowKey: 'refF1',
+        value: '0.90'
+    },
+    {
+        id: 'KPI-14',
+        rowKey: 'refAccuracy',
+        value: '0.91'
+    },
+    {
+        id: 'KPI-15',
+        rowKey: 'currTrueA',
+        value: '950'
+    },
+    {
+        id: 'KPI-16',
+        rowKey: 'currFalseB',
+        value: '60'
+    },
+    {
+        id: 'KPI-17',
+        rowKey: 'currTrueB',
+        value: '970'
+    },
+    {
+        id: 'KPI-18',
+        rowKey: 'currFalseA',
+        value: '45'
+    },
+    {
+        id: 'KPI-19',
+        rowKey: 'currPrecision',
+        value: '0.90'
+    },
+    {
+        id: 'KPI-20',
+        rowKey: 'currRecall',
+        value: '0.87'
+    },
+    {
+        id: 'KPI-21',
+        rowKey: 'currF1',
+        value: '0.88'
+    },
+    {
+        id: 'KPI-22',
+        rowKey: 'currAccuracy',
+        value: '0.89'
+    },
+    {
+        id: 'KPI-23',
+        rowKey: 'xaiAnalysis',
+        value: 'Model shows moderate drift with slight performance degradation.'
+    },
+    {
+        id: 'KPI-24',
+        rowKey: 'recommendation',
+        value: 'Monitor closely and consider retraining if trend continues.'
     }
+];
+async function fetchMode3KPIs() {
+    // Return mock data forcibly for mode3 KPIs
+    return new Promise((resolve)=>{
+        setTimeout(()=>{
+            resolve(mockMode3KPIs);
+        }, 500); // simulate network delay
+    });
 }
 async function fetchMode4KPIs() {
     try {

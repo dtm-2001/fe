@@ -1,10 +1,6 @@
 from flask import Flask, jsonify, request
 from flask_cors import CORS
-import sqlite3
-from pathlib import Path
 import pyodbc
-from werkzeug.exceptions import NotFound
-import json
 import random
 from datetime import datetime, timedelta
 from functools import wraps
@@ -12,8 +8,7 @@ from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 
 # Configuration
-MOCK_MODE = True  # Set to False to use real database
-
+MOCK_MODE = False  # Set to True to use mock data
 app = Flask(__name__)
 CORS(app)
 
@@ -30,7 +25,7 @@ def handle_errors(f):
     @wraps(f)
     def wrapper(*args, **kwargs):
         try:
-            return f(*args, **kwargs)
+            return f(*args, **kwargs)  # Execute the function logic here
         except pyodbc.Error as e:
             app.logger.error(f"Database error: {str(e)}")
             return jsonify({
@@ -67,6 +62,7 @@ def validate_business_unit(f):
         return f(business_unit, *args, **kwargs)
     return wrapper
 
+# Database connection helper
 def get_db():
     try:
         # Try different connection string formats
@@ -91,10 +87,12 @@ def get_db():
         print(f"Database connection failed: {e}")
         return None
 
+# Helper function to generate alphanumeric IDs
 def generate_alphanum_id():
     chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'
     return ''.join(random.choice(chars) for _ in range(6))
 
+# Route to retrieve business units
 @app.route('/api/businessUnits')
 @limiter.limit("5 per minute")
 def get_business_units():
@@ -131,27 +129,23 @@ def get_business_units():
             'hyperparameters': ''
         }), 500
     finally:
-        conn.close()
+        if conn:
+            conn.close()
 
+# Route to retrieve Mode1 metrics
 @app.route('/api/mode1/metrics')
 @limiter.limit("10 per minute")
+@handle_errors
 def get_mode1_metrics():
     conn = get_db()
     if not conn:
         print("Using mock data for mode1 metrics: DB connection failed")
-        mock_data = [
-            {'id': f"KPI-{generate_alphanum_id()}", 'rowKey': 'runtimeCount', 'value': str(random.randint(100, 200))},
-            {'id': f"KPI-{generate_alphanum_id()}", 'rowKey': 'alertKeeper', 'value': 'System Admin'},
-            {'id': f"KPI-{generate_alphanum_id()}", 'rowKey': 'kstest', 'value': f"{random.uniform(0.1, 0.5):.2f}"},
-            {'id': f"KPI-{generate_alphanum_id()}", 'rowKey': 'wasserstein', 'value': f"{random.uniform(0.5, 2.0):.2f}"},
-            {'id': f"KPI-{generate_alphanum_id()}", 'rowKey': 'mseRef', 'value': f"{random.uniform(0.1, 0.2):.2f}"},
-            {'id': f"KPI-{generate_alphanum_id()}", 'rowKey': 'mseCurrent', 'value': f"{random.uniform(0.15, 0.3):.2f}"},
-            {'id': f"KPI-{generate_alphanum_id()}", 'rowKey': 'status', 'value': random.choice(["Normal", "Warning", "Error"])}
-        ]
+        mock_data = generate_mock_mode1_metrics()
         return jsonify({
             'kpis': mock_data,
             'status': 'success',
-            'message': 'Using mock mode1 data'
+            'message': 'Using mock mode1 data',
+            'hyperparameters': generate_hyperparameters()
         })
     try:
         cursor = conn.cursor()
@@ -171,19 +165,16 @@ def get_mode1_metrics():
             'kpis': metrics,
             'status': 'success',
             'message': 'KPIs retrieved successfully',
-            'hyperparameters': {
-                'ksThreshold': round(random.uniform(0.05, 0.15), 2),
-                'wassersteinThreshold': round(random.uniform(0.5, 1.5), 2),
-                'mseThreshold': round(random.uniform(0.1, 0.3), 2),
-                'monitoringWindow': random.choice([7, 14, 30]),
-                'confidenceLevel': round(random.uniform(0.9, 0.99), 2)
-            }
+            'hyperparameters': generate_hyperparameters()
         })
     except Exception as e:
+        app.logger.error(f"Error fetching mode1 metrics: {str(e)}")
         return jsonify({"error": str(e)}), 500
     finally:
-        conn.close()
+        if conn:
+            conn.close()
 
+# Route to retrieve errors
 @app.route('/api/errors')
 @limiter.limit("5 per minute")
 def get_errors():
@@ -203,8 +194,9 @@ def get_errors():
             mean_pred = mean_predictions[i]
             exceeds_thresh = error_val > 15
             mock_errors['plotData'].append({
-                'x': date_str,
-                'y': round(error_val, 2),
+                'timePeriod': date_str,
+                'meanPrediction': round(mean_pred, 2),
+                'error': round(error_val, 2),
                 'exceedsThreshold': exceeds_thresh
             })
             mock_errors['tableData'].append({
@@ -248,73 +240,18 @@ def get_errors():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
     finally:
-        conn.close()
+        if conn:
+            conn.close()
 
-@app.route('/api/mode2/metrics')
-@app.route('/api/mode2/metrics/<business_unit>')
+# Route to retrieve Mode1 XAI data
+@app.route('/api/mode1/xai')
+@app.route('/api/mode1/xai/<business_unit>')
 @limiter.limit("30 per minute")
-def get_mode2_metrics(business_unit=None):
+@handle_errors
+def get_mode1_xai(business_unit=None):
     conn = get_db()
     if not conn:
-        print("Using enhanced mock data: DB connection failed")
-        conn = None
-    print("FORCING MOCK DATA FOR MODE2 METRICS")
-    def generate_alphanum_id():
-        chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'
-        return ''.join(random.choice(chars) for _ in range(6))
-    base_drift = random.randint(0, 1)
-    drift_trend = random.choice(['increasing', 'decreasing', 'stable'])
-    business_context = {
-        'CCS': {
-            'alertKeeper': 'CCS Admin', 
-            'status': random.choice(["Normal", "Warning"]),
-            'useCases': ['CC-Di', 'CC-MT']
-        },
-        'JMSL': {
-            'alertKeeper': 'JMSL Admin', 
-            'status': random.choice(["Normal", "Error"]),
-            'useCases': ['JM-Ch']
-        }
-    }
-    if business_unit and business_unit in business_context:
-        selected_context = business_context[business_unit]
-    else:
-        selected_context = business_context[random.choice(['CCS', 'JMSL'])]
-    try:
-        cursor = conn.cursor()
-        cursor.execute("SELECT id, rowKey, value FROM Mode2Metrics")
-        mock_data = [{
-            'id': row[0],
-            'rowKey': row[1],
-            'value': row[2],
-            'status': 'Normal',
-            'businessUnit': selected_context['alertKeeper'].split()[0],
-            'useCase': random.choice(selected_context['useCases'])
-        } for row in cursor.fetchall()]
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
-    finally:
-        conn.close()
-    return jsonify({
-        'kpis': mock_data,
-        'status': 'success',
-        'message': 'Using enhanced mock data',
-        'hyperparameters': {
-            'driftThreshold': round(random.uniform(0.1, 0.2), 2),
-            'windowSize': random.choice([7, 14, 30]),
-            'confidenceLevel': round(random.uniform(0.9, 0.99), 2),
-            'minSamples': random.choice([1000, 5000, 10000]),
-            'alertThreshold': random.choice([3, 5, 7])
-        }
-    })
-
-@app.route('/api/mode2/xai')
-@app.route('/api/mode2/xai/<business_unit>')
-@limiter.limit("30 per minute")
-def get_mode2_xai(business_unit=None):
-    conn = get_db()
-    if not conn:
-        print("Using mock data for mode3 metrics: DB connection failed")
+        print("Using mock data for mode1 XAI: DB connection failed")
         explanations = {
             'CCS': [
                 "CCS: Significant drift detected in transaction amount distributions (p<0.01)",
@@ -350,7 +287,7 @@ def get_mode2_xai(business_unit=None):
         return jsonify(xai_results)
     try:
         cursor = conn.cursor()
-        cursor.execute('SELECT explanation FROM XAIResults WHERE mode=\'mode2\'')
+        cursor.execute('SELECT explanation FROM XAIResults WHERE mode=\'mode1\'')
         row = cursor.fetchone()
         if not row:
             return jsonify({
@@ -364,6 +301,7 @@ def get_mode2_xai(business_unit=None):
             'status': 'success'
         })
     except Exception as e:
+        app.logger.error(f"Error fetching mode1 XAI data: {str(e)}")
         return jsonify({
             'status': 'error',
             'message': str(e)
@@ -372,10 +310,7 @@ def get_mode2_xai(business_unit=None):
         if conn:
             conn.close()
 
-@app.route('/api/ping')
-def ping():
-    return jsonify({"message": "pong"})
-
+# Route to retrieve Mode3 metrics
 @app.route('/api/metrics/3')
 @app.route('/api/metrics', methods=['GET'])
 @limiter.limit("10 per minute")
@@ -383,79 +318,223 @@ def get_mode3_metrics():
     app.logger.info("Received request for mode3 metrics")
     if request.args.get('mode') != 'mode3' and not request.path.endswith('/3'):
         return jsonify({"error": "Invalid mode parameter"}), 400
-    def generate_alphanum_id():
-        chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'
-        return ''.join(random.choice(chars) for _ in range(6))
-    mock_data = [
-        {"rowKey": "alertTime", "value": datetime.now().strftime("%Y-%m-%d %H:%M")},
-        {"rowKey": "runtimeCount", "value": str(random.randint(100, 200))},
-        {"rowKey": "alertKeeper", "value": "System Admin"},
-        {"rowKey": "jensenShannon", "value": f"{random.uniform(0.1, 0.3):.3f}"},
-        {"rowKey": "psi", "value": f"{random.uniform(0.05, 0.2):.3f}"},
-        {"rowKey": "status", "value": random.choice(["Normal", "Warning", "Error"])},
-        {"rowKey": "refTrueA", "value": str(random.randint(800, 1200))},
-        {"rowKey": "refFalseB", "value": str(random.randint(30, 100))},
-        {"rowKey": "refTrueB", "value": str(random.randint(800, 1200))},
-        {"rowKey": "refFalseA", "value": str(random.randint(30, 100))},
-        {"rowKey": "refPrecision", "value": f"{random.uniform(0.85, 0.95):.3f}"},
-        {"rowKey": "refRecall", "value": f"{random.uniform(0.8, 0.9):.3f}"},
-        {"rowKey": "refF1", "value": f"{random.uniform(0.8, 0.9):.3f}"},
-        {"rowKey": "refAccuracy", "value": f"{random.uniform(0.85, 0.95):.3f}"},
-        {"rowKey": "currTrueA", "value": str(random.randint(800, 1200))},
-        {"rowKey": "currFalseB", "value": str(random.randint(30, 100))},
-        {"rowKey": "currTrueB", "value": str(random.randint(800, 1200))},
-        {"rowKey": "currFalseA", "value": str(random.randint(30, 100))},
-        {"rowKey": "currPrecision", "value": f"{random.uniform(0.85, 0.95):.3f}"},
-        {"rowKey": "currRecall", "value": f"{random.uniform(0.8, 0.9):.3f}"},
-        {"rowKey": "currF1", "value": f"{random.uniform(0.8, 0.9):.3f}"},
-        {"rowKey": "currAccuracy", "value": f"{random.uniform(0.85, 0.95):.3f}"},
-        {"rowKey": "xaiAnalysis", "value": "Model shows moderate drift in feature distributions with slight performance degradation."},
-        {"rowKey": "recommendation", "value": "Monitor closely and consider retraining if trend continues."}
-    ]
-    return jsonify({
-        'kpis': mock_data,
-        'status': 'success',
-        'message': 'Using complete mock mode3 data'
-    })
+    if MOCK_MODE:
+        mock_data = generate_mock_mode3_metrics()
+        return jsonify({
+            'kpis': mock_data,
+            'status': 'success',
+            'message': 'Using complete mock mode3 data'
+        })
+    else:
+        conn = get_db()
+        if not conn:
+            app.logger.warning("DB connection failed, falling back to mock data for mode3")
+            mock_data = generate_mock_mode3_metrics()
+            return jsonify({
+                'kpis': mock_data,
+                'status': 'success',
+                'message': 'Using fallback mock mode3 data due to DB connection failure'
+            })
+        try:
+            cursor = conn.cursor()
+            cursor.execute("SELECT rowKey, value FROM Mode3Metrics")
+            db_metrics = {row[0]: row[1] for row in cursor.fetchall()}
+            app.logger.info(f"Fetched mode3 keys from DB: {list(db_metrics.keys())}")
+            # Provide better defaults for missing keys using mock data
+            mock_data = {item['rowKey']: item['value'] for item in generate_mock_mode3_metrics()}
+            default_values = {
+                'alertTime': datetime.now().strftime("%Y-%m-%d %H:%M"),
+                'runtimeCount': mock_data.get('runtimeCount', 'N/A'),
+                'alertKeeper': mock_data.get('alertKeeper', 'N/A'),
+                'jensenShannon': mock_data.get('jensenShannon', 'N/A'),
+                'psi': mock_data.get('psi', 'N/A'),
+                'status': mock_data.get('status', 'N/A'),
+                'refTrueA': mock_data.get('refTrueA', 'N/A'),
+                'refFalseB': mock_data.get('refFalseB', 'N/A'),
+                'refTrueB': mock_data.get('refTrueB', 'N/A'),
+                'refFalseA': mock_data.get('refFalseA', 'N/A'),
+                'refPrecision': mock_data.get('refPrecision', 'N/A'),
+                'refRecall': mock_data.get('refRecall', 'N/A'),
+                'refF1': mock_data.get('refF1', 'N/A'),
+                'refAccuracy': mock_data.get('refAccuracy', 'N/A'),
+                'currTrueA': mock_data.get('currTrueA', 'N/A'),
+                'currFalseB': mock_data.get('currFalseB', 'N/A'),
+                'currTrueB': mock_data.get('currTrueB', 'N/A'),
+                'currFalseA': mock_data.get('currFalseA', 'N/A'),
+                'currPrecision': mock_data.get('currPrecision', 'N/A'),
+                'currRecall': mock_data.get('currRecall', 'N/A'),
+                'currF1': mock_data.get('currF1', 'N/A'),
+                'currAccuracy': mock_data.get('currAccuracy', 'N/A'),
+                'xaiAnalysis': mock_data.get('xaiAnalysis', 'N/A'),
+                'recommendation': mock_data.get('recommendation', 'N/A')
+            }
+            # Replace missing, falsy, or 'N/A' string values with mock data defaults
+            for key, default in default_values.items():
+                value = db_metrics.get(key)
+                if not value or value == 'N/A':
+                    db_metrics[key] = default
+            metrics = [{'id': f"KPI-{generate_alphanum_id()}", 'rowKey': key, 'value': db_metrics[key]} for key in default_values.keys()]
+            # Remove 'id' key from each metric dict to match frontend KPI type
+            metrics_no_id = [{'rowKey': m['rowKey'], 'value': m['value']} for m in metrics]
+            return jsonify({
+                'kpis': metrics_no_id,
+                'status': 'success',
+                'message': 'KPIs retrieved successfully'
+            })
+        except Exception as e:
+            app.logger.error(f"Error fetching mode3 metrics: {str(e)}")
+            return jsonify({"error": str(e)}), 500
+        finally:
+            if conn:
+                conn.close()
 
+# Route to retrieve Mode4 metrics
 @app.route('/api/mode4/metrics')
 @limiter.limit("10 per minute")
 def get_mode4_metrics():
-    # Mock data for mode4 metrics
-    mock_data = {
-        'kpis': [
-            {'rowKey': 'runtime', 'value': '00:12:34'},
-            {'rowKey': 'currTrueA', 'value': '95'},
-            {'rowKey': 'currFalseB', 'value': '22'},
-            {'rowKey': 'currFalseA', 'value': '15'},
-            {'rowKey': 'currTrueB', 'value': '78'},
-            {'rowKey': 'currPrecision', 'value': '0.79'},
-            {'rowKey': 'currRecall', 'value': '0.80'},
-            {'rowKey': 'currF1', 'value': '0.79'},
-            {'rowKey': 'currAccuracy', 'value': '0.85'},
-            {'rowKey': 'refTrueA', 'value': '105'},
-            {'rowKey': 'refFalseB', 'value': '18'},
-            {'rowKey': 'refFalseA', 'value': '10'},
-            {'rowKey': 'refTrueB', 'value': '85'},
-            {'rowKey': 'refPrecision', 'value': '0.85'},
-            {'rowKey': 'refRecall', 'value': '0.86'},
-            {'rowKey': 'refF1', 'value': '0.85'},
-            {'rowKey': 'refAccuracy', 'value': '0.90'},
-            {'rowKey': 'confusionMatrixRef', 'value': '[[105,18],[10,85]]'},
-            {'rowKey': 'confusionMatrixCurr', 'value': '[[95,22],[15,78]]'},
-            {'rowKey': 'hyperparameter', 'value': 'Auto'},
-            {'rowKey': 'psi', 'value': '0.72'},
-            {'rowKey': 'xaiAnalysis', 'value': 'Moderate performance degradation detected in precision and recall'},
-            {'rowKey': 'errorRate', 'value': '0.18'},
-            {'rowKey': 'misclassificationRate', 'value': '0.14'},
-            {'rowKey': 'worstCases', 'value': '2023-02-01:20%,2023-02-02:16%,2023-02-03:14%'},
-            {'rowKey': 'recommendation', 'value': 'Monitor closely and consider retraining if trend continues'},
-            {'rowKey': 'alertTime', 'value': '2023-07-10 10:45:00'},
-            {'rowKey': 'runtimeCount', 'value': '45'},
-            {'rowKey': 'alertKeeper', 'value': 'AI Monitoring System'}
-        ]
+    conn = get_db()
+    if not conn:
+        app.logger.warning("DB connection failed, falling back to mock data for mode4")
+        mock_data = {
+            'kpis': [
+                {'rowKey': 'runtime', 'value': '00:12:34'},
+                {'rowKey': 'currTrueA', 'value': '95'},
+                {'rowKey': 'currFalseB', 'value': '22'},
+                {'rowKey': 'currFalseA', 'value': '15'},
+                {'rowKey': 'currTrueB', 'value': '78'},
+                {'rowKey': 'currPrecision', 'value': '0.79'},
+                {'rowKey': 'currRecall', 'value': '0.80'},
+                {'rowKey': 'currF1', 'value': '0.79'},
+                {'rowKey': 'currAccuracy', 'value': '0.85'},
+                {'rowKey': 'refTrueA', 'value': '105'},
+                {'rowKey': 'refFalseB', 'value': '18'},
+                {'rowKey': 'refFalseA', 'value': '10'},
+                {'rowKey': 'refTrueB', 'value': '85'},
+                {'rowKey': 'refPrecision', 'value': '0.85'},
+                {'rowKey': 'refRecall', 'value': '0.86'},
+                {'rowKey': 'refF1', 'value': '0.85'},
+                {'rowKey': 'refAccuracy', 'value': '0.90'},
+                {'rowKey': 'confusionMatrixRef', 'value': '[[105,18],[10,85]]'},
+                {'rowKey': 'confusionMatrixCurr', 'value': '[[95,22],[15,78]]'},
+                {'rowKey': 'hyperparameter', 'value': 'Auto'},
+                {'rowKey': 'psi', 'value': '0.72'},
+                {'rowKey': 'xaiAnalysis', 'value': 'Moderate performance degradation detected in precision and recall'},
+                {'rowKey': 'errorRate', 'value': '0.18'},
+                {'rowKey': 'misclassificationRate', 'value': '0.14'},
+                {'rowKey': 'worstCases', 'value': '2023-02-01:20%,2023-02-02:16%,2023-02-03:14%'},
+                {'rowKey': 'recommendation', 'value': 'Monitor closely and consider retraining if trend continues'},
+                {'rowKey': 'alertTime', 'value': '2023-07-10 10:45:00'},
+                {'rowKey': 'runtimeCount', 'value': '45'},
+                {'rowKey': 'alertKeeper', 'value': 'AI Monitoring System'}
+            ]
+        }
+        return jsonify(mock_data)
+    try:
+        cursor = conn.cursor()
+        cursor.execute("SELECT rowKey, value FROM Mode4Metrics")
+        db_metrics = {row[0]: row[1] for row in cursor.fetchall()}
+        app.logger.info(f"Fetched mode4 keys from DB: {list(db_metrics.keys())}")
+        # Provide better defaults for missing keys
+        default_values = {
+            'runtime': 'N/A',
+            'currTrueA': 'N/A',
+            'currFalseB': 'N/A',
+            'currFalseA': 'N/A',
+            'currTrueB': 'N/A',
+            'currPrecision': 'N/A',
+            'currRecall': 'N/A',
+            'currF1': 'N/A',
+            'currAccuracy': 'N/A',
+            'refTrueA': 'N/A',
+            'refFalseB': 'N/A',
+            'refFalseA': 'N/A',
+            'refTrueB': 'N/A',
+            'refPrecision': 'N/A',
+            'refRecall': 'N/A',
+            'refF1': 'N/A',
+            'refAccuracy': 'N/A',
+            'confusionMatrixRef': 'N/A',
+            'confusionMatrixCurr': 'N/A',
+            'hyperparameter': 'N/A',
+            'psi': 'N/A',
+            'xaiAnalysis': 'N/A',
+            'errorRate': 'N/A',
+            'misclassificationRate': 'N/A',
+            'worstCases': 'N/A',
+            'recommendation': 'N/A',
+            'alertTime': 'N/A',
+            'runtimeCount': 'N/A',
+            'alertKeeper': 'N/A'
+        }
+        for key, default in default_values.items():
+            db_metrics.setdefault(key, default)
+        metrics = [{'rowKey': key, 'value': db_metrics[key]} for key in default_values.keys()]
+        return jsonify({
+            'kpis': metrics,
+            'status': 'success',
+            'message': 'KPIs retrieved successfully'
+        })
+    except Exception as e:
+        app.logger.error(f"Error fetching mode4 metrics: {str(e)}")
+        return jsonify({"error": str(e)}), 500
+    finally:
+        if conn:
+            conn.close()
+
+# Health check route
+@app.route('/api/ping')
+def ping():
+    return jsonify({"message": "pong"})
+
+# Helper functions for generating mock data
+def generate_mock_mode1_metrics():
+    return [
+        {'id': f"KPI-{generate_alphanum_id()}", 'rowKey': 'runtimeCount', 'value': str(random.randint(100, 200))},
+        {'id': f"KPI-{generate_alphanum_id()}", 'rowKey': 'alertKeeper', 'value': 'System Admin'},
+        {'id': f"KPI-{generate_alphanum_id()}", 'rowKey': 'kstest', 'value': f"{random.uniform(0.1, 0.5):.2f}"},
+        {'id': f"KPI-{generate_alphanum_id()}", 'rowKey': 'wasserstein', 'value': f"{random.uniform(0.5, 2.0):.2f}"},
+        {'id': f"KPI-{generate_alphanum_id()}", 'rowKey': 'mseRef', 'value': f"{random.uniform(0.1, 0.2):.2f}"},
+        {'id': f"KPI-{generate_alphanum_id()}", 'rowKey': 'mseCurrent', 'value': f"{random.uniform(0.15, 0.3):.2f}"},
+        {'id': f"KPI-{generate_alphanum_id()}", 'rowKey': 'status', 'value': random.choice(["Normal", "Warning", "Error"])}
+    ]
+
+def generate_hyperparameters():
+    return {
+        'ksThreshold': round(random.uniform(0.05, 0.15), 2),
+        'wassersteinThreshold': round(random.uniform(0.5, 1.5), 2),
+        'mseThreshold': round(random.uniform(0.1, 0.3), 2),
+        'monitoringWindow': random.choice([7, 14, 30]),
+        'confidenceLevel': round(random.uniform(0.9, 0.99), 2),
+        'alertThreshold': random.choice([3, 5, 7])
     }
-    return jsonify(mock_data)
+
+def generate_mock_mode3_metrics():
+    return [
+        {"id": f"KPI-{generate_alphanum_id()}", "rowKey": "alertTime", "value": datetime.now().strftime("%Y-%m-%d %H:%M")},
+        {"id": f"KPI-{generate_alphanum_id()}", "rowKey": "runtimeCount", "value": str(random.randint(100, 200))},
+        {"id": f"KPI-{generate_alphanum_id()}", "rowKey": "alertKeeper", "value": "System Admin"},
+        {"id": f"KPI-{generate_alphanum_id()}", "rowKey": "jensenShannon", "value": f"{random.uniform(0.1, 0.3):.3f}"},
+        {"id": f"KPI-{generate_alphanum_id()}", "rowKey": "psi", "value": f"{random.uniform(0.05, 0.2):.3f}"},
+        {"id": f"KPI-{generate_alphanum_id()}", "rowKey": "status", "value": random.choice(["Normal", "Warning", "Error"])},
+        {"id": f"KPI-{generate_alphanum_id()}", "rowKey": "refTrueA", "value": str(random.randint(800, 1200))},
+        {"id": f"KPI-{generate_alphanum_id()}", "rowKey": "refFalseB", "value": str(random.randint(30, 100))},
+        {"id": f"KPI-{generate_alphanum_id()}", "rowKey": "refTrueB", "value": str(random.randint(800, 1200))},
+        {"id": f"KPI-{generate_alphanum_id()}", "rowKey": "refFalseA", "value": str(random.randint(30, 100))},
+        {"id": f"KPI-{generate_alphanum_id()}", "rowKey": "refPrecision", "value": f"{random.uniform(0.85, 0.95):.3f}"},
+        {"id": f"KPI-{generate_alphanum_id()}", "rowKey": "refRecall", "value": f"{random.uniform(0.8, 0.9):.3f}"},
+        {"id": f"KPI-{generate_alphanum_id()}", "rowKey": "refF1", "value": f"{random.uniform(0.8, 0.9):.3f}"},
+        {"id": f"KPI-{generate_alphanum_id()}", "rowKey": "refAccuracy", "value": f"{random.uniform(0.85, 0.95):.3f}"},
+        {"id": f"KPI-{generate_alphanum_id()}", "rowKey": "currTrueA", "value": str(random.randint(800, 1200))},
+        {"id": f"KPI-{generate_alphanum_id()}", "rowKey": "currFalseB", "value": str(random.randint(30, 100))},
+        {"id": f"KPI-{generate_alphanum_id()}", "rowKey": "currTrueB", "value": str(random.randint(800, 1200))},
+        {"id": f"KPI-{generate_alphanum_id()}", "rowKey": "currFalseA", "value": str(random.randint(30, 100))},
+        {"id": f"KPI-{generate_alphanum_id()}", "rowKey": "currPrecision", "value": f"{random.uniform(0.85, 0.95):.3f}"},
+        {"id": f"KPI-{generate_alphanum_id()}", "rowKey": "currRecall", "value": f"{random.uniform(0.8, 0.9):.3f}"},
+        {"id": f"KPI-{generate_alphanum_id()}", "rowKey": "currF1", "value": f"{random.uniform(0.8, 0.9):.3f}"},
+        {"id": f"KPI-{generate_alphanum_id()}", "rowKey": "currAccuracy", "value": f"{random.uniform(0.85, 0.95):.3f}"},
+        {"id": f"KPI-{generate_alphanum_id()}", "rowKey": "xaiAnalysis", "value": "Model shows moderate drift in feature distributions with slight performance degradation."},
+        {"id": f"KPI-{generate_alphanum_id()}", "rowKey": "recommendation", "value": "Monitor closely and consider retraining if trend continues."}
+    ]
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000, debug=True)
+    app.run(host='0.0.0.0', port=5000, debug=False)

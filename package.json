@@ -4,6 +4,7 @@
     "@types/react": "^19.1.2"
   },
   "dependencies": {
-    "node-fetch": "^2.7.0"
+    "node-fetch": "^2.7.0",
+    "react-markdown": "^10.1.0"
   }
 }

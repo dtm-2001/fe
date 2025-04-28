@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import Head from 'next/head';
+import ReactMarkdown from 'react-markdown';
 import DriftWarningChart from './DriftWarningChart';
 import {
   fetchData,
@@ -10,6 +11,7 @@ import {
   TableDataPoint,
   OutletsExceedingThreshold,
   Indices,
+  Top10Id,
 } from '../../services/backendService1';
 
 export default function Mode2Page(): React.ReactElement {
@@ -19,6 +21,7 @@ export default function Mode2Page(): React.ReactElement {
     plotData: PlotDataPoint[];
     tableData: TableDataPoint[];
   }>({ plotData: [], tableData: [] });
+  const [top10Ids, setTop10Ids] = useState<Top10Id[]>([]);
   const [outletsExceedingThreshold, setOutletsExceedingThreshold] = useState<
     OutletsExceedingThreshold[]
   >([]);
@@ -33,10 +36,8 @@ export default function Mode2Page(): React.ReactElement {
   const [backwardAnalysis, setBackwardAnalysis] = useState<any>({});
   const [currentPeriod, setCurrentPeriod] = useState<string>('N/A');
   const [totalOutlets, setTotalOutlets] = useState<number>(0);
-  const [
-    outletsExceedingThresholdCount,
-    setOutletsExceedingThresholdCount,
-  ] = useState<number>(0);
+  const [outletsExceedingThresholdCount, setOutletsExceedingThresholdCount] =
+    useState<number>(0);
   const [xaiExplanation, setXaiExplanation] = useState<string>('');
   const [loading, setLoading] = useState<boolean>(true);
   const [backendError, setBackendError] = useState<string | null>(null);
@@ -50,6 +51,7 @@ export default function Mode2Page(): React.ReactElement {
       const {
         kpis: fetchedKpis,
         errors: fetchedErrors,
+        top10Ids: fetchedTop10,
         outletsExceedingThreshold: fetchedOutlets,
         indices: fetchedIndices,
         state: fetchedState,
@@ -62,7 +64,7 @@ export default function Mode2Page(): React.ReactElement {
         xaiExplanation: fetchedXai,
       } = await fetchData();
 
-      // build our drift/warning plot from indices
+      // Build our drift/warning plot from indices
       const driftPlot: PlotDataPoint[] = [];
       fetchedIndices.normal.forEach(x =>
         driftPlot.push({ x, y: 0, exceedsThreshold: false })
@@ -75,9 +77,19 @@ export default function Mode2Page(): React.ReactElement {
       );
       driftPlot.sort((a, b) => a.x - b.x);
 
-      setKpis(fetchedKpis);
+      // Remove kstest and set N/A for wasserstein, mseRef, mseCurrent
+      console.log('Fetched KPIs:', fetchedKpis.map(kpi => ({ rowKey: kpi.rowKey, value: kpi.value })));
+      const filteredKpis = fetchedKpis.filter(
+        kpi =>
+          !['kstest', 'wasserstein', 'mseref', 'msecurrent'].includes(
+            kpi.rowKey.toLowerCase()
+          )
+      );
+      console.log('Filtered KPIs:', filteredKpis);
+      setKpis(filteredKpis);
       // overwrite plotData with our driftPlot
       setErrorData({ plotData: driftPlot, tableData: fetchedErrors.tableData });
+      setTop10Ids(fetchedTop10);
       setOutletsExceedingThreshold(fetchedOutlets);
       setIndices(fetchedIndices);
       setDashboardState(fetchedState);
@@ -136,44 +148,6 @@ export default function Mode2Page(): React.ReactElement {
           <p className="text-blue-200 mb-2">
             Current Period: {loading ? 'Loading...' : currentPeriod}
           </p>
-          <p className="text-blue-200 mb-2">
-            State: {loading ? 'Loading...' : dashboardState}
-          </p>
-          <p className="text-blue-200 mb-2">
-            Total Outlets: {loading ? 'Loading...' : totalOutlets}
-          </p>
-          <p className="text-blue-200 mb-2">
-            Outlets Exceeding Threshold:{' '}
-            {loading ? 'Loading...' : outletsExceedingThresholdCount}
-          </p>
-          <p className="text-blue-200 mb-2">
-            Coverage – Total Points:{' '}
-            {loading ? 'Loading...' : coverage.total_points ?? 'N/A'}
-          </p>
-          <p className="text-blue-200 mb-2">
-            Coverage – Warning:{' '}
-            {loading ? 'Loading...' : coverage.warning_coverage ?? 'N/A'}
-          </p>
-          <p className="text-blue-200 mb-2">
-            Coverage – Drift:{' '}
-            {loading ? 'Loading...' : coverage.drift_coverage ?? 'N/A'}
-          </p>
-          <p className="text-blue-200 mb-2">
-            Backward Analysis – 10% Drift:{' '}
-            {loading
-              ? 'Loading...'
-              : backwardAnalysis.backward_10_percent_drift
-              ? 'Yes'
-              : 'No'}
-          </p>
-          <p className="text-blue-200 mb-2">
-            Backward Analysis – 10% Warning:{' '}
-            {loading
-              ? 'Loading...'
-              : backwardAnalysis.backward_10_percent_warning
-              ? 'Yes'
-              : 'No'}
-          </p>
 
           {/* KPI Cards */}
           <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mt-4">
@@ -215,111 +189,97 @@ export default function Mode2Page(): React.ReactElement {
           )}
         </div>
 
-        {/* Error Comparison & Threshold Exceedances */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-          {/* Error Comparison */}
-          <div className="bg-gray-800 rounded-xl shadow-md p-6 border border-gray-700">
-            <h2 className="text-2xl font-semibold text-blue-300 mb-4">
-              Error Comparison
-            </h2>
-            <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-700">
-                <thead>
-                  <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-blue-200 uppercase tracking-wider">
-                      ID
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-blue-200 uppercase tracking-wider">
-                      Time Period
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-red-400 uppercase tracking-wider">
-                      Error
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-700">
-                  {errorData.tableData.slice(0, 5).map((err, i) => (
-                    <tr key={i}>
-                      <td className="px-6 py-4 text-sm text-white">
-                        {err.id}
-                      </td>
-                      <td className="px-6 py-4 text-sm text-white">
-                        {err.timePeriod}
-                      </td>
-                      <td className="px-6 py-4 text-sm text-red-400">
-                        {(err.error ?? 0).toFixed(2)}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-
-          {/* Threshold Exceedances */}
-          <div className="bg-red-900/20 rounded-xl shadow-md p-6 border border-red-800/50">
-            <h2 className="text-2xl font-semibold text-red-300 mb-4">
-              Threshold Exceedances
-            </h2>
-            <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-red-800/50">
-                <thead>
-                  <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-red-200 uppercase tracking-wider">
-                      ID
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-red-200 uppercase tracking-wider">
-                      True Value
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-red-200 uppercase tracking-wider">
-                      Predicted Value
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-red-200 uppercase tracking-wider">
-                      Percentage Error
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-red-800/50">
-                  {outletsExceedingThreshold.slice(0, 5).map((o) => (
-                    <tr key={o.id}>
-                      <td className="px-6 py-4 text-sm text-white">
-                        {o.id}
-                      </td>
-                      <td className="px-6 py-4 text-sm text-white">
-                        {o.y_true.toFixed(2)}
-                      </td>
-                      <td className="px-6 py-4 text-sm text-white">
-                        {o.y_pred.toFixed(2)}
-                      </td>
-                      <td className="px-6 py-4 text-sm text-red-400">
-                        {o.percentage_error.toFixed(2)}%
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </div>
-
         {/* XAI Explanation */}
-        <div className="bg-gray-800 rounded-xl shadow-md p-6 mt-6 border border-gray-700">
-          <h2 className="text-2xl font-semibold text-blue-300 mb-4">
-            XAI Result
-          </h2>
-          <div className="space-y-3 text-white">
+        <div className="bg-gray-800 rounded-xl shadow-md p-6 mb-6 border border-gray-700">
+          <h2 className="text-2xl font-semibold text-blue-300 mb-4">XAI Result</h2>
+          <div className="prose prose-invert text-white">
             {loading ? (
               <p>Loading XAI explanation...</p>
             ) : xaiExplanation ? (
-              <div
-                className="prose prose-invert"
-                dangerouslySetInnerHTML={{ __html: xaiExplanation }}
-              />
+              <ReactMarkdown>{xaiExplanation}</ReactMarkdown>
             ) : (
               <p className="text-red-400">No explanation available</p>
             )}
           </div>
         </div>
+
+        {/* Top 10 Misclassifications */}
+        <div className="bg-gray-800 rounded-xl shadow-md p-6 mb-6 border border-gray-700">
+          <h2 className="text-2xl font-semibold text-blue-300 mb-4">Top 10 Misclassifications</h2>
+          <div className="overflow-x-auto">
+            <table className="min-w-full divide-y divide-gray-700">
+              <thead>
+                <tr>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-blue-200 uppercase">
+                    ID
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-blue-200 uppercase">
+                    Time Period
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-red-400 uppercase">
+                    Error
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-700">
+                {top10Ids.slice(0, 10).map((item, i) => (
+                  <tr key={i}>
+                    <td className="px-6 py-4 text-sm text-white">{item.id}</td>
+                    <td className="px-6 py-4 text-sm text-white">{item.time_period}</td>
+                    <td className="px-6 py-4 text-sm text-red-400">
+                      {item.Mean_Prediction_Error.toFixed(2)}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        {/* Threshold Exceedances */}
+        <div className="bg-red-900/20 rounded-xl shadow-md overflow-hidden p-6 mb-6 border border-red-800/50">
+          <h2 className="text-2xl font-semibold text-red-300 mb-4">
+            Threshold Exceedances
+          </h2>
+          <div className="overflow-x-auto">
+            <table className="min-w-full divide-y divide-red-800/50">
+              <thead>
+                <tr>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-red-200 uppercase">
+                    ID
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-red-200 uppercase">
+                    True Value
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-red-200 uppercase">
+                    Predicted Value
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-red-200 uppercase">
+                    Percentage Error
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-red-800/50">
+                {outletsExceedingThreshold.slice(0, 5).map(o => (
+                  <tr key={o.id}>
+                    <td className="px-6 py-4 text-sm text-white">{o.id}</td>
+                    <td className="px-6 py-4 text-sm text-white">
+                      {o.y_true.toFixed(2)}
+                    </td>
+                    <td className="px-6 py-4 text-sm text-white">
+                      {o.y_pred.toFixed(2)}
+                    </td>
+                    <td className="px-6 py-4 text-sm text-red-400">
+                      {o.percentage_error.toFixed(2)}%
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+
       </main>
     </div>
   );

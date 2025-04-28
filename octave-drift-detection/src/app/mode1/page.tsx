@@ -1,6 +1,7 @@
 'use client';
 import React, { useEffect, useState, useRef } from 'react';
 import Head from 'next/head';
+import ReactMarkdown from 'react-markdown';
 import { Chart, registerables } from 'chart.js';
 Chart.register(...registerables);
 import { fetchData } from '../../services/backendService';
@@ -135,102 +136,78 @@ export default function Mode1Page(): JSX.Element {
                 <div className="text-white">Loading plot data...</div>
               </div>
             ) : (
-              <canvas id="mapeMseChart" className="w-full h-full" ref={(el) => {
-                if (el && !loading) {
-                  const ctx = el.getContext('2d');
-                  if (ctx) {
-                    if (chartRef.current) {
-                      chartRef.current.destroy();
+              <canvas
+                id="mapeMseChart"
+                className="w-full h-full"
+                ref={(el) => {
+                  if (el && !loading) {
+                    const ctx = el.getContext('2d');
+                    if (ctx) {
+                      if (chartRef.current) {
+                        chartRef.current.destroy();
+                      }
+                      chartRef.current = new Chart(ctx, {
+                        type: 'line',
+                        data: {
+                          labels: errors.plotData.map((item) => item.x),
+                          datasets: [
+                            {
+                              label: 'Error Values',
+                              data: errors.plotData.map((item) => item.y),
+                              borderColor: 'rgb(75, 192, 192)',
+                              backgroundColor: errors.plotData.map((item) =>
+                                item.exceedsThreshold
+                                  ? 'rgba(255, 99, 132, 0.5)'
+                                  : 'rgba(54, 162, 235, 0.5)'
+                              ),
+                              borderWidth: 2,
+                              tension: 0.1,
+                            },
+                          ],
+                        },
+                        options: {
+                          responsive: true,
+                          maintainAspectRatio: false,
+                          plugins: {
+                            legend: { labels: { color: '#e5e7eb' } },
+                            tooltip: { mode: 'index', intersect: false },
+                          },
+                          scales: {
+                            x: {
+                              title: {
+                                display: true,
+                                text: 'Time Period',
+                                color: '#93c5fd',
+                                font: { weight: 'bold' },
+                              },
+                              grid: { color: 'rgba(255, 255, 255, 0.1)' },
+                              ticks: { color: '#e5e7eb', font: { size: 12 } },
+                            },
+                            y: {
+                              title: {
+                                display: true,
+                                text: 'Error Value',
+                                color: '#93c5fd',
+                                font: { weight: 'bold' },
+                              },
+                              beginAtZero: true,
+                              grid: { color: 'rgba(255, 255, 255, 0.1)' },
+                              ticks: {
+                                color: '#e5e7eb',
+                                font: { size: 12 },
+                                callback: (value) =>
+                                  typeof value === 'number' ? value.toFixed(2) : value,
+                              },
+                            },
+                          },
+                          animation: { duration: 1000, easing: 'easeInOutQuad' },
+                          elements: { point: { radius: 4, hoverRadius: 6 } },
+                        },
+                      });
                     }
-                    chartRef.current = new Chart(ctx, {
-                      type: 'line',
-                      data: {
-                        labels: errors.plotData.map((item) => item.x),
-                        datasets: [
-                          {
-                            label: 'Error Values',
-                            data: errors.plotData.map((item) => item.y),
-                            borderColor: 'rgb(75, 192, 192)',
-                            backgroundColor: errors.plotData.map((item) =>
-                              item.exceedsThreshold ? 'rgba(255, 99, 132, 0.5)' : 'rgba(54, 162, 235, 0.5)'
-                            ),
-                            borderWidth: 2,
-                            tension: 0.1,
-                          },
-                        ],
-                      },
-                      options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        plugins: {
-                          legend: {
-                            labels: {
-                              color: '#e5e7eb',
-                            },
-                          },
-                          tooltip: {
-                            mode: 'index',
-                            intersect: false,
-                          },
-                        },
-                        scales: {
-                          x: {
-                            title: {
-                              display: true,
-                              text: 'Time Period',
-                              color: '#93c5fd',
-                              font: {
-                                weight: 'bold',
-                              },
-                            },
-                            grid: {
-                              color: 'rgba(255, 255, 255, 0.1)',
-                            },
-                            ticks: {
-                              color: '#e5e7eb',
-                              font: {
-                                size: 12,
-                              },
-                            },
-                          },
-                          y: {
-                            title: {
-                              display: true,
-                              text: 'Error Value',
-                              color: '#93c5fd',
-                              font: {
-                                weight: 'bold',
-                              },
-                            },
-                            beginAtZero: true,
-                            grid: {
-                              color: 'rgba(255, 255, 255, 0.1)',
-                            },
-                            ticks: {
-                              color: '#e5e7eb',
-                              font: {
-                                size: 12,
-                              },
-                              callback: (value) => typeof value === 'number' ? value.toFixed(2) : value,
-                            },
-                          },
-                        },
-                        animation: {
-                          duration: 1000,
-                          easing: 'easeInOutQuad',
-                        },
-                        elements: {
-                          point: {
-                            radius: 4,
-                            hoverRadius: 6,
-                          },
-                        },
-                      },
-                    });
                   }
-                }
-              }}
-            />
+                }}
+              />
             )}
           </div>
         </div>
@@ -248,7 +225,9 @@ export default function Mode1Page(): JSX.Element {
             <div className="bg-blue-900/30 p-4 rounded-lg border border-blue-800/50">
               <h3 className="text-lg font-medium text-blue-200 mb-2">Wasserstein</h3>
               <p className="text-xl">
-                {loading ? 'Loading...' : kpis.find((k) => k.rowKey === 'wasserstein')?.value || 'N/A'}
+                {loading
+                  ? 'Loading...'
+                  : kpis.find((k) => k.rowKey === 'wasserstein')?.value || 'N/A'}
               </p>
             </div>
             <div className="bg-blue-900/30 p-4 rounded-lg border border-blue-800/50">
@@ -260,7 +239,9 @@ export default function Mode1Page(): JSX.Element {
             <div className="bg-blue-900/30 p-4 rounded-lg border border-blue-800/50">
               <h3 className="text-lg font-medium text-blue-200 mb-2">MSE</h3>
               <p className="text-xl">
-                {loading ? 'Loading...' : kpis.find((k) => k.rowKey === 'mseCurrent')?.value || 'N/A'}
+                {loading
+                  ? 'Loading...'
+                  : kpis.find((k) => k.rowKey === 'mseCurrent')?.value || 'N/A'}
               </p>
             </div>
             <div className="bg-blue-900/30 p-4 rounded-lg border border-blue-800/50">
@@ -276,28 +257,21 @@ export default function Mode1Page(): JSX.Element {
                     : 'text-green-400'
                 }`}
               >
-                {loading ? 'Loading...' : kpis.find((k) => k.rowKey === 'status')?.value || 'N/A'}
+                {loading
+                  ? 'Loading...'
+                  : kpis.find((k) => k.rowKey === 'status')?.value || 'N/A'}
               </p>
             </div>
           </div>
         </div>
-
-        {/* Debug Data Section */}
-        <div className="bg-gray-800 rounded-xl shadow-md overflow-hidden p-6 mb-6 border border-gray-700">
-          <h2 className="text-2xl font-semibold text-blue-300 mb-4">Debug Data</h2>
-          <div className="space-y-3 text-white text-xs overflow-auto max-h-60">
-            <pre>{JSON.stringify({ kpis, errors, outletsExceedingThreshold, xaiExplanation }, null, 2)}</pre>
-          </div>
-        </div>
-
         {/* XAI Result Section */}
         <div className="bg-gray-800 rounded-xl shadow-md overflow-hidden p-6 mb-6 border border-gray-700">
           <h2 className="text-2xl font-semibold text-blue-300 mb-4">XAI Result</h2>
-          <div className="space-y-3 text-white">
+          <div className="prose prose-invert text-white">
             {loading ? (
               <p>Loading XAI explanation...</p>
             ) : xaiExplanation ? (
-              <p>{xaiExplanation}</p>
+              <ReactMarkdown>{xaiExplanation}</ReactMarkdown>
             ) : (
               <p className="text-red-400">No explanation available</p>
             )}
@@ -322,7 +296,9 @@ export default function Mode1Page(): JSX.Element {
                   {errors.tableData.slice(0, 5).map((error, index) => (
                     <tr key={index}>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-white">{error.id}</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-white">{error.timePeriod}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-white">
+                        {error.timePeriod}
+                      </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-red-400">
                         {(error.error ?? 0).toFixed(2)}
                       </td>
@@ -350,9 +326,15 @@ export default function Mode1Page(): JSX.Element {
                   {outletsExceedingThreshold.slice(0, 5).map((outlet) => (
                     <tr key={outlet.id}>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-white">{outlet.id}</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-white">{outlet.y_true.toFixed(2)}</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-white">{outlet.y_pred.toFixed(2)}</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-red-400">{outlet.percentage_error.toFixed(2)}%</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-white">
+                        {outlet.y_true.toFixed(2)}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-white">
+                        {outlet.y_pred.toFixed(2)}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-red-400">
+                        {outlet.percentage_error.toFixed(2)}%
+                      </td>
                     </tr>
                   ))}
                 </tbody>

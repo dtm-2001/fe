@@ -2,15 +2,13 @@
 
 import React, { useEffect, useState } from 'react'
 import Head from 'next/head'
+import ReactMarkdown from 'react-markdown';
 import D3ConfusionMatrix from '../../components/D3ConfusionMatrix'
 import {
   fetchData,
   KPI,
   PlotDataPoint,
   TableDataPoint,
-  Coverage,
-  Clusters,
-  BackwardAnalysis,
 } from '../../services/backendService2'
 
 interface DetailedMetric {
@@ -20,7 +18,7 @@ interface DetailedMetric {
   misclassifications: Record<string, { count: number; percentage: number }>
 }
 
-export default function Mode3Page(): JSX.Element {
+export default function Mode3Page() {
   const [businessUnit, setBusinessUnit] = useState('CCS')
   const [useCase, setUseCase] = useState('CC-Di')
 
@@ -122,6 +120,21 @@ export default function Mode3Page(): JSX.Element {
     return []
   }
 
+  const additionalKpis: KPI[] = [
+    { rowKey: 'Drift Detected', value: 'Yes', status: 'Warning' },
+    { rowKey: 'Jensen–Shannon Divergence', value: '0.3228', status: 'Normal' },
+    { rowKey: 'Population Stability Index', value: '5327.1352', status: 'Normal' },
+    { rowKey: 'Precision (Reference)', value: '0.1631', status: 'Normal' },
+    { rowKey: 'Precision (Current)', value: '0.1693', status: 'Normal' },
+    { rowKey: 'Recall (Reference)', value: '0.2260', status: 'Normal' },
+    { rowKey: 'Recall (Current)', value: '0.2320', status: 'Normal' },
+    { rowKey: 'F1 Score (Reference)', value: '0.1894', status: 'Normal' },
+    { rowKey: 'F1 Score (Current)', value: '0.1957', status: 'Normal' },
+    { rowKey: 'Accuracy', value: '23.20', status: 'Normal' },
+    { rowKey: 'Error Rate', value: '76.80', status: 'Warning' },
+    { rowKey: 'Status', value: 'Warning', status: 'Warning' },
+  ];
+
   return (
     <div className="bg-gray-900 min-h-screen flex flex-col">
       <Head>
@@ -138,32 +151,6 @@ export default function Mode3Page(): JSX.Element {
           <h2 className="text-2xl font-semibold text-blue-300 mb-4">OCTAVE - CL Dashboard</h2>
           <p className="text-blue-200 mb-2">
             Current Period: {loading ? 'Loading...' : currentPeriod}
-          </p>
-          <p className="text-blue-200 mb-2">
-            State: {loading ? 'Loading...' : stateVal}
-          </p>
-          <p className="text-blue-200 mb-2">
-            Total Outlets: {loading ? 'Loading...' : totalOutlets}
-          </p>
-          <p className="text-blue-200 mb-2">
-            Outlets Exceeding Threshold: {loading ? 'Loading...' : outletsExceedingThresholdCount}
-          </p>
-          <p className="text-blue-200 mb-2">
-            Coverage – Total Points: {loading ? 'Loading...' : coverage.total_points ?? 'N/A'}
-          </p>
-          <p className="text-blue-200 mb-2">
-            Coverage – Warning: {loading ? 'Loading...' : coverage.warning_coverage ?? 'N/A'}
-          </p>
-          <p className="text-blue-200 mb-2">
-            Coverage – Drift: {loading ? 'Loading...' : coverage.drift_coverage ?? 'N/A'}
-          </p>
-          <p className="text-blue-200 mb-2">
-            Backward Analysis – 10% Drift:{' '}
-            {loading ? 'Loading...' : backwardAnalysis.backward_10_percent_drift ? 'Yes' : 'No'}
-          </p>
-          <p className="text-blue-200 mb-2">
-            Backward Analysis – 10% Warning:{' '}
-            {loading ? 'Loading...' : backwardAnalysis.backward_10_percent_warning ? 'Yes' : 'No'}
           </p>
 
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-4">
@@ -212,25 +199,59 @@ export default function Mode3Page(): JSX.Element {
               />
             </div>
           </div>
+
+          {/* Additional KPIs */}
+          <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mt-6">
+            {additionalKpis.map(kpi => (
+              <div
+                key={kpi.rowKey}
+                className="bg-blue-900/30 p-4 rounded-lg border border-blue-800/50"
+              >
+                <h3 className="text-lg font-medium text-blue-200 mb-2">{kpi.rowKey}</h3>
+                <p
+                  className={`text-xl ${
+                    kpi.status === 'Alert' || kpi.status === 'Warning'
+                      ? 'text-yellow-400'
+                      : kpi.status === 'Error'
+                      ? 'text-red-400'
+                      : 'text-green-400'
+                  }`}
+                >
+                  {loading ? 'Loading...' : kpi.value}
+                </p>
+              </div>
+            ))}
+          </div>
         </div>
 
         {/* KPI Cards */}
         <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-6">
-          {kpis.map(kpi => (
-            <div
-              key={kpi.rowKey}
-              className="bg-blue-900/30 p-4 rounded-lg border border-blue-800/50"
-            >
-              <h3 className="text-lg font-medium text-blue-200 mb-2">{kpi.rowKey}</h3>
-              <p className={`text-xl ${
-                kpi.status === 'Alert' || kpi.status === 'Warning' ? 'text-yellow-400'
-                : kpi.status === 'Error' ? 'text-red-400'
-                : 'text-green-400'
-              }`}>
-                {loading ? 'Loading...' : kpi.value}
-              </p>
-            </div>
-          ))}
+          {kpis
+            .filter(
+              kpi =>
+                !additionalKpis.some(
+                  addKpi => addKpi.rowKey.toLowerCase() === kpi.rowKey.toLowerCase()
+                )
+            )
+            .map(kpi => (
+              <div
+                key={kpi.rowKey}
+                className="bg-blue-900/30 p-4 rounded-lg border border-blue-800/50"
+              >
+                <h3 className="text-lg font-medium text-blue-200 mb-2">{kpi.rowKey}</h3>
+                <p
+                  className={`text-xl ${
+                    kpi.status === 'Alert' || kpi.status === 'Warning'
+                      ? 'text-yellow-400'
+                      : kpi.status === 'Error'
+                      ? 'text-red-400'
+                      : 'text-green-400'
+                  }`}
+                >
+                  {loading ? 'Loading...' : kpi.value}
+                </p>
+              </div>
+            ))}
         </div>
 
         {/* Confusion Matrices */}
@@ -309,11 +330,11 @@ export default function Mode3Page(): JSX.Element {
         {/* XAI Explanation */}
         <div className="bg-gray-800 rounded-xl shadow-md overflow-hidden p-6 mb-6 border border-gray-700">
           <h2 className="text-2xl font-semibold text-blue-300 mb-4">XAI Result</h2>
-          <div className="space-y-3 text-white">
+          <div className="prose prose-invert text-white">
             {loading ? (
-              <p>Loading explanation...</p>
+              <p>Loading explanation…</p>
             ) : xaiExplanation ? (
-              <div className="prose prose-invert" dangerouslySetInnerHTML={{ __html: xaiExplanation }} />
+              <ReactMarkdown>{xaiExplanation}</ReactMarkdown>
             ) : (
               <p className="text-red-400">No explanation available</p>
             )}

@@ -1,105 +1,111 @@
-'use client'
+import React, { useRef, useEffect } from 'react'
 import * as d3 from 'd3'
-import { useEffect, useRef } from 'react'
 
-type Props = {
+export interface D3ConfusionMatrixProps {
   data: number[][]
   labels: string[]
-  title: string
-  width?: number
-  height?: number
-  cellSize?: number
-  minCellSize?: number
-  maxCellSize?: number
+  title?: string
+  width: number
+  height: number
 }
 
-export default function D3ConfusionMatrix({
+const D3ConfusionMatrix: React.FC<D3ConfusionMatrixProps> = ({
   data,
   labels,
   title,
-  width = 500,
-  height = 500,
-  cellSize = 40,
-  minCellSize = 20,
-  maxCellSize = 60
-}: Props) {
-  const ref = useRef<HTMLDivElement>(null)
+  width,
+  height,
+}) => {
+  const svgRef = useRef<SVGSVGElement>(null)
 
   useEffect(() => {
-    if (!ref.current || !data?.length || !labels?.length) return
-    
-    // Validate dimensions
-    const safeWidth = Math.max(100, width || 500)
-    const safeHeight = Math.max(100, height || 500)
-    const containerWidth = ref.current?.clientWidth || safeWidth
-    const containerHeight = ref.current?.clientHeight || safeHeight
-    const calculatedCellSize = Math.min(
-      Math.max(minCellSize || 20, Math.min(containerWidth, containerHeight) / Math.max(data.length, data[0]?.length || 1)),
-      maxCellSize || 60
-    )
-    const safeCellSize = Math.max(10, cellSize || calculatedCellSize)
+    if (!data.length) return
 
-    // Clear previous render
-    ref.current.innerHTML = ''
+    const maxVal = d3.max(data.flat()) ?? 1
+    const margin = { top: title ? 30 : 10, right: 10, bottom: 10, left: 10 }
+    const innerW = width - margin.left - margin.right
+    const innerH = height - margin.top - margin.bottom
 
-    const margin = { top: 30, right: 30, bottom: 30, left: 30 }
-    const innerWidth = safeWidth - margin.left - margin.right
-    const innerHeight = safeHeight - margin.top - margin.bottom
+    const x = d3
+      .scaleBand<string>()
+      .domain(labels)
+      .range([0, innerW])
+      .padding(0.05)
 
-    const svg = d3.select(ref.current)
-      .append('svg')
-      .attr('width', safeWidth)
-      .attr('height', safeHeight)
+    const y = d3
+      .scaleBand<string>()
+      .domain(labels)
+      .range([0, innerH])
+      .padding(0.05)
+
+    const color = d3
+      .scaleSequential(d3.interpolateBlues)
+      .domain([0, maxVal])
+
+    const svg = d3.select(svgRef.current!)
+    svg.selectAll('*').remove()
+    svg.attr('viewBox', `0 0 ${width} ${height}`)
+
+    // optional title
+    if (title) {
+      svg
+        .append('text')
+        .attr('x', width / 2)
+        .attr('y', margin.top / 2)
+        .attr('text-anchor', 'middle')
+        .style('fill', 'white')
+        .style('font-size', '14px')
+        .text(title)
+    }
+
+    const g = svg
       .append('g')
       .attr('transform', `translate(${margin.left},${margin.top})`)
 
-    // Color scale
-    const colorScale = d3.scaleSequential(d3.interpolateBlues)
-      .domain([0, d3.max(data.flat()) || 1])
+    // cells + centered text
+    data.forEach((row, i) => {
+      row.forEach((val, j) => {
+        const xpos = x(labels[j])!
+        const ypos = y(labels[i])!
 
-    // Create matrix
-    svg.selectAll('g')
-      .data(data)
-      .enter()
-      .append('g')
-      .selectAll('rect')
-      .data((d, i) => d.map((value, j) => ({value, x: j, y: i})))
-      .enter()
-      .append('rect')
-      .attr('x', d => d.x * safeCellSize)
-      .attr('y', d => d.y * safeCellSize)
-      .attr('width', safeCellSize - 1)
-      .attr('height', safeCellSize - 1)
-      .style('fill', d => colorScale(d.value))
-      .style('stroke', '#fff')
+        g.append('rect')
+          .attr('x', xpos)
+          .attr('y', ypos)
+          .attr('width', x.bandwidth())
+          .attr('height', y.bandwidth())
+          .attr('fill', color(val))
 
-    // Add labels
-    svg.selectAll('.row-label')
-      .data(labels)
-      .enter()
-      .append('text')
-      .attr('x', -5)
-      .attr('y', (d, i) => i * safeCellSize + safeCellSize / 2)
-      .style('text-anchor', 'end')
-      .style('fill', '#e5e7eb')
-      .text(d => d)
+        g.append('text')
+          .attr('x', xpos + x.bandwidth() / 2)
+          .attr('y', ypos + y.bandwidth() / 2)
+          .attr('text-anchor', 'middle')
+          .attr('dominant-baseline', 'middle')
+          .style('font-size', `${Math.min(x.bandwidth(), y.bandwidth()) * 0.4}px`)
+          .attr('fill', val > maxVal / 2 ? 'white' : 'black')
+          .text(val)
+      })
+    })
 
-    svg.selectAll('.col-label')
-      .data(labels)
-      .enter()
-      .append('text')
-      .attr('y', -5)
-      .attr('x', (d, i) => i * safeCellSize + safeCellSize / 2)
-      .style('text-anchor', 'middle')
-      .style('fill', '#e5e7eb')
-      .text(d => d)
+    // axes (no tick lines)
+    g.append('g')
+      .call(d3.axisTop(x).tickSize(0))
+      .selectAll('text')
+      .style('font-size', '10px')
 
-  }, [data, labels, width, height, cellSize, minCellSize, maxCellSize])
+    g.append('g')
+      .call(d3.axisLeft(y).tickSize(0))
+      .selectAll('text')
+      .style('font-size', '10px')
+  }, [data, labels, width, height, title])
 
   return (
-    <div className="relative h-full w-full">
-      <h3 className="text-lg font-medium text-blue-200 mb-2">{title}</h3>
-      <div ref={ref} />
-    </div>
+    <svg
+      ref={svgRef}
+      width="100%"
+      height="100%"
+      preserveAspectRatio="xMidYMid meet"
+    />
   )
 }
+
+export default D3ConfusionMatrix

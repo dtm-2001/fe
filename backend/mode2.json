@@ -1,0 +1,74 @@
+{
+    "indices": {
+        "normal": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7
+        ],
+        "warning": [8,9,10],
+        "drift": [11,12,13,14,15,16,17,18,19,20]
+    },
+    "clusters": {
+        "warning": [],
+        "drift": [],
+        "combined": []
+    },
+    "state": "Stable",
+    "coverage": {
+        "total_points": 200,
+        "warning_coverage": 0.0,
+        "drift_coverage": 0.0
+    },
+    "locations": {
+        "first_warning_location": null,
+        "last_warning_location": null,
+        "first_drift_location": null,
+        "last_drift_location": null
+    },
+    "backward_analysis": {
+        "backward_10_percent_drift": false,
+        "backward_10_percent_warning": false
+    },
+    "xai": {
+        "explanation": "### Explanation of Drift Detection Using the ADWIN Algorithm\n\nThe **ADWIN (Adaptive Window**) algorithm is a change detection method that monitors the performance of a model over time. It uses a sliding window to keep track of the data points and their performance metrics. When a significant change is detected, it triggers an alert.\n\n### Key Metrics:\n- **KS Statistic**: A measure of the maximum distance between the empirical cumulative distribution functions of two samples. A value of 1 indicates a perfect separation.\n- **KS P-value**: The p-value associated with the KS statistic, indicating the significance of the observed difference.\n- **Wasserstein Distance**: A measure of the distance between two probability distributions. A higher value indicates a larger difference.\n- **Mean MSE Reference**: The mean squared error of the reference model.\n- **Mean MSE Current**: The mean squared error of the current model.\n- **MSE Threshold Value**: The threshold for MSE to determine if drift is present.\n\n### Summary:\n- **Drift Detected**: Yes\n- **Warning Detected**: No\n- **Drift Coverage**: 0.0%\n- **Warning Coverage**: 0.0%\n\n### Conclusion:\nThe model has detected a drift in the data, indicating that the current model may not be performing as expected. Further investigation and potential model retraining may be necessary."
+    },
+    "current_period": "Period_2",
+    "error_percentage_threshold": 10.0,
+    "total_outlets": 100,
+    "outlets_exceeding_threshold_count": 16,
+    "average_percentage_error_all": 5.715873756717494,
+    "average_percentage_error_exceeding": 12.663126603233309,
+    "all_outlets": [
+        {
+            "id": 101,
+            "y_true": 57.86229888278626,
+            "y_pred": 56.54631883909797,
+            "percentage_error": 2.3272603251732455
+        },
+        {
+            "id": 102,
+            "y_true": 59.486276210945874,
+            "y_pred": 59.245552050158,
+            "percentage_error": 0.4063160059409649
+        },
+        {
+            "id": 200,
+            "y_true": 60.037030735388896,
+            "y_pred": 66.98829598328274,
+            "percentage_error": 10.376835454403208
+        }
+    ],
+    "outlets_exceeding_threshold": [
+        {
+            "id": 107,
+            "y_true": 59.12028213766928,
+            "y_pred": 66.23094172082298,
+            "percentage_error": 10.736159562892214
+        }
+    ]
+}

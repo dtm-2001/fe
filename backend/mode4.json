@@ -1,0 +1,140 @@
+{
+    "indices": {
+        "normal": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8,
+            9,
+            10,
+            11,
+            12
+        ],
+        "warning": [13,14,15],
+        "drift": [16,17]
+    },
+    "clusters": {
+        "warning": [],
+        "drift": [],
+        "combined": []
+    },
+    "state": "Stable",
+    "coverage": {
+        "total_points": 1000,
+        "warning_coverage": 0.0,
+        "drift_coverage": 0.0
+    },
+    "locations": {
+        "first_warning_location": null,
+        "last_warning_location": null,
+        "first_drift_location": null,
+        "last_drift_location": null
+    },
+    "backward_analysis": {
+        "backward_10_percent_drift": false,
+        "backward_10_percent_warning": false
+    },
+    "xai": {
+        "explanation": "### Explanation of Drift Detection Using the EDDM Algorithm\n\nThe **EDDM (Early Drift Detection Method)** monitors the distance between consecutive errors to detect changes in data patterns. It uses statistical thresholds to determine when a warning or drift has occurred.\n\n#### Key Parameters:\n- **Pi (Current Error Rate):** 0.0000\n- **Pmax (Maximum Error Rate Observed So Far):** 0.0000\n- **Si (Current Standard Deviation):** 0.0000\n- **Smax (Standard Deviation at Pmax):** 0.0000\n- **Alpha (\u03b1):** 0.95 (default = 0.95)\n- **Beta (\u03b2):** 0.9 (default = 0.9)\n- **Level:** 2.0 (default = 2.0)\n\n#### No Drift Detected:\nNo significant increase in the distance between errors was observed. The ratio remains above the drift threshold.\n\n#### Warning Level:\nThe warning threshold is triggered when the ratio falls below **\u03b1 (0.95)**. In this case:\n- Warning Condition: Ratio < \u03b1 (0.95)\n- Substituting values: 0.0000 < 0.95\n\n#### Drift Data Analysis:\nNo drift data points were available for analysis.\n\n#### Warning Data Analysis:\nNo warning data points were available for analysis.\n\n### Summary:\nThe EDDM algorithm continuously monitors the distance between errors and compares it against predefined thresholds. In this case:\n- The **current error rate (Pi)** is 0.0000.\n- The **maximum error rate (Pmax)** observed so far is 0.0000.\n- The **current standard deviation (Si)** is 0.0000.\n- The **standard deviation at Pmax (Smax)** is 0.0000.\n- A **warning** is issued when the ratio falls below 0.95.\n- A **drift** is declared when the ratio falls below 0.9.\n\nBased on these calculations, the algorithm determined whether a warning or drift occurred."
+    },
+    "current_period": "Q4",
+    "overall_metrics": {
+        "accuracy": 50.3,
+        "error_rate": 49.7
+    },
+    "confusion_matrix": {
+        "raw": [
+            [
+                253,
+                256
+            ],
+            [
+                241,
+                250
+            ]
+        ],
+        "normalized": [
+            [
+                49.70530451866404,
+                50.29469548133595
+            ],
+            [
+                49.08350305498982,
+                50.91649694501018
+            ]
+        ]
+    },
+    "detailed_metrics": {
+        "0": {
+            "total_samples": 509,
+            "correct_predictions": {
+                "count": 253,
+                "percentage": 49.70530451866404
+            },
+            "incorrect_predictions": {
+                "count": 256,
+                "percentage": 50.29469548133595
+            },
+            "misclassifications": {
+                "1": {
+                    "count": 256,
+                    "percentage": 50.29469548133595
+                }
+            }
+        },
+        "1": {
+            "total_samples": 491,
+            "correct_predictions": {
+                "count": 250,
+                "percentage": 50.91649694501018
+            },
+            "incorrect_predictions": {
+                "count": 241,
+                "percentage": 49.08350305498982
+            },
+            "misclassifications": {
+                "0": {
+                    "count": 241,
+                    "percentage": 49.08350305498982
+                }
+            }
+        }
+    },
+    "misclassified_table": [
+        {
+            "id": "id_0",
+            "True": 0,
+            "Predicted": 1
+        },
+        {
+            "id": "id_1",
+            "True": 0,
+            "Predicted": 1
+        },
+        {
+            "id": "id_3",
+            "True": 1,
+            "Predicted": 0
+        },
+        {
+            "id": "id_994",
+            "True": 0,
+            "Predicted": 1
+        },
+        {
+            "id": "id_995",
+            "True": 1,
+            "Predicted": 0
+        },
+        {
+            "id": "id_997",
+            "True": 0,
+            "Predicted": 1
+        }
+    ]
+}

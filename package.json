@@ -1,6 +1,7 @@
 {
   "devDependencies": {
-    "@types/node-fetch": "^2.6.12"
+    "@types/node-fetch": "^2.6.12",
+    "@types/react": "^19.1.2"
   },
   "dependencies": {
     "node-fetch": "^2.7.0"

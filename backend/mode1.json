@@ -1,0 +1,239 @@
+{
+    "sorted_periods": [
+        "Period_1",
+        "Period_2"
+    ],
+    "selected_range": [
+        "Period_1",
+        "Period_2"
+    ],
+    "filtered_data": [
+
+        {
+            "period": "Period_2",
+            "y_true": 60.037030735388896,
+            "y_pred": 66.98829598328274,
+            "id": 200
+        }
+    ],
+    "hyperparameters": {
+        "alpha": 0.05,
+        "wass_threshold": 0.1,
+        "mse_threshold": 0.1
+    },
+    "drift_state": {
+        "drift_detected": true,
+        "metrics": {
+            "ks_statistic": 1.0,
+            "ks_p_value": 1.0,
+            "wasserstein_distance": 14.669633708256352,
+            "mean_mse_reference": 3.6035485867744397,
+            "mean_mse_current": 18.273182295030793,
+            "mse_threshold_value": 3.9639034454518836
+        }
+    },
+    "id_error": [
+        {
+            "id": 101,
+            "time_period": "Period_2",
+            "Mean_Prediction_Error": -1.3159800436882918
+        },
+        {
+            "id": 102,
+            "time_period": "Period_2",
+            "Mean_Prediction_Error": -0.2407241607878774
+        },
+        {
+            "id": 200,
+            "time_period": "Period_2",
+            "Mean_Prediction_Error": 6.9512652478938435
+        }
+    ],
+    "top_10_ids": [
+        {
+            "id": 183,
+            "time_period": "Period_2",
+            "Mean_Prediction_Error": -6.495582897239231
+        },
+        {
+            "id": 197,
+            "time_period": "Period_2",
+            "Mean_Prediction_Error": -4.852538116363512
+        },
+        {
+            "id": 147,
+            "time_period": "Period_2",
+            "Mean_Prediction_Error": -3.7923373659892974
+        },
+        {
+            "id": 148,
+            "time_period": "Period_2",
+            "Mean_Prediction_Error": -3.6298550975062227
+        },
+        {
+            "id": 193,
+            "time_period": "Period_2",
+            "Mean_Prediction_Error": -3.2809328280825696
+        },
+        {
+            "id": 126,
+            "time_period": "Period_2",
+            "Mean_Prediction_Error": -2.856754451150927
+        },
+        {
+            "id": 125,
+            "time_period": "Period_2",
+            "Mean_Prediction_Error": -2.0240695259988044
+        },
+        {
+            "id": 156,
+            "time_period": "Period_2",
+            "Mean_Prediction_Error": -2.0101174585512354
+        },
+        {
+            "id": 191,
+            "time_period": "Period_2",
+            "Mean_Prediction_Error": -1.5936586853934287
+        },
+        {
+            "id": 132,
+            "time_period": "Period_2",
+            "Mean_Prediction_Error": -1.589017485943323
+        }
+    ],
+    "mse_trend": [
+        {
+            "time_period": "Period_1",
+            "MSE": 3.6035485867744397
+        },
+        {
+            "time_period": "Period_2",
+            "MSE": 18.273182295030793
+        }
+    ],
+    "current_period": "Period_2",
+    "error_percentage_threshold": 10.0,
+    "total_outlets": 100,
+    "outlets_exceeding_threshold_count": 16,
+    "average_percentage_error_all": 5.715873756717494,
+    "average_percentage_error_exceeding": 12.663126603233309,
+    "all_outlets": [
+        {
+            "id": 101,
+            "y_true": 57.86229888278626,
+            "y_pred": 56.54631883909797,
+            "percentage_error": 2.3272603251732455
+        },
+        {
+            "id": 102,
+            "y_true": 59.486276210945874,
+            "y_pred": 59.245552050158,
+            "percentage_error": 0.4063160059409649
+        },
+        {
+            "id": 103,
+            "y_true": 63.66440994540221,
+            "y_pred": 68.65358436589526,
+            "percentage_error": 7.2671725250393395
+        },
+        {
+            "id": 104,
+            "y_true": 63.43041641627922,
+            "y_pred": 67.87189747801308,
+            "percentage_error": 6.5439176253657365
+        },
+        {
+            "id": 105,
+            "y_true": 43.97864505634327,
+            "y_pred": 45.89503868048668,
+            "percentage_error": 4.175600847588366
+        },
+        {
+            "id": 106,
+            "y_true": 47.49739968067902,
+            "y_pred": 49.96670921391414,
+            "percentage_error": 4.941909467489009
+        },
+        {
+            "id": 107,
+            "y_true": 59.12028213766928,
+            "y_pred": 66.23094172082298,
+            "percentage_error": 10.736159562892214
+        },
+        {
+            "id": 108,
+            "y_true": 59.11028760729767,
+            "y_pred": 58.744002051954354,
+            "percentage_error": 0.6235284327740683
+        },
+        {
+            "id": 109,
+            "y_true": 59.12038149044838,
+            "y_pred": 63.308771015128535,
+            "percentage_error": 6.615812402485714
+        },
+        {
+            "id": 110,
+            "y_true": 85.82185192523777,
+            "y_pred": 87.01308131550219,
+            "percentage_error": 1.3690233379336683
+        },
+        {
+            "id": 111,
+            "y_true": 59.56712408554534,
+            "y_pred": 60.696399272636455,
+            "percentage_error": 1.8605307738579886
+        },
+        {
+            "id": 194,
+            "y_true": 61.7968167761682,
+            "y_pred": 71.12265183958561,
+            "percentage_error": 13.1123275387024
+        },
+        {
+            "id": 195,
+            "y_true": 57.85612388772038,
+            "y_pred": 64.57388437060553,
+            "percentage_error": 10.403215709202586
+        },
+        {
+            "id": 196,
+            "y_true": 49.456723237914765,
+            "y_pred": 49.58002062949595,
+            "percentage_error": 0.24868362299113483
+        },
+        {
+            "id": 197,
+            "y_true": 62.196799003466005,
+            "y_pred": 57.34426088710249,
+            "percentage_error": 8.462116419840218
+        },
+        {
+            "id": 198,
+            "y_true": 57.45839616701287,
+            "y_pred": 64.87388566367453,
+            "percentage_error": 11.430623309825705
+        },
+        {
+            "id": 199,
+            "y_true": 61.50289695071168,
+            "y_pred": 63.044737569701205,
+            "percentage_error": 2.445629371182475
+        },
+        {
+            "id": 200,
+            "y_true": 60.037030735388896,
+            "y_pred": 66.98829598328274,
+            "percentage_error": 10.376835454403208
+        }
+    ],
+    "outlets_exceeding_threshold": [
+        {
+            "id": 107,
+            "y_true": 59.12028213766928,
+            "y_pred": 66.23094172082298,
+            "percentage_error": 10.736159562892214
+        }
+    ],
+    "explanation": "\nDrift Detection Report: A Story of Model Performance\n----------------------------------------------------\n\n1. **The Timeframe We Explored**:\n   - Reference Period: Period_1\n   - Current Period: Period_2\n\n2. **What Happened in the Data?**:\n   - To determine whether your model's performance has changed significantly, we conducted two key statistical tests:\n     - **Kolmogorov-Smirnov (KS) Test**:\n       - Statistic: 1.000\n       - P-Value: 1.000\n       - Interpretation: No significant difference was found. The data distribution appears stable.\n     - **Wasserstein Distance**:\n       - Value: 14.670\n       - Threshold: 0.100\n       - Interpretation: A significant shift in the data distribution was detected. This indicates that the underlying patterns have changed.\n\n3. **How Did the Model Perform?**:\n   - We measured the **Mean Squared Error (MSE)** to assess model performance:\n     - In the reference period (**Period_1**), the mean MSE was **3.604**.\n     - In the current period (**Period_2**), the mean MSE increased to **18.273**.\n     - Our acceptable threshold for performance degradation was set at **3.964**.\n     - Interpretation: The model\u2019s performance has degraded beyond acceptable limits. Immediate attention is required to address this issue.\n\n4. **Did Drift Occur?**:\n   - Based on the analysis, drift was detected:\n     - Yes, drift was detected. This means the model\u2019s behavior has changed significantly, and its predictions may no longer be reliable.\n\n5. **Who Were the Key Contributors to the Change?**:\n   - To better understand the source of the drift, we identified the top 10 data points where the model\u2019s predictions deviated most from the actual values:\n     - ID: 144.0, Predicted: 61.90, Actual: 61.93, Difference: 0.03\n- ID: 184.0, Predicted: 44.99, Actual: 45.10, Difference: 0.10\n- ID: 145.0, Predicted: 45.51, Actual: 45.40, Difference: -0.12\n- ID: 196.0, Predicted: 49.58, Actual: 49.46, Difference: -0.12\n- ID: 102.0, Predicted: 59.25, Actual: 59.49, Difference: 0.24\n- ID: 140.0, Predicted: 61.56, Actual: 61.82, Difference: 0.25\n- ID: 190.0, Predicted: 49.71, Actual: 50.02, Difference: 0.31\n- ID: 108.0, Predicted: 58.74, Actual: 59.11, Difference: 0.37\n- ID: 166.0, Predicted: 45.41, Actual: 45.02, Difference: -0.40\n- ID: 182.0, Predicted: 59.90, Actual: 60.30, Difference: 0.40\n---\n\nKey Metrics:\n- KS Test Statistic: 1.000, P-Value: 1.000\n- Wasserstein Distance: 14.670\n- Mean MSE (Reference): 3.604, (Current): 18.273\n- Threshold Value: 3.964\n"
+}

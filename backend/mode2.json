@@ -8,10 +8,202 @@
             4,
             5,
             6,
-            7
+            7,
+            8,
+            9,
+            10,
+            11,
+            12,
+            13,
+            14,
+            15,
+            16,
+            17,
+            18,
+            19,
+            20,
+            21,
+            22,
+            23,
+            24,
+            25,
+            26,
+            27,
+            28,
+            29,
+            30,
+            31,
+            32,
+            33,
+            34,
+            35,
+            36,
+            37,
+            38,
+            39,
+            40,
+            41,
+            42,
+            43,
+            44,
+            45,
+            46,
+            47,
+            48,
+            49,
+            50,
+            51,
+            52,
+            53,
+            54,
+            55,
+            56,
+            57,
+            58,
+            59,
+            60,
+            61,
+            62,
+            63,
+            64,
+            65,
+            66,
+            67,
+            68,
+            69,
+            70,
+            71,
+            72,
+            73,
+            74,
+            75,
+            76,
+            77,
+            78,
+            79,
+            80,
+            81,
+            82,
+            83,
+            84,
+            85,
+            86,
+            87,
+            88,
+            89,
+            90,
+            91,
+            92,
+            93,
+            94,
+            95,
+            96,
+            97,
+            98,
+            99,
+            100,
+            101,
+            102,
+            103,
+            104,
+            105,
+            106,
+            107,
+            108,
+            109,
+            110,
+            111,
+            112,
+            113,
+            114,
+            115,
+            116,
+            117,
+            118,
+            119,
+            120,
+            121,
+            122,
+            123,
+            124,
+            125,
+            126,
+            127,
+            128,
+            129,
+            130,
+            131,
+            132,
+            133,
+            134,
+            135,
+            136,
+            137,
+            138,
+            139,
+            140,
+            141,
+            142,
+            143,
+            144,
+            145,
+            146,
+            147,
+            148,
+            149,
+            150,
+            151,
+            152,
+            153,
+            154,
+            155,
+            156,
+            157,
+            158,
+            159,
+            160,
+            161,
+            162,
+            163,
+            164,
+            165,
+            166,
+            167,
+            168,
+            169,
+            170,
+            171,
+            172,
+            173,
+            174,
+            175,
+            176,
+            177,
+            178,
+            179,
+            180,
+            181,
+            182,
+            183,
+            184,
+            185,
+            186,
+            187,
+            188,
+            189,
+            190,
+            191,
+            192,
+            193,
+            194,
+            195,
+            196,
+            197,
+            198,
+            199
         ],
-        "warning": [8,9,10],
-        "drift": [11,12,13,14,15,16,17,18,19,20]
+        "warning": [],
+        "drift": [200,201,202]
     },
     "clusters": {
         "warning": [],
@@ -35,7 +227,7 @@
         "backward_10_percent_warning": false
     },
     "xai": {
-        "explanation": "### Explanation of Drift Detection Using the ADWIN Algorithm\n\nThe **ADWIN (Adaptive Window**) algorithm is a change detection method that monitors the performance of a model over time. It uses a sliding window to keep track of the data points and their performance metrics. When a significant change is detected, it triggers an alert.\n\n### Key Metrics:\n- **KS Statistic**: A measure of the maximum distance between the empirical cumulative distribution functions of two samples. A value of 1 indicates a perfect separation.\n- **KS P-value**: The p-value associated with the KS statistic, indicating the significance of the observed difference.\n- **Wasserstein Distance**: A measure of the distance between two probability distributions. A higher value indicates a larger difference.\n- **Mean MSE Reference**: The mean squared error of the reference model.\n- **Mean MSE Current**: The mean squared error of the current model.\n- **MSE Threshold Value**: The threshold for MSE to determine if drift is present.\n\n### Summary:\n- **Drift Detected**: Yes\n- **Warning Detected**: No\n- **Drift Coverage**: 0.0%\n- **Warning Coverage**: 0.0%\n\n### Conclusion:\nThe model has detected a drift in the data, indicating that the current model may not be performing as expected. Further investigation and potential model retraining may be necessary."
+        "explanation": "### Explanation of Drift Detection Using the ADWIN Algorithm\n\nThe **ADWIN (Adaptive Windowing)** algorithm dynamically adjusts its window size based on the data to detect concept drifts. It splits the sliding window into two parts (older and newer sub-windows) and compares their averages to determine if a drift has occurred.\n\n#### Key Parameters:\n- **Delta (\u03b4):** 0.02 (default = 0.002, corresponds to 99.8% confidence)\n  - Smaller \u03b4: Stricter \u2013 requires stronger evidence to declare drift.\n  - Larger \u03b4: Less strict \u2013 detects smaller changes but may trigger more false alarms.\n- **Window Size:** Automatically adjusts based on the data.\n  - Larger windows: Better for detecting gradual drifts.\n  - Smaller windows: Better for detecting abrupt drifts.\n\n#### Sliding Window Splitting:\nThe sliding window is split at index **None**, dividing it into two sub-windows:\n- **Older Sub-Window:** Contains 0 instances with an average value of 6.8002.\n- **Newer Sub-Window:** Contains 0 instances with an average value of 6.8649.\n\n#### Statistical Significance Test:\nTo determine whether the difference between the two sub-windows is significant, ADWIN uses Hoeffding\u2019s inequality:\n- **Threshold (\u03b5_cut):** \u03b5_cut = \u221a((1 / |Left Window|) + (1 / |Right Window|)) * ln(1 / \u03b4)\n- Substituting values: \u03b5_cut = \u221a((1 / 0) + (1 / 0)) * ln(1 / 0.02) = 1.1065\n- **Mean Difference:** |\u03bc_left - \u03bc_right| = |6.8002 - 6.8649| = 0.0648\n\n#### Drift Detected:\nA significant difference was detected between the older and newer sub-windows, indicating a potential concept drift. This conclusion was reached because the mean difference (**0.0648**) exceeded the threshold (**\u03b5_cut = 1.1065**).\n\n#### Window Shrinking:\nWhen a drift is detected, ADWIN shrinks the sliding window by dropping the oldest data. This ensures that the detector stays focused on recent data, adapting quickly to changes.\n\n#### Drift Data Analysis:\n- **Mean of Drift Data Points:** 1.6224\n- **Variance of Drift Data Points:** 0.4250\nThese statistics indicate the central tendency and spread of the data points around the drift event.\n\n#### Warning Data Analysis:\nNo warning data points were available for analysis.\n\n### Summary:\nThe ADWIN algorithm dynamically adjusts its window size and splits the data into two sub-windows to compare their averages. In this case:\n- The **mean difference** between the older and newer sub-windows is 0.0648.\n- The **threshold (\u03b5_cut)** for statistical significance is 1.1065.\n- A **drift** is declared when the mean difference exceeds the threshold.\n\nBased on these calculations, the algorithm determined whether a drift occurred."
     },
     "current_period": "Period_2",
     "error_percentage_threshold": 10.0,
@@ -57,6 +249,588 @@
             "percentage_error": 0.4063160059409649
         },
         {
+            "id": 103,
+            "y_true": 63.66440994540221,
+            "y_pred": 68.65358436589526,
+            "percentage_error": 7.2671725250393395
+        },
+        {
+            "id": 104,
+            "y_true": 63.43041641627922,
+            "y_pred": 67.87189747801308,
+            "percentage_error": 6.5439176253657365
+        },
+        {
+            "id": 105,
+            "y_true": 43.97864505634327,
+            "y_pred": 45.89503868048668,
+            "percentage_error": 4.175600847588366
+        },
+        {
+            "id": 106,
+            "y_true": 47.49739968067902,
+            "y_pred": 49.96670921391414,
+            "percentage_error": 4.941909467489009
+        },
+        {
+            "id": 107,
+            "y_true": 59.12028213766928,
+            "y_pred": 66.23094172082298,
+            "percentage_error": 10.736159562892214
+        },
+        {
+            "id": 108,
+            "y_true": 59.11028760729767,
+            "y_pred": 58.744002051954354,
+            "percentage_error": 0.6235284327740683
+        },
+        {
+            "id": 109,
+            "y_true": 59.12038149044838,
+            "y_pred": 63.308771015128535,
+            "percentage_error": 6.615812402485714
+        },
+        {
+            "id": 110,
+            "y_true": 85.82185192523777,
+            "y_pred": 87.01308131550219,
+            "percentage_error": 1.3690233379336683
+        },
+        {
+            "id": 111,
+            "y_true": 59.56712408554534,
+            "y_pred": 60.696399272636455,
+            "percentage_error": 1.8605307738579886
+        },
+        {
+            "id": 112,
+            "y_true": 64.08452512144478,
+            "y_pred": 70.47963252939354,
+            "percentage_error": 9.073695730864767
+        },
+        {
+            "id": 113,
+            "y_true": 62.63201410794562,
+            "y_pred": 67.93367950389774,
+            "percentage_error": 7.804178184766111
+        },
+        {
+            "id": 114,
+            "y_true": 60.21113001044638,
+            "y_pred": 65.46516855444894,
+            "percentage_error": 8.025700781069013
+        },
+        {
+            "id": 115,
+            "y_true": 52.47784604287723,
+            "y_pred": 59.69976127149455,
+            "percentage_error": 12.09705880694307
+        },
+        {
+            "id": 116,
+            "y_true": 61.07175376394614,
+            "y_pred": 63.155769130477175,
+            "percentage_error": 3.299802053278055
+        },
+        {
+            "id": 117,
+            "y_true": 48.817398283699426,
+            "y_pred": 53.54521016887928,
+            "percentage_error": 8.829570133852382
+        },
+        {
+            "id": 118,
+            "y_true": 53.10545114607993,
+            "y_pred": 53.8643841197061,
+            "percentage_error": 1.408969927029241
+        },
+        {
+            "id": 119,
+            "y_true": 51.11709161736717,
+            "y_pred": 54.41375702732094,
+            "percentage_error": 6.058514592731623
+        },
+        {
+            "id": 120,
+            "y_true": 55.65499311509058,
+            "y_pred": 57.13442089761985,
+            "percentage_error": 2.589380900841326
+        },
+        {
+            "id": 121,
+            "y_true": 73.51726853338806,
+            "y_pred": 75.90525239335894,
+            "percentage_error": 3.1460060861082146
+        },
+        {
+            "id": 122,
+            "y_true": 40.06187845926601,
+            "y_pred": 44.442506561013666,
+            "percentage_error": 9.856843010719102
+        },
+        {
+            "id": 123,
+            "y_true": 60.49008152299611,
+            "y_pred": 59.21719879006222,
+            "percentage_error": 2.149515274179942
+        },
+        {
+            "id": 124,
+            "y_true": 42.09827303048279,
+            "y_pred": 52.46782213322463,
+            "percentage_error": 19.763635464822254
+        },
+        {
+            "id": 125,
+            "y_true": 51.22454507368453,
+            "y_pred": 49.20047554768573,
+            "percentage_error": 4.113922687672095
+        },
+        {
+            "id": 126,
+            "y_true": 63.71160477573893,
+            "y_pred": 60.854850324588,
+            "percentage_error": 4.694374295415322
+        },
+        {
+            "id": 127,
+            "y_true": 55.514240152763705,
+            "y_pred": 62.146683646763975,
+            "percentage_error": 10.672240423476929
+        },
+        {
+            "id": 128,
+            "y_true": 46.37804177656555,
+            "y_pred": 51.544692552417295,
+            "percentage_error": 10.023632929030715
+        },
+        {
+            "id": 129,
+            "y_true": 49.27757032592025,
+            "y_pred": 53.77404959412887,
+            "percentage_error": 8.361801467709341
+        },
+        {
+            "id": 130,
+            "y_true": 60.4367819914774,
+            "y_pred": 64.95016402853452,
+            "percentage_error": 6.948992515360318
+        },
+        {
+            "id": 131,
+            "y_true": 49.15706694626291,
+            "y_pred": 51.10807985487525,
+            "percentage_error": 3.8174255697971256
+        },
+        {
+            "id": 132,
+            "y_true": 56.7316687166558,
+            "y_pred": 55.142651230712474,
+            "percentage_error": 2.88164868840818
+        },
+        {
+            "id": 133,
+            "y_true": 55.36457471923051,
+            "y_pred": 57.667792952005414,
+            "percentage_error": 3.9939420513141166
+        },
+        {
+            "id": 134,
+            "y_true": 49.78719721915346,
+            "y_pred": 49.07855037310502,
+            "percentage_error": 1.4439033766506335
+        },
+        {
+            "id": 135,
+            "y_true": 72.1515527146026,
+            "y_pred": 78.05203164827361,
+            "percentage_error": 7.559673731825941
+        },
+        {
+            "id": 136,
+            "y_true": 60.07135217854409,
+            "y_pred": 61.483122652535535,
+            "percentage_error": 2.29619188662537
+        },
+        {
+            "id": 137,
+            "y_true": 38.798859306739146,
+            "y_pred": 37.4968705195691,
+            "percentage_error": 3.472259868968415
+        },
+        {
+            "id": 138,
+            "y_true": 56.49163451815542,
+            "y_pred": 57.20609115154345,
+            "percentage_error": 1.2489170628620174
+        },
+        {
+            "id": 139,
+            "y_true": 49.70570828185289,
+            "y_pred": 53.35743409895539,
+            "percentage_error": 6.843893224569408
+        },
+        {
+            "id": 140,
+            "y_true": 61.81946667836979,
+            "y_pred": 61.56456846715389,
+            "percentage_error": 0.41403394446254654
+        },
+        {
+            "id": 141,
+            "y_true": 48.6598340925384,
+            "y_pred": 47.37095251027267,
+            "percentage_error": 2.720826823117441
+        },
+        {
+            "id": 142,
+            "y_true": 54.082108468264806,
+            "y_pred": 57.05685731423245,
+            "percentage_error": 5.213657018620292
+        },
+        {
+            "id": 143,
+            "y_true": 59.03989823184366,
+            "y_pred": 62.01976451627855,
+            "percentage_error": 4.804704286893504
+        },
+        {
+            "id": 144,
+            "y_true": 61.926041553360974,
+            "y_pred": 61.89826885187645,
+            "percentage_error": 0.044868300842117445
+        },
+        {
+            "id": 145,
+            "y_true": 45.39762874355379,
+            "y_pred": 45.513475521080494,
+            "percentage_error": 0.2545329184387353
+        },
+        {
+            "id": 146,
+            "y_true": 52.323990113272416,
+            "y_pred": 55.25218986270296,
+            "percentage_error": 5.299698992396277
+        },
+        {
+            "id": 147,
+            "y_true": 51.20043751071235,
+            "y_pred": 47.40810014472305,
+            "percentage_error": 7.999344741536577
+        },
+        {
+            "id": 148,
+            "y_true": 49.77336613941031,
+            "y_pred": 46.143511041904084,
+            "percentage_error": 7.866447557945601
+        },
+        {
+            "id": 149,
+            "y_true": 69.12363392224877,
+            "y_pred": 68.24985703723902,
+            "percentage_error": 1.280261853930316
+        },
+        {
+            "id": 150,
+            "y_true": 58.23985368768764,
+            "y_pred": 59.386065080840254,
+            "percentage_error": 1.9301016014317718
+        },
+        {
+            "id": 151,
+            "y_true": 44.91292836531964,
+            "y_pred": 48.156558627711654,
+            "percentage_error": 6.735593976861695
+        },
+        {
+            "id": 152,
+            "y_true": 62.34289557643821,
+            "y_pred": 70.24432044423642,
+            "percentage_error": 11.248489298249774
+        },
+        {
+            "id": 153,
+            "y_true": 71.97724957610106,
+            "y_pred": 77.40788806890913,
+            "percentage_error": 7.015613819580858
+        },
+        {
+            "id": 154,
+            "y_true": 63.25972208440918,
+            "y_pred": 64.61996796455547,
+            "percentage_error": 2.1049931205357444
+        },
+        {
+            "id": 155,
+            "y_true": 42.845040272367896,
+            "y_pred": 44.76897544075714,
+            "percentage_error": 4.2974741982540765
+        },
+        {
+            "id": 156,
+            "y_true": 51.12612741706999,
+            "y_pred": 49.11600995851875,
+            "percentage_error": 4.092591112854837
+        },
+        {
+            "id": 157,
+            "y_true": 65.13528919349298,
+            "y_pred": 67.06123664952342,
+            "percentage_error": 2.871923561588734
+        },
+        {
+            "id": 158,
+            "y_true": 49.33864427504975,
+            "y_pred": 50.1840097193692,
+            "percentage_error": 1.6845314853212452
+        },
+        {
+            "id": 159,
+            "y_true": 58.550555425169826,
+            "y_pred": 61.84142966652218,
+            "percentage_error": 5.321471801506342
+        },
+        {
+            "id": 160,
+            "y_true": 61.19707242743469,
+            "y_pred": 59.8881486532254,
+            "percentage_error": 2.1856140215461406
+        },
+        {
+            "id": 161,
+            "y_true": 47.58455622737534,
+            "y_pred": 51.66194228434003,
+            "percentage_error": 7.8924366306697
+        },
+        {
+            "id": 162,
+            "y_true": 54.5237971515056,
+            "y_pred": 62.654752803515905,
+            "percentage_error": 12.977396427544493
+        },
+        {
+            "id": 163,
+            "y_true": 29.06986127944742,
+            "y_pred": 30.63482068561999,
+            "percentage_error": 5.10843338119215
+        },
+        {
+            "id": 164,
+            "y_true": 46.80489886932568,
+            "y_pred": 50.41174575772145,
+            "percentage_error": 7.154774813255327
+        },
+        {
+            "id": 165,
+            "y_true": 52.97945478885472,
+            "y_pred": 57.740030755699166,
+            "percentage_error": 8.244844875449884
+        },
+        {
+            "id": 166,
+            "y_true": 45.017734544281204,
+            "y_pred": 45.41285265673786,
+            "percentage_error": 0.870057900663578
+        },
+        {
+            "id": 167,
+            "y_true": 68.05929043145308,
+            "y_pred": 70.95566035869474,
+            "percentage_error": 4.08194344552633
+        },
+        {
+            "id": 168,
+            "y_true": 43.55886897631494,
+            "y_pred": 45.60923857944212,
+            "percentage_error": 4.495513775253776
+        },
+        {
+            "id": 169,
+            "y_true": 51.47964410642413,
+            "y_pred": 53.87034850061946,
+            "percentage_error": 4.437885517239291
+        },
+        {
+            "id": 170,
+            "y_true": 56.04592461828873,
+            "y_pred": 54.953885482866866,
+            "percentage_error": 1.98719185336282
+        },
+        {
+            "id": 171,
+            "y_true": 66.53018631252893,
+            "y_pred": 68.6282270095647,
+            "percentage_error": 3.0571104463231538
+        },
+        {
+            "id": 172,
+            "y_true": 43.51310279056449,
+            "y_pred": 47.50509595554629,
+            "percentage_error": 8.403294603840767
+        },
+        {
+            "id": 173,
+            "y_true": 64.30531001723968,
+            "y_pred": 72.10988444841985,
+            "percentage_error": 10.823168683293034
+        },
+        {
+            "id": 174,
+            "y_true": 55.0818644881567,
+            "y_pred": 60.91894779249753,
+            "percentage_error": 9.581720492322251
+        },
+        {
+            "id": 175,
+            "y_true": 47.14793079161639,
+            "y_pred": 57.760660621662616,
+            "percentage_error": 18.373629587723272
+        },
+        {
+            "id": 176,
+            "y_true": 58.69682779410616,
+            "y_pred": 57.62743754255396,
+            "percentage_error": 1.8556963438857186
+        },
+        {
+            "id": 177,
+            "y_true": 56.59247756458776,
+            "y_pred": 62.08176011147047,
+            "percentage_error": 8.842021452076212
+        },
+        {
+            "id": 178,
+            "y_true": 50.19826498272964,
+            "y_pred": 52.93163300568305,
+            "percentage_error": 5.1639593712514715
+        },
+        {
+            "id": 179,
+            "y_true": 55.55841667992015,
+            "y_pred": 66.31762841279084,
+            "percentage_error": 16.223758283243335
+        },
+        {
+            "id": 180,
+            "y_true": 51.91749122510592,
+            "y_pred": 50.68429808368531,
+            "percentage_error": 2.433087145420205
+        },
+        {
+            "id": 181,
+            "y_true": 55.90813876200998,
+            "y_pred": 54.54925139328688,
+            "percentage_error": 2.491120105252874
+        },
+        {
+            "id": 182,
+            "y_true": 60.29704539616837,
+            "y_pred": 59.899474814392285,
+            "percentage_error": 0.6637296620847183
+        },
+        {
+            "id": 183,
+            "y_true": 67.68813452916282,
+            "y_pred": 61.19255163192359,
+            "percentage_error": 10.614989445628126
+        },
+        {
+            "id": 184,
+            "y_true": 45.097476009385204,
+            "y_pred": 44.99445592266216,
+            "percentage_error": 0.22896173453039642
+        },
+        {
+            "id": 185,
+            "y_true": 72.06426699725013,
+            "y_pred": 71.02773635103534,
+            "percentage_error": 1.4593322263460766
+        },
+        {
+            "id": 186,
+            "y_true": 39.38329760381998,
+            "y_pred": 41.984872749724815,
+            "percentage_error": 6.196458332535696
+        },
+        {
+            "id": 187,
+            "y_true": 53.785719239715334,
+            "y_pred": 57.15274314282397,
+            "percentage_error": 5.891272610825501
+        },
+        {
+            "id": 188,
+            "y_true": 59.706537651876616,
+            "y_pred": 69.21122100874015,
+            "percentage_error": 13.732864726751842
+        },
+        {
+            "id": 189,
+            "y_true": 57.24793494188026,
+            "y_pred": 63.049630294624464,
+            "percentage_error": 9.20179123276929
+        },
+        {
+            "id": 190,
+            "y_true": 50.01840384143525,
+            "y_pred": 49.71078921878564,
+            "percentage_error": 0.6188085674837005
+        },
+        {
+            "id": 191,
+            "y_true": 53.3350219971418,
+            "y_pred": 51.74136331174837,
+            "percentage_error": 3.0800477285289722
+        },
+        {
+            "id": 192,
+            "y_true": 51.05599252272934,
+            "y_pred": 55.023669208755365,
+            "percentage_error": 7.210854425161976
+        },
+        {
+            "id": 193,
+            "y_true": 50.285081944446304,
+            "y_pred": 47.004149116363735,
+            "percentage_error": 6.980091948819825
+        },
+        {
+            "id": 194,
+            "y_true": 61.7968167761682,
+            "y_pred": 71.12265183958561,
+            "percentage_error": 13.1123275387024
+        },
+        {
+            "id": 195,
+            "y_true": 57.85612388772038,
+            "y_pred": 64.57388437060553,
+            "percentage_error": 10.403215709202586
+        },
+        {
+            "id": 196,
+            "y_true": 49.456723237914765,
+            "y_pred": 49.58002062949595,
+            "percentage_error": 0.24868362299113483
+        },
+        {
+            "id": 197,
+            "y_true": 62.196799003466005,
+            "y_pred": 57.34426088710249,
+            "percentage_error": 8.462116419840218
+        },
+        {
+            "id": 198,
+            "y_true": 57.45839616701287,
+            "y_pred": 64.87388566367453,
+            "percentage_error": 11.430623309825705
+        },
+        {
+            "id": 199,
+            "y_true": 61.50289695071168,
+            "y_pred": 63.044737569701205,
+            "percentage_error": 2.445629371182475
+        },
+        {
             "id": 200,
             "y_true": 60.037030735388896,
             "y_pred": 66.98829598328274,
@@ -69,15 +843,96 @@
             "y_true": 59.12028213766928,
             "y_pred": 66.23094172082298,
             "percentage_error": 10.736159562892214
-        }
-
-
-    ],
-    "top_10_ids": [
+        },
+        {
+            "id": 115,
+            "y_true": 52.47784604287723,
+            "y_pred": 59.69976127149455,
+            "percentage_error": 12.09705880694307
+        },
+        {
+            "id": 124,
+            "y_true": 42.09827303048279,
+            "y_pred": 52.46782213322463,
+            "percentage_error": 19.763635464822254
+        },
+        {
+            "id": 127,
+            "y_true": 55.514240152763705,
+            "y_pred": 62.146683646763975,
+            "percentage_error": 10.672240423476929
+        },
+        {
+            "id": 128,
+            "y_true": 46.37804177656555,
+            "y_pred": 51.544692552417295,
+            "percentage_error": 10.023632929030715
+        },
+        {
+            "id": 152,
+            "y_true": 62.34289557643821,
+            "y_pred": 70.24432044423642,
+            "percentage_error": 11.248489298249774
+        },
+        {
+            "id": 162,
+            "y_true": 54.5237971515056,
+            "y_pred": 62.654752803515905,
+            "percentage_error": 12.977396427544493
+        },
+        {
+            "id": 173,
+            "y_true": 64.30531001723968,
+            "y_pred": 72.10988444841985,
+            "percentage_error": 10.823168683293034
+        },
+        {
+            "id": 175,
+            "y_true": 47.14793079161639,
+            "y_pred": 57.760660621662616,
+            "percentage_error": 18.373629587723272
+        },
+        {
+            "id": 179,
+            "y_true": 55.55841667992015,
+            "y_pred": 66.31762841279084,
+            "percentage_error": 16.223758283243335
+        },
         {
             "id": 183,
-            "time_period": "Period_2",
-            "Mean_Prediction_Error": -6.495582897239231
+            "y_true": 67.68813452916282,
+            "y_pred": 61.19255163192359,
+            "percentage_error": 10.614989445628126
+        },
+        {
+            "id": 188,
+            "y_true": 59.706537651876616,
+            "y_pred": 69.21122100874015,
+            "percentage_error": 13.732864726751842
+        },
+        {
+            "id": 194,
+            "y_true": 61.7968167761682,
+            "y_pred": 71.12265183958561,
+            "percentage_error": 13.1123275387024
+        },
+        {
+            "id": 195,
+            "y_true": 57.85612388772038,
+            "y_pred": 64.57388437060553,
+            "percentage_error": 10.403215709202586
+        },
+        {
+            "id": 198,
+            "y_true": 57.45839616701287,
+            "y_pred": 64.87388566367453,
+            "percentage_error": 11.430623309825705
+        },
+        {
+            "id": 200,
+            "y_true": 60.037030735388896,
+            "y_pred": 66.98829598328274,
+            "percentage_error": 10.376835454403208
         }
     ]
 }

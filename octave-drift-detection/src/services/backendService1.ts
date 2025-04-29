@@ -56,6 +56,7 @@ export async function fetchData(): Promise<{
   totalOutlets: number
   outletsExceedingThresholdCount: number
   xaiExplanation: string
+  error_percentage_threshold: number
 }> {
   const res = await fetch('/api/mode2/data', { credentials: 'include' })
   if (!res.ok) throw new Error(`HTTP error! Status: ${res.status}`)
@@ -199,5 +200,6 @@ export async function fetchData(): Promise<{
     totalOutlets,
     outletsExceedingThresholdCount,
     xaiExplanation,
+    error_percentage_threshold: raw.error_percentage_threshold || 0,
   }
 }

@@ -1,6 +1,5 @@
 "use client"
-import type React from "react"
-import { useState, useEffect } from "react"
+import React, { useState, useEffect, useMemo } from "react"
 import Head from "next/head"
 import ReactMarkdown from "react-markdown"
 import DriftWarningChart from "./DriftWarningChart"
@@ -35,24 +34,66 @@ export default function Mode2Page(): React.ReactElement {
   const [xaiExplanation, setXaiExplanation] = useState<string>("")
   const [loading, setLoading] = useState<boolean>(true)
   const [backendError, setBackendError] = useState<string | null>(null)
+  const [errorPercentageThreshold, setErrorPercentageThreshold] = useState<number>(0)
 
-  // New state for business unit and use case
+  // --- NEW STATE FOR FILTERS ---
   const [businessUnit, setBusinessUnit] = useState<string>("")
   const [useCase, setUseCase] = useState<string>("")
-  const useCases: Record<string, string[]> = {
+  const [shortCode, setShortCode] = useState<string>("")
+  const [runtimeValue, setRuntimeValue] = useState<number>(1)
+  const [alertKeeperValue, setAlertKeeperValue] = useState<string>("")
+  const [roleValue, setRoleValue] = useState<string>("")
+  const [emailValue, setEmailValue] = useState<string>("")
+
+  const useCasesByUnit: Record<string, string[]> = {
     CCS: ["CC-Di", "CC-MT"],
     JMSL: ["JM-Ch"],
   }
 
+  const computedShortCodes = useMemo(() => {
+    if (!businessUnit || !useCase) return []
+    return [`${businessUnit.substring(0, 2)}-${useCase.substring(0, 2)}`]
+  }, [businessUnit, useCase])
+
+  // Stubbed lists for the remaining selects
+  const [availableAlertKeepers] = useState<string[]>(["KeeperA", "KeeperB", "KeeperC"])
+  const [availableRoles] = useState<string[]>(["Analyst", "Manager", "Reviewer"])
+  const [availableEmails] = useState<string[]>([
+    "alice@example.com",
+    "bob@example.com",
+    "carol@example.com",
+  ])
+
+  // --- HANDLERS FOR FILTERS ---
   const handleBusinessUnitChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const v = e.target.value
-    setBusinessUnit(v)
+    setBusinessUnit(e.target.value)
     setUseCase("")
+    setShortCode("")
   }
 
   const handleUseCaseChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const v = e.target.value
-    setUseCase(v)
+    setUseCase(e.target.value)
+    setShortCode("")
+  }
+
+  const handleShortCodeChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    setShortCode(e.target.value)
+  }
+
+  const handleRuntimeChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    setRuntimeValue(Number(e.target.value))
+  }
+
+  const handleAlertKeeperChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    setAlertKeeperValue(e.target.value)
+  }
+
+  const handleRoleChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    setRoleValue(e.target.value)
+  }
+
+  const handleEmailChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    setEmailValue(e.target.value)
   }
 
   // --- DATA FETCHER ---
@@ -75,16 +116,17 @@ export default function Mode2Page(): React.ReactElement {
         totalOutlets: fetchedTotal,
         outletsExceedingThresholdCount: fetchedCount,
         xaiExplanation: fetchedXai,
+        error_percentage_threshold,
       } = await fetchData()
 
-      // Build our drift/warning plot from indices
+      // Build drift/warning plot
       const driftPlot: PlotDataPoint[] = []
       fetchedIndices.normal.forEach((x) => driftPlot.push({ x, y: 0, exceedsThreshold: false }))
       fetchedIndices.warning.forEach((x) => driftPlot.push({ x, y: 1, exceedsThreshold: false }))
       fetchedIndices.drift.forEach((x) => driftPlot.push({ x, y: 2, exceedsThreshold: false }))
       driftPlot.sort((a, b) => (a.x > b.x ? 1 : a.x < b.x ? -1 : 0))
 
-      // Filter out certain KPIs
+      // Filter KPIs
       const filteredKpis = fetchedKpis.filter(
         (kpi) => !["kstest", "wasserstein", "mseref", "msecurrent"].includes(kpi.rowKey.toLowerCase()),
       )
@@ -102,6 +144,7 @@ export default function Mode2Page(): React.ReactElement {
       setTotalOutlets(fetchedTotal)
       setOutletsExceedingThresholdCount(fetchedCount)
       setXaiExplanation(fetchedXai)
+      setErrorPercentageThreshold(error_percentage_threshold ?? 0)
     } catch (err) {
       console.error("Error fetching data:", err)
       setBackendError(
@@ -116,7 +159,7 @@ export default function Mode2Page(): React.ReactElement {
     initData()
   }, [])
 
-  // Helper function to get status color
+  // --- Helpers for KPI rendering ---
   const getStatusColor = (status: string | undefined) => {
     if (!status) return "text-gray-400"
     switch (status.toLowerCase()) {
@@ -131,7 +174,6 @@ export default function Mode2Page(): React.ReactElement {
     }
   }
 
-  // Helper function to get status icon
   const getStatusIcon = (status: string | undefined) => {
     if (!status) return <Info className="h-5 w-5 text-gray-400" />
     switch (status.toLowerCase()) {
@@ -172,7 +214,7 @@ export default function Mode2Page(): React.ReactElement {
           </div>
         )}
 
-        {/* Header Section */}
+        {/* Header & Filters */}
         <div className="bg-gray-900/80 rounded-xl shadow-xl overflow-hidden p-6 mb-6 border border-gray-700/50 backdrop-blur-sm">
           <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-6">
             <div>
@@ -180,21 +222,21 @@ export default function Mode2Page(): React.ReactElement {
                 OCTAVE - RG Dashboard
               </h2>
               <p className="text-sky-300 flex items-center gap-2">
-                <span className="inline-block h-2 w-2 rounded-full bg-sky-400 animate-pulse"></span>
+                <span className="inline-block h-2 w-2 rounded-full bg-sky-400 animate-pulse" />
                 Current Period: {loading ? "Loading..." : currentPeriod}
               </p>
             </div>
             <button
               onClick={initData}
-              className="mt-4 md:mt-0 px-4 py-2 bg-sky-800/40 hover:bg-sky-700/60 text-white rounded-md text-sm font-medium transition-colors duration-200 flex items-center gap-2 self-start"
+              className="mt-4 md:mt-0 px-4 py-2 bg-sky-800/40 hover:bg-sky-700/60 text-white rounded-md text-sm font-medium transition-colors duration-200 flex items-center gap-2"
             >
-              <RefreshCw className="h-4 w-4" />
-              Refresh Data
+              <RefreshCw className="h-4 w-4" /> Refresh Data
             </button>
           </div>
 
-          {/* Business Unit and Use Case Selector */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+          {/* first row: filters 1–4 */}
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
+            {/* 1. Business Unit */}
             <div className="bg-gradient-to-br from-sky-950/40 to-sky-900/20 p-4 rounded-lg border border-sky-800/30 shadow-md">
               <h3 className="text-lg font-medium text-sky-300 mb-2 flex items-center gap-2">
                 <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-sky-800/40 text-xs">
@@ -203,15 +245,19 @@ export default function Mode2Page(): React.ReactElement {
                 Business Unit
               </h3>
               <select
-                className="w-full bg-gray-800/80 border border-sky-700/50 rounded-md p-2 text-white focus:ring-2 focus:ring-sky-500 focus:border-transparent transition-all duration-200"
+                className="w-full bg-gray-800/80 border border-sky-700/50 rounded-md p-2 text-white focus:ring-2 focus:ring-sky-500 transition-all duration-200"
                 value={businessUnit}
                 onChange={handleBusinessUnitChange}
               >
                 <option value="">Select Business Unit</option>
-                <option value="CCS">CCS</option>
-                <option value="JMSL">JMSL</option>
+                {Object.keys(useCasesByUnit).map((bu) => (
+                  <option key={bu} value={bu}>
+                    {bu}
+                  </option>
+                ))}
               </select>
             </div>
+            {/* 2. Use Case */}
             <div className="bg-gradient-to-br from-sky-950/40 to-sky-900/20 p-4 rounded-lg border border-sky-800/30 shadow-md">
               <h3 className="text-lg font-medium text-sky-300 mb-2 flex items-center gap-2">
                 <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-sky-800/40 text-xs">
@@ -220,20 +266,21 @@ export default function Mode2Page(): React.ReactElement {
                 Use Case
               </h3>
               <select
-                className="w-full bg-gray-800/80 border border-sky-700/50 rounded-md p-2 text-white focus:ring-2 focus:ring-sky-500 focus:border-transparent transition-all duration-200"
+                className="w-full bg-gray-800/80 border border-sky-700/50 rounded-md p-2 text-white focus:ring-2 focus:ring-sky-500 transition-all duration-200"
                 value={useCase}
                 onChange={handleUseCaseChange}
                 disabled={!businessUnit}
               >
                 <option value="">Select Use Case</option>
                 {businessUnit &&
-                  useCases[businessUnit]?.map((option) => (
-                    <option key={option} value={option}>
-                      {option}
+                  useCasesByUnit[businessUnit].map((uc) => (
+                    <option key={uc} value={uc}>
+                      {uc}
                     </option>
                   ))}
               </select>
             </div>
+            {/* 3. Short Code */}
             <div className="bg-gradient-to-br from-sky-950/40 to-sky-900/20 p-4 rounded-lg border border-sky-800/30 shadow-md">
               <h3 className="text-lg font-medium text-sky-300 mb-2 flex items-center gap-2">
                 <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-sky-800/40 text-xs">
@@ -241,10 +288,21 @@ export default function Mode2Page(): React.ReactElement {
                 </span>
                 Short Code
               </h3>
-              <div className="w-full bg-gray-800/80 border border-sky-700/50 rounded-md p-2 text-white">
-                {businessUnit && useCase ? `${businessUnit.substring(0, 2)}-${useCase.substring(0, 2)}` : "-"}
-              </div>
+              <select
+                className="w-full bg-gray-800/80 border border-sky-700/50 rounded-md p-2 text-white focus:ring-2 focus:ring-sky-500 transition-all duration-200"
+                value={shortCode}
+                onChange={handleShortCodeChange}
+                disabled={computedShortCodes.length === 0}
+              >
+                <option value="">Select Short Code</option>
+                {computedShortCodes.map((code) => (
+                  <option key={code} value={code}>
+                    {code}
+                  </option>
+                ))}
+              </select>
             </div>
+            {/* 4. Runtime */}
             <div className="bg-gradient-to-br from-sky-950/40 to-sky-900/20 p-4 rounded-lg border border-sky-800/30 shadow-md">
               <h3 className="text-lg font-medium text-sky-300 mb-2 flex items-center gap-2">
                 <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-sky-800/40 text-xs">
@@ -252,86 +310,86 @@ export default function Mode2Page(): React.ReactElement {
                 </span>
                 Runtime
               </h3>
-              <div className="w-full bg-gray-800/80 border border-sky-700/50 rounded-md p-2 text-white flex items-center">
-                <span className="inline-block h-2 w-2 rounded-full bg-emerald-400 mr-2"></span>
-                2h 45m
-              </div>
+              <select
+                className="w-full bg-gray-800/80 border border-sky-700/50 rounded-md p-2 text-white focus:ring-2 focus:ring-sky-500 transition-all duration-200"
+                value={runtimeValue}
+                onChange={handleRuntimeChange}
+              >
+                <option value={1}>1</option>
+                <option value={2}>2</option>
+                <option value={3}>3</option>
+                <option value={4}>4</option>
+              </select>
             </div>
           </div>
 
-          {/* Key Metrics */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="bg-gradient-to-br from-sky-950/40 to-sky-900/20 p-4 rounded-lg border border-sky-800/30 shadow-md transition-all duration-300 hover:shadow-sky-900/20 hover:border-sky-700/50">
-              <h3 className="text-lg font-medium text-sky-300 mb-2">Current Alert Time</h3>
-              <div className="flex items-center">
-                <div className="w-10 h-10 rounded-full bg-sky-800/40 flex items-center justify-center mr-3">
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    className="h-5 w-5 text-sky-300"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
-                    />
-                  </svg>
-                </div>
-                <p className="text-xl font-semibold text-white">
-                  {loading ? "Loading..." : kpis.find((k) => k.rowKey === "alertTime")?.value || "N/A"}
-                </p>
-              </div>
+          {/* second row: filters 5–7 */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+            {/* 5. Alert Keeper */}
+            <div className="bg-gradient-to-br from-sky-950/40 to-sky-900/20 p-4 rounded-lg border border-sky-800/30 shadow-md">
+              <h3 className="text-lg font-medium text-sky-300 mb-2 flex items-center gap-2">
+                <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-sky-800/40 text-xs">
+                  5
+                </span>
+                Alert Keeper
+              </h3>
+              <select
+                className="w-full bg-gray-800/80 border border-sky-700/50 rounded-md p-2 text-white focus:ring-2 focus:ring-sky-500 transition-all duration-200"
+                value={alertKeeperValue}
+                onChange={handleAlertKeeperChange}
+                disabled={!availableAlertKeepers.length}
+              >
+                <option value="">Select Keeper</option>
+                {availableAlertKeepers.map((k) => (
+                  <option key={k} value={k}>
+                    {k}
+                  </option>
+                ))}
+              </select>
             </div>
-            <div className="bg-gradient-to-br from-sky-950/40 to-sky-900/20 p-4 rounded-lg border border-sky-800/30 shadow-md transition-all duration-300 hover:shadow-sky-900/20 hover:border-sky-700/50">
-              <h3 className="text-lg font-medium text-sky-300 mb-2">No. of Runtime</h3>
-              <div className="flex items-center">
-                <div className="w-10 h-10 rounded-full bg-sky-800/40 flex items-center justify-center mr-3">
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    className="h-5 w-5 text-sky-300"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
-                    />
-                  </svg>
-                </div>
-                <p className="text-xl font-semibold text-white">
-                  {loading ? "Loading..." : kpis.find((k) => k.rowKey === "runtimeCount")?.value || "0"}
-                </p>
-              </div>
+            {/* 6. Role */}
+            <div className="bg-gradient-to-br from-sky-950/40 to-sky-900/20 p-4 rounded-lg border border-sky-800/30 shadow-md">
+              <h3 className="text-lg font-medium text-sky-300 mb-2 flex items-center gap-2">
+                <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-sky-800/40 text-xs">
+                  6
+                </span>
+                Role
+              </h3>
+              <select
+                className="w-full bg-gray-800/80 border border-sky-700/50 rounded-md p-2 text-white focus:ring-2 focus:ring-sky-500 transition-all duration-200"
+                value={roleValue}
+                onChange={handleRoleChange}
+                disabled={!availableRoles.length}
+              >
+                <option value="">Select Role</option>
+                {availableRoles.map((r) => (
+                  <option key={r} value={r}>
+                    {r}
+                  </option>
+                ))}
+              </select>
             </div>
-            <div className="bg-gradient-to-br from-sky-950/40 to-sky-900/20 p-4 rounded-lg border border-sky-800/30 shadow-md transition-all duration-300 hover:shadow-sky-900/20 hover:border-sky-700/50">
-              <h3 className="text-lg font-medium text-sky-300 mb-2">Alert Keeper</h3>
-              <div className="flex items-center">
-                <div className="w-10 h-10 rounded-full bg-sky-800/40 flex items-center justify-center mr-3">
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    className="h-5 w-5 text-sky-300"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
-                    />
-                  </svg>
-                </div>
-                <p className="text-xl font-semibold text-white">
-                  {loading ? "Loading..." : kpis.find((k) => k.rowKey === "alertKeeper")?.value || "N/A"}
-                </p>
-              </div>
+            {/* 7. Email */}
+            <div className="bg-gradient-to-br from-sky-950/40 to-sky-900/20 p-4 rounded-lg border border-sky-800/30 shadow-md">
+              <h3 className="text-lg font-medium text-sky-300 mb-2 flex items-center gap-2">
+                <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-sky-800/40 text-xs">
+                  7
+                </span>
+                Email
+              </h3>
+              <select
+                className="w-full bg-gray-800/80 border	border-sky-700/50 rounded-md p-2 text-white focus:ring-2 focus:ring-sky-500 transition-all duration-200"
+                value={emailValue}
+                onChange={handleEmailChange}
+                disabled={!availableEmails.length}
+              >
+                <option value="">Select Email</option>
+                {availableEmails.map((e) => (
+                  <option key={e} value={e}>
+                    {e}
+                  </option>
+                ))}
+              </select>
             </div>
           </div>
         </div>
@@ -366,7 +424,7 @@ export default function Mode2Page(): React.ReactElement {
           <h2 className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-sky-600 mb-4">
             Drift & Warning Over Time
           </h2>
-          <div className="bg-gray-800/60 rounded-lg p-4 border border-gray-700/50 h-72">
+          <div className="bg-gray-800/60 rounded-lg p-4 border border-gray-700/50 h-72 relative">
             {loading ? (
               <div className="flex items-center justify-center h-full">
                 <div className="flex flex-col items-center">
@@ -376,14 +434,7 @@ export default function Mode2Page(): React.ReactElement {
                     fill="none"
                     viewBox="0 0 24 24"
                   >
-                    <circle
-                      className="opacity-25"
-                      cx="12"
-                      cy="12"
-                      r="10"
-                      stroke="currentColor"
-                      strokeWidth="4"
-                    ></circle>
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                     <path
                       className="opacity-75"
                       fill="currentColor"
@@ -393,11 +444,16 @@ export default function Mode2Page(): React.ReactElement {
                   <div className="text-sky-300">Loading chart data...</div>
                 </div>
               </div>
+            ) : errorData.plotData.length === 0 ? (
+              <div className="flex items-center justify-center h-full text-sky-300">
+                No data available for Drift & Warning Over Time
+              </div>
             ) : (
               <DriftWarningChart plotData={errorData.plotData} />
             )}
           </div>
         </div>
+                      fill="none"
 
         {/* XAI Explanation */}
         <div className="bg-gray-900/80 rounded-xl shadow-xl overflow-hidden p-6 mb-6 border border-gray-700/50 backdrop-blur-sm">
@@ -414,14 +470,7 @@ export default function Mode2Page(): React.ReactElement {
                     fill="none"
                     viewBox="0 0 24 24"
                   >
-                    <circle
-                      className="opacity-25"
-                      cx="12"
-                      cy="12"
-                      r="10"
-                      stroke="currentColor"
-                      strokeWidth="4"
-                    ></circle>
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                     <path
                       className="opacity-75"
                       fill="currentColor"
@@ -446,118 +495,138 @@ export default function Mode2Page(): React.ReactElement {
           </div>
         </div>
 
-        {/* Top 10 Misclassifications */}
-        <div className="bg-gray-900/80 rounded-xl shadow-xl overflow-hidden p-6 mb-6 border border-gray-700/50 backdrop-blur-sm">
-          <h2 className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-sky-600 mb-4">
-            Top 10 Misclassifications
-          </h2>
-          {loading ? (
-            <div className="flex items-center justify-center py-12">
-              <div className="flex flex-col items-center">
+        {/* Error Tables Section */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Error Comparison */}
+          <div className="bg-gray-900/80 rounded-xl shadow-xl overflow-hidden p-6 border border-gray-700/50 backdrop-blur-sm">
+            <h2 className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-sky-600 mb-4">
+              Error Comparison
+            </h2>
+            {loading ? (
+              <div className="flex items-center justify-center py-12">
                 <svg
                   className="animate-spin h-8 w-8 text-sky-500 mb-2"
                   xmlns="http://www.w3.org/2000/svg"
                   fill="none"
                   viewBox="0 0 24 24"
                 >
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                   <path
                     className="opacity-75"
                     fill="currentColor"
                     d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                  ></path>
+                  />
                 </svg>
-                <div className="text-sky-300">Loading misclassification data...</div>
+                <span className="text-sky-300">Loading error data...</span>
               </div>
-            </div>
-          ) : (
-            <div className="overflow-x-auto rounded-lg border border-gray-700/50">
-              <table className="min-w-full divide-y divide-gray-700/50">
-                <thead className="bg-gray-800/60">
-                  <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-sky-300 uppercase tracking-wider">
-                      ID
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-sky-300 uppercase tracking-wider">
-                      Time Period
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-rose-400 uppercase tracking-wider">
-                      Error
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="bg-gray-800/30 divide-y divide-gray-700/50">
-                  {top10Ids.slice(0, 10).map((item, i) => (
-                    <tr key={i} className="hover:bg-gray-700/30 transition-colors duration-150">
-                      <td className="px-6 py-4 text-sm font-medium text-white">{item.id}</td>
-                      <td className="px-6 py-4 text-sm text-gray-300">{item.time_period}</td>
-                      <td className="px-6 py-4 text-sm text-rose-400 font-medium">
-                        {item.Mean_Prediction_Error.toFixed(2)}
-                      </td>
+            ) : (
+              <div className="max-h-96 overflow-y-scroll rounded-lg border border-gray-700/50">
+                <table className="min-w-full divide-y divide-gray-700/50">
+                  <thead className="bg-gray-800/60">
+                    <tr>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-sky-300 uppercase tracking-wider">
+                        NO.
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-sky-300 uppercase tracking-wider">
+                        ID
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-rose-400 uppercase tracking-wider">
+                        Error
+                      </th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </div>
+                  </thead>
+                  <tbody className="bg-gray-800/30 divide-y divide-gray-700/50">
+                    {errorData.tableData
+                      .slice()
+                      .sort((a: any, b: any) => (a.error ?? 0) - (b.error ?? 0))
+                      .map((row: any, i: number) => (
+                        <tr key={row.id} className="hover:bg-gray-700/30 transition-colors duration-150">
+                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-white">
+                            {i + 1}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-white">
+                            {row.id}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-rose-400 font-medium">
+                            {(row.error ?? 0).toFixed(2)}
+                          </td>
+                        </tr>
+                      ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
 
-        {/* Threshold Exceedances */}
-        <div className="bg-gradient-to-br from-rose-950/30 to-gray-900/90 rounded-xl shadow-xl overflow-hidden p-6 mb-6 border border-rose-900/30 backdrop-blur-sm">
-          <h2 className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-rose-400 to-rose-600 mb-4">
-            Threshold Exceedances
-          </h2>
-          {loading ? (
-            <div className="flex items-center justify-center py-12">
-              <div className="flex flex-col items-center">
+          {/* Threshold Exceedances */}
+          <div className="bg-gradient-to-br from-rose-950/30 to-gray-900/90 rounded-xl shadow-xl overflow-hidden p-6 border border-rose-900/30 backdrop-blur-sm">
+            <h2 className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-rose-400 to-rose-600 mb-4">
+              Threshold Exceedances&nbsp;
+              <span className="text-sm text-rose-200">
+                (Threshold: {errorPercentageThreshold.toFixed(2)}%)
+              </span>
+            </h2>
+            {loading ? (
+              <div className="flex items-center justify-center py-12">
                 <svg
                   className="animate-spin h-8 w-8 text-rose-500 mb-2"
                   xmlns="http://www.w3.org/2000/svg"
                   fill="none"
                   viewBox="0 0 24 24"
                 >
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                   <path
                     className="opacity-75"
                     fill="currentColor"
                     d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                  ></path>
+                  />
                 </svg>
-                <div className="text-rose-300">Loading threshold data...</div>
+                <span className="text-rose-300">Loading threshold data...</span>
               </div>
-            </div>
-          ) : (
-            <div className="overflow-x-auto rounded-lg border border-rose-800/30">
-              <table className="min-w-full divide-y divide-rose-800/30">
-                <thead className="bg-rose-900/20">
-                  <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-rose-300 uppercase tracking-wider">
-                      ID
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-rose-300 uppercase tracking-wider">
-                      True Value
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-rose-300 uppercase tracking-wider">
-                      Predicted Value
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-rose-300 uppercase tracking-wider">
-                      Percentage Error
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="bg-rose-900/10 divide-y divide-rose-800/30">
-                  {outletsExceedingThreshold.slice(0, 5).map((o) => (
-                    <tr key={o.id} className="hover:bg-rose-900/20 transition-colors duration-150">
-                      <td className="px-6 py-4 text-sm font-medium text-white">{o.id}</td>
-                      <td className="px-6 py-4 text-sm text-gray-300">{o.y_true.toFixed(2)}</td>
-                      <td className="px-6 py-4 text-sm text-gray-300">{o.y_pred.toFixed(2)}</td>
-                      <td className="px-6 py-4 text-sm text-rose-400 font-medium">{o.percentage_error.toFixed(2)}%</td>
+            ) : (
+              <div className="max-h-96 overflow-y-scroll rounded-lg border border-rose-800/30">
+                <table className="min-w-full divide-y divide-rose-800/30">
+                  <thead className="bg-rose-900/20">
+                    <tr>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-rose-300 uppercase tracking-wider">
+                        ID
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-rose-300 uppercase tracking-wider">
+                        True Value
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-rose-300 uppercase tracking-wider">
+                        Predicted Value
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-rose-300 uppercase tracking-wider">
+                        % Error
+                      </th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
+                  </thead>
+                  <tbody className="bg-rose-900/10 divide-y divide-rose-800/30">
+                    {outletsExceedingThreshold
+                      .slice()
+                      .sort((a, b) => b.percentage_error - a.percentage_error)
+                      .map((outlet) => (
+                        <tr key={outlet.id} className="hover:bg-rose-900/20 transition-colors duration-150">
+                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-white">
+                            {outlet.id}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
+                            {outlet.y_true.toFixed(2)}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
+                            {outlet.y_pred.toFixed(2)}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-rose-400 font-medium">
+                            {outlet.percentage_error.toFixed(2)}%
+                          </td>
+                        </tr>
+                      ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
         </div>
       </main>
     </div>

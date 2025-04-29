@@ -34,6 +34,7 @@ export async function fetchData(): Promise<{
   outletsExceedingThreshold: OutletsExceedingThreshold[]
   xaiExplanation: string
   currentPeriod: string
+  error_percentage_threshold: number
 }> {
   try {
     console.log("Fetching data from backend via proxy: /api/mode1/data")
@@ -105,7 +106,7 @@ export async function fetchData(): Promise<{
 
     const errors = {
       plotData: rawData.id_error?.map((item: any) => ({
-        x: item.time_period || "",
+        x: item.id?.toString() || "",
         y: item.Mean_Prediction_Error || 0,
         exceedsThreshold:
           Math.abs(item.Mean_Prediction_Error) > (rawData.error_percentage_threshold || 0),
@@ -143,6 +144,7 @@ export async function fetchData(): Promise<{
       outletsExceedingThreshold,
       xaiExplanation,
       currentPeriod,
+      error_percentage_threshold: rawData.error_percentage_threshold || 0,
     }
   } catch (error) {
     console.error("Error fetching data:", error)

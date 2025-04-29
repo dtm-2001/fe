@@ -2,13 +2,15 @@
 
 import React, { useEffect, useState } from 'react'
 import Head from 'next/head'
-import ReactMarkdown from 'react-markdown';
 import D3ConfusionMatrix from '../../components/D3ConfusionMatrix'
 import {
   fetchData,
   KPI,
   PlotDataPoint,
   TableDataPoint,
+  Coverage,
+  Clusters,
+  BackwardAnalysis,
 } from '../../services/backendService2'
 
 interface DetailedMetric {
@@ -18,30 +20,47 @@ interface DetailedMetric {
   misclassifications: Record<string, { count: number; percentage: number }>
 }
 
-export default function Mode3Page() {
-  const [businessUnit, setBusinessUnit] = useState('CCS')
-  const [useCase, setUseCase] = useState('CC-Di')
+export default function Mode3Page(): JSX.Element {
+  // --- STATE HOOKS ---
+  // New state for business unit and use case
+  const [businessUnit, setBusinessUnit] = useState<string>('')
+  const [useCase, setUseCase] = useState<string>('')
+  const useCases: Record<string, string[]> = {
+    CCS: ['CC-Di', 'CC-MT'],
+    JMSL: ['JM-Ch'],
+  }
 
+  const handleBusinessUnitChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const v = e.target.value
+    setBusinessUnit(v)
+    setUseCase('')
+  }
+
+  const handleUseCaseChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const v = e.target.value
+    setUseCase(v)
+  }
+
+  // Core data states
   const [kpis, setKpis] = useState<KPI[]>([])
   const [errors, setErrors] = useState<{ plotData: PlotDataPoint[]; tableData: TableDataPoint[] }>({
     plotData: [],
     tableData: [],
   })
-
   const [referenceMatrix, setReferenceMatrix] = useState<number[][]>([])
   const [currentMatrix, setCurrentMatrix] = useState<number[][]>([])
   const [detailedMetrics, setDetailedMetrics] = useState<Record<string, DetailedMetric>>({})
 
-  const [stateVal, setStateVal] = useState('Unknown')
+  const [stateVal, setStateVal] = useState<string>('Unknown')
   const [coverage, setCoverage] = useState<Coverage>({})
   const [clusters, setClusters] = useState<Clusters>({})
   const [backwardAnalysis, setBackwardAnalysis] = useState<BackwardAnalysis>({})
-  const [currentPeriod, setCurrentPeriod] = useState('N/A')
-  const [totalOutlets, setTotalOutlets] = useState(0)
-  const [outletsExceedingThresholdCount, setOutletsExceedingThresholdCount] = useState(0)
-  const [xaiExplanation, setXaiExplanation] = useState('No explanation available')
+  const [currentPeriod, setCurrentPeriod] = useState<string>('N/A')
+  const [totalOutlets, setTotalOutlets] = useState<number>(0)
+  const [outletsExceedingThresholdCount, setOutletsExceedingThresholdCount] = useState<number>(0)
+  const [xaiExplanation, setXaiExplanation] = useState<string>('No explanation available')
 
-  const [loading, setLoading] = useState(true)
+  const [loading, setLoading] = useState<boolean>(true)
 
   // build labels ["0","1",…] for axes
   const makeLabels = (n: number) => Array.from({ length: n }, (_, i) => i.toString())
@@ -56,15 +75,11 @@ export default function Mode3Page() {
     return Math.max(rows, cols) * cellSize
   }
 
+  // --- FETCH DATA ---
   useEffect(() => {
     async function init() {
       setLoading(true)
       try {
-        const savedBU = localStorage.getItem('businessUnit')
-        const savedUC = localStorage.getItem('useCase')
-        if (savedBU) setBusinessUnit(savedBU)
-        if (savedUC) setUseCase(savedUC)
-
         const {
           kpis: fetchedKpis,
           errors: fetchedErrors,
@@ -82,7 +97,7 @@ export default function Mode3Page() {
         } = await fetchData()
 
         setKpis(fetchedKpis)
-        setErrors(fetchedErrors)                     // ← fixed typo here
+        setErrors(fetchedErrors)
         setReferenceMatrix(fetchedRefM)
         setCurrentMatrix(fetchedCurrM)
         setDetailedMetrics(fetchedDetailed)
@@ -103,38 +118,6 @@ export default function Mode3Page() {
     init()
   }, [])
 
-  const handleBusinessUnitChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const v = e.target.value
-    setBusinessUnit(v)
-    setUseCase('')
-    localStorage.setItem('businessUnit', v)
-  }
-  const handleUseCaseChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const v = e.target.value
-    setUseCase(v)
-    localStorage.setItem('useCase', v)
-  }
-  const getUseCaseOptions = () => {
-    if (businessUnit === 'CCS') return ['CC-Di', 'CC-MT']
-    if (businessUnit === 'JMSL') return ['JM-Ch']
-    return []
-  }
-
-  const additionalKpis: KPI[] = [
-    { rowKey: 'Drift Detected', value: 'Yes', status: 'Warning' },
-    { rowKey: 'Jensen–Shannon Divergence', value: '0.3228', status: 'Normal' },
-    { rowKey: 'Population Stability Index', value: '5327.1352', status: 'Normal' },
-    { rowKey: 'Precision (Reference)', value: '0.1631', status: 'Normal' },
-    { rowKey: 'Precision (Current)', value: '0.1693', status: 'Normal' },
-    { rowKey: 'Recall (Reference)', value: '0.2260', status: 'Normal' },
-    { rowKey: 'Recall (Current)', value: '0.2320', status: 'Normal' },
-    { rowKey: 'F1 Score (Reference)', value: '0.1894', status: 'Normal' },
-    { rowKey: 'F1 Score (Current)', value: '0.1957', status: 'Normal' },
-    { rowKey: 'Accuracy', value: '23.20', status: 'Normal' },
-    { rowKey: 'Error Rate', value: '76.80', status: 'Warning' },
-    { rowKey: 'Status', value: 'Warning', status: 'Warning' },
-  ];
-
   return (
     <div className="bg-gray-900 min-h-screen flex flex-col">
       <Head>
@@ -146,14 +129,15 @@ export default function Mode3Page() {
       </Head>
       <main className="flex-grow container mx-auto px-4 py-8">
 
-        {/* Header & selectors */}
+        {/* Header Section */}
         <div className="bg-gray-800 rounded-xl shadow-md overflow-hidden p-6 mb-6 border border-gray-700">
           <h2 className="text-2xl font-semibold text-blue-300 mb-4">OCTAVE - CL Dashboard</h2>
           <p className="text-blue-200 mb-2">
             Current Period: {loading ? 'Loading...' : currentPeriod}
           </p>
 
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-4">
+          {/* Business Unit and Use Case Selector */}
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
             <div className="bg-blue-900/30 p-4 rounded-lg border border-blue-800/50">
               <h3 className="text-lg font-medium text-blue-200 mb-2">Business Unit</h3>
               <select
@@ -174,18 +158,25 @@ export default function Mode3Page() {
                 onChange={handleUseCaseChange}
                 disabled={!businessUnit}
               >
-                <option value="">{businessUnit ? 'Select Use Case' : 'Select BU first'}</option>
-                {getUseCaseOptions().map(o => (
-                  <option key={o} value={o}>{o}</option>
-                ))}
+                <option value="">Select Use Case</option>
+                {businessUnit &&
+                  useCases[businessUnit]?.map(option => (
+                    <option key={option} value={option}>
+                      {option}
+                    </option>
+                  ))}
               </select>
             </div>
             <div className="bg-blue-900/30 p-4 rounded-lg border border-blue-800/50">
               <h3 className="text-lg font-medium text-blue-200 mb-2">Short Code</h3>
               <input
                 type="text"
-                value={useCase || '-'}
                 readOnly
+                value={
+                  businessUnit && useCase
+                    ? `${businessUnit.substring(0, 2)}-${useCase.substring(0, 2)}`
+                    : '-'
+                }
                 className="w-full bg-gray-700 border-blue-600 rounded p-2 text-white"
               />
             </div>
@@ -193,16 +184,47 @@ export default function Mode3Page() {
               <h3 className="text-lg font-medium text-blue-200 mb-2">Runtime</h3>
               <input
                 type="text"
-                value="2h 45m"
                 readOnly
+                value="2h 45m"
                 className="w-full bg-gray-700 border-blue-600 rounded p-2 text-white"
               />
             </div>
           </div>
 
-          {/* Additional KPIs */}
-          <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mt-6">
-            {additionalKpis.map(kpi => (
+          {/* Key Metrics */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="bg-blue-900/30 p-4 rounded-lg border border-blue-800/50">
+              <h3 className="text-lg font-medium text-blue-200 mb-2">Current Alert Time</h3>
+              <p className="text-xl">
+                {loading
+                  ? 'Loading...'
+                  : kpis.find(k => k.rowKey === 'alertTime')?.value || 'N/A'}
+              </p>
+            </div>
+            <div className="bg-blue-900/30 p-4 rounded-lg border border-blue-800/50">
+              <h3 className="text-lg font-medium text-blue-200 mb-2">No. of Runtime</h3>
+              <p className="text-xl">
+                {loading
+                  ? 'Loading...'
+                  : kpis.find(k => k.rowKey === 'runtimeCount')?.value || '0'}
+              </p>
+            </div>
+            <div className="bg-blue-900/30 p-4 rounded-lg border border-blue-800/50">
+              <h3 className="text-lg font-medium text-blue-200 mb-2">Alert Keeper</h3>
+              <p className="text-xl">
+                {loading
+                  ? 'Loading...'
+                  : kpis.find(k => k.rowKey === 'alertKeeper')?.value || 'N/A'}
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* KPI Section */}
+        <div className="bg-gray-800 rounded-xl shadow-md overflow-hidden p-6 mb-6 border border-gray-700">
+          <h2 className="text-2xl font-semibold text-blue-300 mb-4">Key Performance Indicators</h2>
+          <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+            {kpis.map(kpi => (
               <div
                 key={kpi.rowKey}
                 className="bg-blue-900/30 p-4 rounded-lg border border-blue-800/50"
@@ -210,7 +232,7 @@ export default function Mode3Page() {
                 <h3 className="text-lg font-medium text-blue-200 mb-2">{kpi.rowKey}</h3>
                 <p
                   className={`text-xl ${
-                    kpi.status === 'Alert' || kpi.status === 'Warning'
+                    kpi.status === 'Warning'
                       ? 'text-yellow-400'
                       : kpi.status === 'Error'
                       ? 'text-red-400'
@@ -224,41 +246,11 @@ export default function Mode3Page() {
           </div>
         </div>
 
-        {/* KPI Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-6">
-          {kpis
-            .filter(
-              kpi =>
-                !additionalKpis.some(
-                  addKpi => addKpi.rowKey.toLowerCase() === kpi.rowKey.toLowerCase()
-                )
-            )
-            .map(kpi => (
-              <div
-                key={kpi.rowKey}
-                className="bg-blue-900/30 p-4 rounded-lg border border-blue-800/50"
-              >
-                <h3 className="text-lg font-medium text-blue-200 mb-2">{kpi.rowKey}</h3>
-                <p
-                  className={`text-xl ${
-                    kpi.status === 'Alert' || kpi.status === 'Warning'
-                      ? 'text-yellow-400'
-                      : kpi.status === 'Error'
-                      ? 'text-red-400'
-                      : 'text-green-400'
-                  }`}
-                >
-                  {loading ? 'Loading...' : kpi.value}
-                </p>
-              </div>
-            ))}
-        </div>
-
         {/* Confusion Matrices */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-          {[ 
+          {[
             { title: 'Reference Matrix', grid: referenceMatrix },
-            { title: 'Current Matrix',   grid: currentMatrix   },
+            { title: 'Current Matrix', grid: currentMatrix },
           ].map(({ title, grid }, idx) => {
             const side = computeSquareSize(grid)
             return (
@@ -330,18 +322,21 @@ export default function Mode3Page() {
         {/* XAI Explanation */}
         <div className="bg-gray-800 rounded-xl shadow-md overflow-hidden p-6 mb-6 border border-gray-700">
           <h2 className="text-2xl font-semibold text-blue-300 mb-4">XAI Result</h2>
-          <div className="prose prose-invert text-white">
+          <div className="space-y-3 text-white">
             {loading ? (
-              <p>Loading explanation…</p>
+              <p>Loading explanation...</p>
             ) : xaiExplanation ? (
-              <ReactMarkdown>{xaiExplanation}</ReactMarkdown>
+              <div
+                className="prose prose-invert"
+                dangerouslySetInnerHTML={{ __html: xaiExplanation }}
+              />
             ) : (
               <p className="text-red-400">No explanation available</p>
             )}
           </div>
         </div>
 
-        {/* Misclassified Table (BOTTOM) */}
+        {/* Misclassified Table */}
         <div className="bg-gray-800 rounded-xl shadow-md overflow-hidden p-6 border border-gray-700">
           <h2 className="text-2xl font-semibold text-blue-300 mb-4">Misclassified Table</h2>
           <div className="overflow-x-auto">

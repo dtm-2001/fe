@@ -45,20 +45,47 @@ export default function Mode1Page(): JSX.Element {
   const [kpis, setKpis] = useState<KPI[]>([]);
   const [errors, setErrors] = useState<ErrorDataState>({ plotData: [], tableData: [] });
   const [outletsExceedingThreshold, setOutletsExceedingThreshold] = useState<OutletsExceedingThreshold[]>([]);
+  const [currentPeriod, setCurrentPeriod] = useState<string>('Loading...');
   const [xaiExplanation, setXaiExplanation] = useState<string>('No explanation available');
   const [loading, setLoading] = useState<boolean>(true);
   const [backendError, setBackendError] = useState<string | null>(null);
+
+  // New state for Business Unit and Use Case
+  const [businessUnit, setBusinessUnit] = useState<string>('');
+  const [useCase, setUseCase] = useState<string>('');
+  const useCases: Record<string, string[]> = {
+    CCS: ['CC-Di', 'CC-MT'],
+    JMSL: ['JM-Ch'],
+  };
+
+  const handleBusinessUnitChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const v = e.target.value;
+    setBusinessUnit(v);
+    setUseCase('');
+  };
+
+  const handleUseCaseChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    setUseCase(e.target.value);
+  };
 
   // Fetch Data from Backend
   const initData = async (): Promise<void> => {
     setLoading(true);
     setBackendError(null);
     try {
-      const { kpis: fetchedKpis, errors: fetchedErrors, outletsExceedingThreshold: fetchedOutlets, xaiExplanation: fetchedXai } = await fetchData();
+      const {
+        kpis: fetchedKpis,
+        errors: fetchedErrors,
+        outletsExceedingThreshold: fetchedOutlets,
+        xaiExplanation: fetchedXai,
+        currentPeriod: fetchedPeriod,
+      } = await fetchData();
+
       setKpis(fetchedKpis);
       setErrors(fetchedErrors);
       setOutletsExceedingThreshold(fetchedOutlets);
       setXaiExplanation(fetchedXai || 'No explanation available');
+      setCurrentPeriod(fetchedPeriod || 'N/A');
     } catch (error) {
       console.error('Error fetching data:', error);
       if (error instanceof Error) {
@@ -81,24 +108,22 @@ export default function Mode1Page(): JSX.Element {
         <title>Mode 1 | Business Dashboard</title>
       </Head>
       <main className="flex-grow container mx-auto px-4 py-8">
-        {/* Backend Error Section */}
+        {/* Backend Error */}
         {backendError && (
           <div className="bg-red-900/50 border border-red-700 rounded-lg p-4 mb-6">
             <div className="flex items-center">
               <svg className="h-5 w-5 text-red-300 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
-                />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                  d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732
+                     4c-.77-1.333-2.694-1.333-3.464 0L3.34
+                     16c-.77 1.333.192 3 1.732 3z" />
               </svg>
               <h3 className="text-lg font-medium text-red-300">Backend Error</h3>
             </div>
             <p className="mt-2 text-red-200">{backendError}</p>
             <p className="mt-2 text-red-200 text-sm">Displaying fallback data. Some features may be limited.</p>
             <button
-              onClick={() => initData()}
+              onClick={initData}
               className="mt-3 px-4 py-2 bg-red-800/50 hover:bg-red-800 text-white rounded-md text-sm font-medium"
             >
               Retry Connection
@@ -109,21 +134,133 @@ export default function Mode1Page(): JSX.Element {
         {/* Header Section */}
         <div className="bg-gray-800 rounded-xl shadow-md overflow-hidden p-6 mb-6 border border-gray-700">
           <h2 className="text-2xl font-semibold text-blue-300 mb-4">OCTAVE - RG Dashboard</h2>
+          <p className="text-blue-200 mb-4">
+            Current Period: {loading ? 'Loading...' : currentPeriod}
+          </p>
+
+          {/* Business Unit / Use Case Selector */}
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+            <div className="bg-blue-900/30 p-4 rounded-lg border border-blue-800/50">
+              <h3 className="text-lg font-medium text-blue-200 mb-2">Business Unit</h3>
+              <select
+                className="w-full bg-gray-700 border-blue-600 rounded p-2 text-white"
+                value={businessUnit}
+                onChange={handleBusinessUnitChange}
+              >
+                <option value="">Select Business Unit</option>
+                <option value="CCS">CCS</option>
+                <option value="JMSL">JMSL</option>
+              </select>
+            </div>
+            <div className="bg-blue-900/30 p-4 rounded-lg border border-blue-800/50">
+              <h3 className="text-lg font-medium text-blue-200 mb-2">Use Case</h3>
+              <select
+                className="w-full bg-gray-700 border-blue-600 rounded p-2 text-white"
+                value={useCase}
+                onChange={handleUseCaseChange}
+                disabled={!businessUnit}
+              >
+                <option value="">Select Use Case</option>
+                {businessUnit && useCases[businessUnit]?.map(option => (
+                  <option key={option} value={option}>{option}</option>
+                ))}
+              </select>
+            </div>
+            <div className="bg-blue-900/30 p-4 rounded-lg border border-blue-800/50">
+              <h3 className="text-lg font-medium text-blue-200 mb-2">Short Code</h3>
+              <input
+                className="w-full bg-gray-700 border-blue-600 rounded p-2 text-white"
+                readOnly
+                value={
+                  businessUnit && useCase
+                    ? `${businessUnit.substring(0, 2)}-${useCase.substring(0, 2)}`
+                    : '-'
+                }
+              />
+            </div>
+            <div className="bg-blue-900/30 p-4 rounded-lg border border-blue-800/50">
+              <h3 className="text-lg font-medium text-blue-200 mb-2">Runtime</h3>
+              <input
+                className="w-full bg-gray-700 border-blue-600 rounded p-2 text-white"
+                readOnly
+                value="2h 45m"
+              />
+            </div>
+          </div>
 
           {/* Key Metrics */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="bg-blue-900/30 p-4 rounded-lg border border-blue-800/50">
+              <h3 className="text-lg font-medium text-blue-200 mb-2">Current Alert Time</h3>
+              <p className="text-xl">
+                {loading ? 'Loading...' : kpis.find(k => k.rowKey === 'alertTime')?.value || 'N/A'}
+              </p>
+            </div>
+            <div className="bg-blue-900/30 p-4 rounded-lg border border-blue-800/50">
+              <h3 className="text-lg font-medium text-blue-200 mb-2">No. of Runtime</h3>
+              <p className="text-xl">
+                {loading ? 'Loading...' : kpis.find(k => k.rowKey === 'runtimeCount')?.value || '0'}
+              </p>
+            </div>
+            <div className="bg-blue-900/30 p-4 rounded-lg border border-blue-800/50">
+              <h3 className="text-lg font-medium text-blue-200 mb-2">Alert Keeper</h3>
+              <p className="text-xl">
+                {loading ? 'Loading...' : kpis.find(k => k.rowKey === 'alertKeeper')?.value || 'N/A'}
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* KPIs Section */}
+        <div className="bg-gray-800 rounded-xl shadow-md overflow-hidden p-6 mb-6 border border-gray-700">
+          <h2 className="text-2xl font-semibold text-blue-300 mb-4">Key Performance Indicators</h2>
           <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
-            {kpis.map((kpi) => (
-              <div key={kpi.rowKey} className="bg-blue-900/30 p-4 rounded-lg border border-blue-800/50">
-                <h3 className="text-lg font-medium text-blue-200 mb-2">{kpi.rowKey}</h3>
-                <p
-                  className={`text-xl ${
-                    kpi.status === 'Warning' ? 'text-yellow-400' : kpi.status === 'Error' ? 'text-red-400' : 'text-green-400'
-                  }`}
-                >
-                  {loading ? 'Loading...' : kpi.value || 'N/A'}
-                </p>
-              </div>
-            ))}
+            <div className="bg-blue-900/30 p-4 rounded-lg border border-blue-800/50">
+              <h3 className="text-lg font-medium text-blue-200 mb-2">KStest</h3>
+              <p className="text-xl">
+                {loading ? 'Loading...' : kpis.find((k) => k.rowKey === 'kstest')?.value || 'N/A'}
+              </p>
+            </div>
+            <div className="bg-blue-900/30 p-4 rounded-lg border border-blue-800/50">
+              <h3 className="text-lg font-medium text-blue-200 mb-2">Wasserstein</h3>
+              <p className="text-xl">
+                {loading
+                  ? 'Loading...'
+                  : kpis.find((k) => k.rowKey === 'wasserstein')?.value || 'N/A'}
+              </p>
+            </div>
+            <div className="bg-blue-900/30 p-4 rounded-lg border border-blue-800/50">
+              <h3 className="text-lg font-medium text-blue-200 mb-2">Ref MSE</h3>
+              <p className="text-xl">
+                {loading ? 'Loading...' : kpis.find((k) => k.rowKey === 'mseRef')?.value || 'N/A'}
+              </p>
+            </div>
+            <div className="bg-blue-900/30 p-4 rounded-lg border border-blue-800/50">
+              <h3 className="text-lg font-medium text-blue-200 mb-2">MSE</h3>
+              <p className="text-xl">
+                {loading
+                  ? 'Loading...'
+                  : kpis.find((k) => k.rowKey === 'mseCurrent')?.value || 'N/A'}
+              </p>
+            </div>
+            <div className="bg-blue-900/30 p-4 rounded-lg border border-blue-800/50">
+              <h3 className="text-lg font-medium text-blue-200 mb-2">Status</h3>
+              <p
+                className={`text-xl ${
+                  loading
+                    ? ''
+                    : kpis.find((k) => k.rowKey === 'status')?.value === 'Warning'
+                    ? 'text-yellow-400'
+                    : kpis.find((k) => k.rowKey === 'status')?.value === 'Error'
+                    ? 'text-red-400'
+                    : 'text-green-400'
+                }`}
+              >
+                {loading
+                  ? 'Loading...'
+                  : kpis.find((k) => k.rowKey === 'status')?.value || 'N/A'}
+              </p>
+            </div>
           </div>
         </div>
 
@@ -212,58 +349,8 @@ export default function Mode1Page(): JSX.Element {
           </div>
         </div>
 
-        {/* KPIs Section */}
-        <div className="bg-gray-800 rounded-xl shadow-md overflow-hidden p-6 mb-6 border border-gray-700">
-          <h2 className="text-2xl font-semibold text-blue-300 mb-4">Key Performance Indicators</h2>
-          <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
-            <div className="bg-blue-900/30 p-4 rounded-lg border border-blue-800/50">
-              <h3 className="text-lg font-medium text-blue-200 mb-2">KStest</h3>
-              <p className="text-xl">
-                {loading ? 'Loading...' : kpis.find((k) => k.rowKey === 'kstest')?.value || 'N/A'}
-              </p>
-            </div>
-            <div className="bg-blue-900/30 p-4 rounded-lg border border-blue-800/50">
-              <h3 className="text-lg font-medium text-blue-200 mb-2">Wasserstein</h3>
-              <p className="text-xl">
-                {loading
-                  ? 'Loading...'
-                  : kpis.find((k) => k.rowKey === 'wasserstein')?.value || 'N/A'}
-              </p>
-            </div>
-            <div className="bg-blue-900/30 p-4 rounded-lg border border-blue-800/50">
-              <h3 className="text-lg font-medium text-blue-200 mb-2">Ref MSE</h3>
-              <p className="text-xl">
-                {loading ? 'Loading...' : kpis.find((k) => k.rowKey === 'mseRef')?.value || 'N/A'}
-              </p>
-            </div>
-            <div className="bg-blue-900/30 p-4 rounded-lg border border-blue-800/50">
-              <h3 className="text-lg font-medium text-blue-200 mb-2">MSE</h3>
-              <p className="text-xl">
-                {loading
-                  ? 'Loading...'
-                  : kpis.find((k) => k.rowKey === 'mseCurrent')?.value || 'N/A'}
-              </p>
-            </div>
-            <div className="bg-blue-900/30 p-4 rounded-lg border border-blue-800/50">
-              <h3 className="text-lg font-medium text-blue-200 mb-2">Status</h3>
-              <p
-                className={`text-xl ${
-                  loading
-                    ? ''
-                    : kpis.find((k) => k.rowKey === 'status')?.value === 'Warning'
-                    ? 'text-yellow-400'
-                    : kpis.find((k) => k.rowKey === 'status')?.value === 'Error'
-                    ? 'text-red-400'
-                    : 'text-green-400'
-                }`}
-              >
-                {loading
-                  ? 'Loading...'
-                  : kpis.find((k) => k.rowKey === 'status')?.value || 'N/A'}
-              </p>
-            </div>
-          </div>
-        </div>
+
+
         {/* XAI Result Section */}
         <div className="bg-gray-800 rounded-xl shadow-md overflow-hidden p-6 mb-6 border border-gray-700">
           <h2 className="text-2xl font-semibold text-blue-300 mb-4">XAI Result</h2>

@@ -4,13 +4,13 @@ import React, { useEffect, useState } from 'react'
 import Head from 'next/head'
 import D3ConfusionMatrix from '../../components/D3ConfusionMatrix'
 import DriftWarningChart from '../mode2/DriftWarningChart'
+import ReactMarkdown from 'react-markdown'
 import {
   fetchData,
   KPI,
   PlotDataPoint,
   TableDataPoint,
 } from '../../services/backendService3'
-import ReactMarkdown from 'react-markdown'
 
 interface DetailedMetric {
   total_samples: number
@@ -20,15 +20,27 @@ interface DetailedMetric {
 }
 
 export default function Mode4Page(): React.ReactElement {
-  const [businessUnit, setBusinessUnit] = useState('CCS')
-  const [useCase, setUseCase] = useState('CC-Di')
+  // --- STATE HOOKS ---
+  const [businessUnit, setBusinessUnit] = useState<string>('')
+  const [useCase, setUseCase] = useState<string>('')
+  const useCases: Record<string, string[]> = {
+    CCS: ['CC-Di', 'CC-MT'],
+    JMSL: ['JM-Ch'],
+  }
+
+  const handleBusinessUnitChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    setBusinessUnit(e.target.value)
+    setUseCase('')
+  }
+  const handleUseCaseChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    setUseCase(e.target.value)
+  }
 
   const [kpis, setKpis] = useState<KPI[]>([])
   const [errors, setErrors] = useState<{ plotData: PlotDataPoint[]; tableData: TableDataPoint[] }>({
     plotData: [],
     tableData: [],
   })
-
   const [referenceMatrix, setReferenceMatrix] = useState<number[][]>([])
   const [currentMatrix, setCurrentMatrix] = useState<number[][]>([])
   const [detailedMetrics, setDetailedMetrics] = useState<Record<string, DetailedMetric>>({})
@@ -44,8 +56,10 @@ export default function Mode4Page(): React.ReactElement {
 
   const [loading, setLoading] = useState<boolean>(true)
 
+  // build labels ["0","1",…] for axes
   const makeLabels = (n: number) => Array.from({ length: n }, (_, i) => i.toString())
 
+  // cap matrix square at 300px
   const computeSquareSize = (grid: number[][]) => {
     const maxPx = 300
     const rows = grid.length
@@ -55,6 +69,7 @@ export default function Mode4Page(): React.ReactElement {
     return Math.max(rows, cols) * cellSize
   }
 
+  // derived KPIs
   const derivedKpis: KPI[] = [
     {
       rowKey: 'Drift Detected',
@@ -63,22 +78,14 @@ export default function Mode4Page(): React.ReactElement {
     },
     {
       rowKey: 'Accuracy',
-      value: (() => {
-        const accuracyKpi = kpis.find(k => k.rowKey.toLowerCase() === 'accuracy')
-        if (accuracyKpi) return accuracyKpi.value
-        return 'N/A'
-      })(),
+      value: kpis.find(k => k.rowKey.toLowerCase() === 'accuracy')?.value ?? 'N/A',
       status: 'Normal',
     },
     {
       rowKey: 'Error Rate',
       value: (() => {
-        const accuracyKpi = kpis.find(k => k.rowKey.toLowerCase() === 'accuracy')
-        if (accuracyKpi) {
-          const accNum = parseFloat(accuracyKpi.value)
-          if (!isNaN(accNum)) return (100 - accNum).toFixed(2)
-        }
-        return 'N/A'
+        const acc = parseFloat(kpis.find(k => k.rowKey.toLowerCase() === 'accuracy')?.value ?? '')
+        return !isNaN(acc) ? (100 - acc).toFixed(2) : 'N/A'
       })(),
       status: 'Normal',
     },
@@ -89,22 +96,17 @@ export default function Mode4Page(): React.ReactElement {
     },
   ]
 
-  const mergedKpis = [...kpis]
-  derivedKpis.forEach(derived => {
-    if (!mergedKpis.find(k => k.rowKey === derived.rowKey)) {
-      mergedKpis.push(derived)
-    }
+  // merge without duplicates
+  const mergedKpis: KPI[] = [...kpis]
+  derivedKpis.forEach(d => {
+    if (!mergedKpis.find(k => k.rowKey === d.rowKey)) mergedKpis.push(d)
   })
 
+  // --- FETCH DATA ---
   useEffect(() => {
     async function init() {
       setLoading(true)
       try {
-        const savedBU = localStorage.getItem('businessUnit')
-        const savedUC = localStorage.getItem('useCase')
-        if (savedBU) setBusinessUnit(savedBU)
-        if (savedUC) setUseCase(savedUC)
-
         const {
           kpis: fetchedKpis,
           errors: fetchedErrors,
@@ -143,55 +145,135 @@ export default function Mode4Page(): React.ReactElement {
     init()
   }, [])
 
+  // filter out N/A values for display
+  const displayedKpis = mergedKpis.filter(k => k.value !== 'N/A')
+
   return (
     <div className="bg-gray-900 min-h-screen flex flex-col">
       <Head>
         <title>Mode 4 | CL Dashboard</title>
       </Head>
-
       <main className="flex-grow container mx-auto px-4 py-8">
-        {/* KPI Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-6">
-          {mergedKpis
-            .filter(kpi => ![
-              'Jensen–Shannon Divergence',
-              'Population Stability Index',
-              'Precision (Reference)',
-              'Precision (Current)',
-              'Recall (Reference)',
-              'Recall (Current)',
-              'F1 Score (Reference)',
-              'F1 Score (Current)',
-            ].includes(kpi.rowKey))
-            .map(kpi => (
+
+        {/* Header Section */}
+        <div className="bg-gray-800 rounded-xl shadow-md overflow-hidden p-6 mb-6 border border-gray-700">
+          <h2 className="text-2xl font-semibold text-blue-300 mb-4">OCTAVE - CL Dashboard</h2>
+          <p className="text-blue-200 mb-4">
+            Current Period: {loading ? 'Loading...' : currentPeriod}
+          </p>
+
+          {/* Business Unit / Use Case */}
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+            <div className="bg-blue-900/30 p-4 rounded-lg border border-blue-800/50">
+              <h3 className="text-lg font-medium text-blue-200 mb-2">Business Unit</h3>
+              <select
+                className="w-full bg-gray-700 border-blue-600 rounded p-2 text-white"
+                value={businessUnit}
+                onChange={handleBusinessUnitChange}
+              >
+                <option value="">Select Business Unit</option>
+                {Object.keys(useCases).map(bu => (
+                  <option key={bu} value={bu}>{bu}</option>
+                ))}
+              </select>
+            </div>
+            <div className="bg-blue-900/30 p-4 rounded-lg border border-blue-800/50">
+              <h3 className="text-lg font-medium text-blue-200 mb-2">Use Case</h3>
+              <select
+                className="w-full bg-gray-700 border-blue-600 rounded p-2 text-white"
+                value={useCase}
+                onChange={handleUseCaseChange}
+                disabled={!businessUnit}
+              >
+                <option value="">{businessUnit ? 'Select Use Case' : 'Select BU first'}</option>
+                {(useCases[businessUnit] || []).map(uc => (
+                  <option key={uc} value={uc}>{uc}</option>
+                ))}
+              </select>
+            </div>
+            <div className="bg-blue-900/30 p-4 rounded-lg border border-blue-800/50">
+              <h3 className="text-lg font-medium text-blue-200 mb-2">Short Code</h3>
+              <input
+                type="text"
+                readOnly
+                value={
+                  businessUnit && useCase
+                    ? `${businessUnit.substring(0,2)}-${useCase.substring(0,2)}`
+                    : '-'
+                }
+                className="w-full bg-gray-700 border-blue-600 rounded p-2 text-white"
+              />
+            </div>
+            <div className="bg-blue-900/30 p-4 rounded-lg border border-blue-800/50">
+              <h3 className="text-lg font-medium text-blue-200 mb-2">Runtime</h3>
+              <input
+                type="text"
+                readOnly
+                value="2h 45m"
+                className="w-full bg-gray-700 border-blue-600 rounded p-2 text-white"
+              />
+            </div>
+          </div>
+
+          {/* Key Metrics */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="bg-blue-900/30 p-4 rounded-lg border border-blue-800/50">
+              <h3 className="text-lg font-medium text-blue-200 mb-2">Current Alert Time</h3>
+              <p className="text-xl">
+                {loading ? 'Loading...' : kpis.find(k => k.rowKey === 'alertTime')?.value || 'N/A'}
+              </p>
+            </div>
+            <div className="bg-blue-900/30 p-4 rounded-lg border border-blue-800/50">
+              <h3 className="text-lg font-medium text-blue-200 mb-2">No. of Runtime</h3>
+              <p className="text-xl">
+                {loading ? 'Loading...' : kpis.find(k => k.rowKey === 'runtimeCount')?.value || '0'}
+              </p>
+            </div>
+            <div className="bg-blue-900/30 p-4 rounded-lg border border-blue-800/50">
+              <h3 className="text-lg font-medium text-blue-200 mb-2">Alert Keeper</h3>
+              <p className="text-xl">
+                {loading ? 'Loading...' : kpis.find(k => k.rowKey === 'alertKeeper')?.value || 'N/A'}
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* KPI Section */}
+        <div className="bg-gray-800 rounded-xl shadow-md overflow-hidden p-6 mb-6 border border-gray-700">
+          <h2 className="text-2xl font-semibold text-blue-300 mb-4">Key Performance Indicators</h2>
+          <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+            {displayedKpis.map(kpi => (
               <div
                 key={kpi.rowKey}
                 className="bg-blue-900/30 p-4 rounded-lg border border-blue-800/50"
               >
                 <h3 className="text-lg font-medium text-blue-200 mb-2">{kpi.rowKey}</h3>
                 <p className={`text-xl ${
-                  kpi.status === 'Alert' || kpi.status === 'Warning' ? 'text-yellow-400'
-                  : kpi.status === 'Error' ? 'text-red-400'
-                  : 'text-green-400'
+                  kpi.status === 'Warning' ? 'text-yellow-400' :
+                  kpi.status === 'Error'   ? 'text-red-400' :
+                  'text-green-400'
                 }`}>
                   {loading ? 'Loading...' : kpi.value}
                 </p>
               </div>
-            ))
-          }
+            ))}
+          </div>
         </div>
 
-        {/* Drift Chart */}
+        {/* Drift & Warning Chart */}
         <div className="bg-gray-800 rounded-xl shadow-md overflow-hidden p-6 mb-6 border border-gray-700 h-80">
           <h2 className="text-2xl font-semibold text-blue-300 mb-4">Drift & Warning Over Time</h2>
-          <DriftWarningChart plotData={errors.plotData} />
+          {!loading ? (
+            <DriftWarningChart plotData={errors.plotData} />
+          ) : (
+            <div className="flex items-center justify-center h-full text-white">Loading…</div>
+          )}
         </div>
 
         {/* Confusion Matrices */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
           {[
             { title: 'Current Matrix', grid: referenceMatrix }
-           
           ].map(({ title, grid }, idx) => {
             const side = computeSquareSize(grid)
             return (
@@ -220,37 +302,62 @@ export default function Mode4Page(): React.ReactElement {
 
         {/* Detailed Metrics */}
         <div className="bg-gray-800 rounded-xl shadow-md overflow-hidden p-6 mb-6 border border-gray-700">
-          <h2 className="text-2xl font-semibold text-blue-300 mb-4">Detailed Metrics by Class</h2>
+          <h2 className="text-2xl font-semibold text-blue-300 mb-4">
+            Detailed Metrics by Class
+          </h2>
           <div className="overflow-x-auto">
             <table className="min-w-full divide-y divide-gray-700">
               <thead>
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-blue-200 uppercase">Class</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-blue-200 uppercase">Total</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-blue-200 uppercase">Correct</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-blue-200 uppercase">Incorrect</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-blue-200 uppercase">Misclassifications</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-blue-200 uppercase">
+                    Class
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-blue-200 uppercase">
+                    Total
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-blue-200 uppercase">
+                    Correct
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-blue-200 uppercase">
+                    Incorrect
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-blue-200 uppercase">
+                    Misclassifications
+                  </th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-700">
                 {loading ? (
                   <tr>
-                    <td colSpan={5} className="px-6 py-4 text-center text-sm text-white">Loading…</td>
+                    <td
+                      colSpan={5}
+                      className="px-6 py-4 text-center text-sm text-white"
+                    >
+                      Loading…
+                    </td>
                   </tr>
                 ) : (
                   Object.entries(detailedMetrics).map(([cls, dm]) => (
                     <tr key={cls}>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-white">{cls}</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-white">{dm.total_samples}</td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-white">
-                        {dm.correct_predictions.count} ({dm.correct_predictions.percentage.toFixed(1)}%)
+                        {cls}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-white">
-                        {dm.incorrect_predictions.count} ({dm.incorrect_predictions.percentage.toFixed(1)}%)
+                        {dm.total_samples}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-white">
+                        {dm.correct_predictions.count} (
+                        {dm.correct_predictions.percentage.toFixed(1)}%)
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-white">
+                        {dm.incorrect_predictions.count} (
+                        {dm.incorrect_predictions.percentage.toFixed(1)}%)
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-white">
                         {Object.entries(dm.misclassifications)
-                          .map(([p, m]) => `${p}: ${m.count} (${m.percentage.toFixed(1)}%)`)
+                          .map(
+                            ([p, m]) => `${p}: ${m.count} (${m.percentage.toFixed(1)}%)`
+                          )
                           .join(', ')}
                       </td>
                     </tr>
@@ -261,21 +368,17 @@ export default function Mode4Page(): React.ReactElement {
           </div>
         </div>
 
-
         {/* XAI Result */}
-        <div className="bg-gray-800 rounded-xl shadow-md overflow-hidden p-6 mb-6 border border-gray-700">
+        <div className="bg-gray-800 rounded-xl shadow-md overflow-hidden p-6 border border-gray-700">
           <h2 className="text-2xl font-semibold text-blue-300 mb-4">XAI Result</h2>
           <div className="prose prose-invert text-white max-w-none">
-            {loading ? 'Loading explanation...' : (
-              <ReactMarkdown>
-                {xaiExplanation || 'No explanation available'}
-              </ReactMarkdown>
-            )}
+            {loading
+              ? 'Loading explanation...'
+              : xaiExplanation
+                ? <ReactMarkdown>{xaiExplanation}</ReactMarkdown>
+                : 'No explanation available'}
           </div>
         </div>
-
-        {/* Misclassified Table */}
-        {/* (Same structure as you already had) */}
       </main>
     </div>
   )

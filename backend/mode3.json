@@ -2,7 +2,7 @@
     "drift_state": {
         "drift_detected": true,
         "jensen_shannon_divergence": 0.3228028901332685,
-        "population_stability_index": 5327.135233390025
+        "population_stability_index": 6000.135233390025
     },
     "confusion_matrices": {
         "current": [

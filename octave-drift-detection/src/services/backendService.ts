@@ -1,23 +1,57 @@
-export async function fetchData() {
+// services/backendService3.ts
+
+export interface KPI {
+  rowKey: string
+  value: string
+  status?: string
+}
+
+export interface PlotDataPoint {
+  x: string
+  y: number
+  exceedsThreshold: boolean
+}
+
+export interface TableDataPoint {
+  id: string
+  timePeriod: string
+  meanPrediction?: number
+  error?: number
+  percentageError?: number
+  status: string
+}
+
+export interface OutletsExceedingThreshold {
+  id: string
+  y_true: number
+  y_pred: number
+  percentage_error: number
+}
+
+export async function fetchData(): Promise<{
+  kpis: KPI[]
+  errors: { plotData: PlotDataPoint[]; tableData: TableDataPoint[] }
+  outletsExceedingThreshold: OutletsExceedingThreshold[]
+  xaiExplanation: string
+  currentPeriod: string
+}> {
   try {
-    console.log("Fetching data from backend via proxy: /api/mode1/data");
+    console.log("Fetching data from backend via proxy: /api/mode1/data")
     const response = await fetch(`/api/mode1/data`, {
       credentials: 'include',
-    });
+    })
 
-    console.log("Raw response:", response);
-
+    console.log("Raw response:", response)
     if (!response.ok) {
-      throw new Error(`HTTP error! Status: ${response.status}`);
+      throw new Error(`HTTP error! Status: ${response.status}`)
     }
 
-    const rawData = await response.json();
+    const rawData = await response.json()
+    console.log("Parsed data:", rawData)
 
-    console.log("Parsed data:", rawData);
+    const driftMetrics = rawData.drift_state?.metrics || {}
 
-    const driftMetrics = rawData.drift_state?.metrics || {};
-
-    const kpis = [
+    const kpis: KPI[] = [
       {
         rowKey: "Drift Detected",
         value: rawData.drift_state?.drift_detected ? "Yes" : "No",
@@ -30,12 +64,16 @@ export async function fetchData() {
       },
       {
         rowKey: "Average Percentage Error (All)",
-        value: rawData.average_percentage_error_all?.toFixed(2) || "N/A",
+        value: rawData.average_percentage_error_all != null
+          ? rawData.average_percentage_error_all.toFixed(2)
+          : "N/A",
         status: "Normal",
       },
       {
         rowKey: "Average Percentage Error (Exceeding)",
-        value: rawData.average_percentage_error_exceeding?.toFixed(2) || "N/A",
+        value: rawData.average_percentage_error_exceeding != null
+          ? rawData.average_percentage_error_exceeding.toFixed(2)
+          : "N/A",
         status: "Alert",
       },
       {
@@ -63,13 +101,14 @@ export async function fetchData() {
         value: rawData.drift_state?.drift_detected ? "Warning" : "Normal",
         status: rawData.drift_state?.drift_detected ? "Warning" : "Normal",
       },
-    ];
+    ]
 
     const errors = {
       plotData: rawData.id_error?.map((item: any) => ({
         x: item.time_period || "",
         y: item.Mean_Prediction_Error || 0,
-        exceedsThreshold: Math.abs(item.Mean_Prediction_Error) > (rawData.error_percentage_threshold || 0),
+        exceedsThreshold:
+          Math.abs(item.Mean_Prediction_Error) > (rawData.error_percentage_threshold || 0),
       })) || [],
       tableData: rawData.id_error?.map((item: any) => ({
         id: item.id?.toString() || "",
@@ -77,28 +116,36 @@ export async function fetchData() {
         meanPrediction: item.Mean_Prediction_Error || 0,
         error: item.Mean_Prediction_Error || 0,
         percentageError: Math.abs(item.Mean_Prediction_Error) || 0,
-        status: Math.abs(item.Mean_Prediction_Error) > (rawData.error_percentage_threshold || 0) ? "Alert" : "Normal",
+        status:
+          Math.abs(item.Mean_Prediction_Error) > (rawData.error_percentage_threshold || 0)
+            ? "Alert"
+            : "Normal",
       })) || [],
-    };
+    }
 
-    // Add outlets_exceeding_threshold data for frontend display
-    const outletsExceedingThreshold = rawData.outlets_exceeding_threshold?.map((item: any) => ({
-      id: item.id?.toString() || "",
-      y_true: item.y_true || 0,
-      y_pred: item.y_pred || 0,
-      percentage_error: item.percentage_error || 0,
-    })) || [];
+    const outletsExceedingThreshold =
+      rawData.outlets_exceeding_threshold?.map((item: any) => ({
+        id: item.id?.toString() || "",
+        y_true: item.y_true || 0,
+        y_pred: item.y_pred || 0,
+        percentage_error: item.percentage_error || 0,
+      })) || []
 
-    const xaiExplanation = rawData.explanation || "No explanation available";
+    const xaiExplanation = rawData.explanation || "No explanation available"
+
+    // --- new: currentPeriod, same as backendService2 ---
+    const currentPeriod =
+      rawData.current_period ?? rawData.currentPeriod ?? "N/A"
 
     return {
       kpis,
       errors,
       outletsExceedingThreshold,
       xaiExplanation,
-    };
+      currentPeriod,
+    }
   } catch (error) {
-    console.error("Error fetching data:", error);
-    throw new Error("Failed to fetch and process data");
+    console.error("Error fetching data:", error)
+    throw new Error("Failed to fetch and process data")
   }
 }

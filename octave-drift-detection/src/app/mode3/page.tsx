@@ -12,7 +12,7 @@ import {
   Clusters,
   BackwardAnalysis,
 } from '../../services/backendService2'
-
+import ReactMarkdown from 'react-markdown';
 interface DetailedMetric {
   total_samples: number
   correct_predictions: { count: number; percentage: number }
@@ -319,17 +319,14 @@ export default function Mode3Page(): JSX.Element {
           </div>
         </div>
 
-        {/* XAI Explanation */}
+        {/* XAI Result Section */}
         <div className="bg-gray-800 rounded-xl shadow-md overflow-hidden p-6 mb-6 border border-gray-700">
           <h2 className="text-2xl font-semibold text-blue-300 mb-4">XAI Result</h2>
-          <div className="space-y-3 text-white">
+          <div className="prose prose-invert text-white">
             {loading ? (
-              <p>Loading explanation...</p>
+              <p>Loading XAI explanation...</p>
             ) : xaiExplanation ? (
-              <div
-                className="prose prose-invert"
-                dangerouslySetInnerHTML={{ __html: xaiExplanation }}
-              />
+              <ReactMarkdown>{xaiExplanation}</ReactMarkdown>
             ) : (
               <p className="text-red-400">No explanation available</p>
             )}

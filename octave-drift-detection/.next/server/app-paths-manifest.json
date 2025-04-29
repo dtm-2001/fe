@@ -1,1 +1,4 @@
-{}
+{
+  "/mode1/page": "app/mode1/page.js",
+  "/mode3/page": "app/mode3/page.js"
+}

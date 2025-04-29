@@ -646,12 +646,8 @@ function Mode4Page() {
                         className: "grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6",
                         children: [
                             {
-                                title: 'Reference Matrix',
-                                grid: referenceMatrix
-                            },
-                            {
                                 title: 'Current Matrix',
-                                grid: currentMatrix
+                                grid: referenceMatrix
                             }
                         ].map(({ title, grid }, idx)=>{
                             const side = computeSquareSize(grid);

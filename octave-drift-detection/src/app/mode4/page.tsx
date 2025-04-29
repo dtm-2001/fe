@@ -190,8 +190,8 @@ export default function Mode4Page(): React.ReactElement {
         {/* Confusion Matrices */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
           {[
-            { title: 'Reference Matrix', grid: referenceMatrix },
-            { title: 'Current Matrix', grid: currentMatrix },
+            { title: 'Current Matrix', grid: referenceMatrix }
+           
           ].map(({ title, grid }, idx) => {
             const side = computeSquareSize(grid)
             return (

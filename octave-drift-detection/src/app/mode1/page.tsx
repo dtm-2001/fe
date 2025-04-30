@@ -4,7 +4,15 @@ import Head from "next/head"
 import ReactMarkdown from "react-markdown"
 import { Chart, registerables } from "chart.js"
 import { fetchData } from "../../services/backendService"
-import { AlertCircle, AlertTriangle, CheckCircle, RefreshCw, Info, HelpCircle, X } from "lucide-react"
+import {
+  AlertCircle,
+  AlertTriangle,
+  CheckCircle,
+  RefreshCw,
+  Info,
+  HelpCircle,
+  X,
+} from "lucide-react"
 
 Chart.register(...registerables)
 
@@ -42,27 +50,21 @@ interface ErrorDataState {
   tableData: TableDataPoint[]
 }
 
-// Map of business units → use cases
-const useCasesByUnit: Record<string, string[]> = {
-  CCS: ["CC-Di", "CC-MT"],
-  JMSL: ["JM-Ch"],
-}
-
 // Tooltip content for KS test and Wasserstein
 const tooltipContent = {
   kstest: {
     title: "Kolmogorov-Smirnov Test",
     content: `The KS test measures the maximum difference between two cumulative distribution functions. 
-    It helps determine if two datasets differ significantly. Lower values indicate more similar distributions.
-    
-    Technical explanation: The test statistic quantifies the distance between the empirical distribution function of the sample and the cumulative distribution function of the reference distribution.`,
+It helps determine if two datasets differ significantly. Lower values indicate more similar distributions.
+
+Technical explanation: The test statistic quantifies the distance between the empirical distribution function of the sample and the cumulative distribution function of the reference distribution.`,
     image: "/ks-test-diagram.png",
   },
   wasserstein: {
     title: "Wasserstein Distance",
     content: `The Wasserstein distance (also called Earth Mover's Distance) measures the minimum "cost" of transforming one distribution into another.
-    
-    Technical explanation: It represents the minimum amount of "work" required to transform one probability distribution into another, where "work" is measured as the amount of distribution weight that must be moved, multiplied by the distance it has to be moved.`,
+
+Technical explanation: It represents the minimum amount of "work" required to transform one probability distribution into another, where "work" is measured as the amount of distribution weight that must be moved, multiplied by the distance it has to be moved.`,
     image: "/wasserstein-diagram.png",
   },
 }
@@ -79,77 +81,46 @@ export default function Mode1Page(): JSX.Element {
   const [currentPeriod, setCurrentPeriod] = useState<string>("N/A")
   const [errorPercentageThreshold, setErrorPercentageThreshold] = useState<number>(0)
 
-  // Filter & UI states
-  const [loading, setLoading] = useState<boolean>(false)
-  const [backendError, setBackendError] = useState<string | null>(null)
+  // Static values from backend
   const [businessUnit, setBusinessUnit] = useState<string>("")
   const [useCase, setUseCase] = useState<string>("")
   const [shortCode, setShortCode] = useState<string>("")
-  const [runtimeValue, setRuntimeValue] = useState<number>(1)
   const [alertKeeperValue, setAlertKeeperValue] = useState<string>("")
-  const [roleValue, setRoleValue] = useState<string>("")
-  const [emailValue, setEmailValue] = useState<string>("")
 
-  // Tooltip state
+  // Runtime & UI
+  const [runtimeValue, setRuntimeValue] = useState<number>(1)
+  const [loading, setLoading] = useState<boolean>(false)
+  const [backendError, setBackendError] = useState<string | null>(null)
+  const [statusDistribution, setStatusDistribution] = useState({ good: 65, warning: 25, error: 10 })
   const [activeTooltip, setActiveTooltip] = useState<string | null>(null)
 
-  // Available options returned by backend
-  const [availableAlertKeepers, setAvailableAlertKeepers] = useState<string[]>([])
-  const [availableRoles, setAvailableRoles] = useState<string[]>([])
-  const [availableEmails, setAvailableEmails] = useState<string[]>([])
-
-  // Status distribution for pie chart
-  const [statusDistribution, setStatusDistribution] = useState({
-    good: 65,
-    warning: 25,
-    error: 10,
-  })
-
-  // Compute possible short-code options from BU + UseCase
-  const computedShortCodes = React.useMemo(() => {
-    if (!businessUnit || !useCase) return []
-    const buCode = businessUnit.substring(0, 2)
-    const ucCode = useCase.substring(0, 2)
-    return [`${buCode}-${ucCode}`]
-  }, [businessUnit, useCase])
-
-  // Calculate MSE change percentage
-  const calculateMseChange = () => {
-    const refMse = Number.parseFloat(kpis.find((k) => k.rowKey === "mseRef")?.value || "0")
-    const currMse = Number.parseFloat(kpis.find((k) => k.rowKey === "mseCurrent")?.value || "0")
-
-    if (refMse === 0) return "N/A"
-
-    const changePercent = ((currMse - refMse) / refMse) * 100
-    const sign = changePercent >= 0 ? "+" : ""
-    return `${sign}${changePercent.toFixed(2)}%`
-  }
-
-  // Fetch all data, including available filters
+  // Fetch all data, including static values
   const fetchAllData = async (): Promise<void> => {
     setLoading(true)
     setBackendError(null)
     try {
       const {
+        businessUnit: fBusinessUnit,
+        useCase: fUseCase,
+        shortCode: fShortCode,
+        alertKeeper: fAlertKeeper,
         kpis: fetchedKpis,
         errors: fetchedErrors,
         outletsExceedingThreshold: fetchedOutlets,
         xaiExplanation: fetchedXai,
         currentPeriod: fetchedPeriod,
         error_percentage_threshold: fetchedThreshold,
-        availableAlertKeepers: fetchedAlertKeepers,
-        roles: fetchedRoles,
-        emails: fetchedEmails,
       } = await fetchData({
-        businessUnit,
-        useCase,
-        shortCode,
         runtime: runtimeValue,
-        alertKeeper: alertKeeperValue,
-        role: roleValue,
-        email: emailValue,
       })
 
+      // static values
+      setBusinessUnit(fBusinessUnit || "")
+      setUseCase(fUseCase || "")
+      setShortCode(fShortCode || "")
+      setAlertKeeperValue(fAlertKeeper || "")
+
+      // dynamic data
       setKpis(fetchedKpis || [])
       setErrors(fetchedErrors || { plotData: [], tableData: [] })
       setOutletsExceedingThreshold(fetchedOutlets || [])
@@ -157,21 +128,17 @@ export default function Mode1Page(): JSX.Element {
       setCurrentPeriod(fetchedPeriod || "N/A")
       setErrorPercentageThreshold(fetchedThreshold ?? 0)
 
-      setAvailableAlertKeepers(fetchedAlertKeepers || [])
-      setAvailableRoles(fetchedRoles || [])
-      setAvailableEmails(fetchedEmails || [])
-
-      // Calculate status distribution for pie chart (in a real app, this would come from the backend)
-      // This is just a placeholder implementation
+      // compute status distribution
       const goodCount =
-        fetchedErrors?.tableData.filter((item) => (item.error || 0) < (fetchedThreshold || 5) * 0.5).length || 0
+        (fetchedErrors?.tableData.filter((r) => (r.error ?? 0) < (fetchedThreshold || 5) * 0.5).length) || 0
       const warningCount =
-        fetchedErrors?.tableData.filter(
-          (item) => (item.error || 0) >= (fetchedThreshold || 5) * 0.5 && (item.error || 0) < (fetchedThreshold || 5),
-        ).length || 0
+        (fetchedErrors?.tableData.filter(
+          (r) =>
+            (r.error ?? 0) >= (fetchedThreshold || 5) * 0.5 &&
+            (r.error ?? 0) < (fetchedThreshold || 5),
+        ).length) || 0
       const errorCount =
-        fetchedErrors?.tableData.filter((item) => (item.error || 0) >= (fetchedThreshold || 5)).length || 0
-
+        (fetchedErrors?.tableData.filter((r) => (r.error ?? 0) >= (fetchedThreshold || 5)).length) || 0
       const total = goodCount + warningCount + errorCount || 1
 
       setStatusDistribution({
@@ -180,36 +147,29 @@ export default function Mode1Page(): JSX.Element {
         error: Math.round((errorCount / total) * 100),
       })
     } catch (err) {
-      console.error("Error fetching data:", err)
-      const message =
-        err instanceof Error ? `Failed to load data: ${err.message}` : "Failed to load data: Unknown error"
+      console.error(err)
+      const message = err instanceof Error ? err.message : "Unknown error"
       setBackendError(message)
     } finally {
       setLoading(false)
     }
   }
 
-  // Re-fetch whenever any filter changes
+  // Initial load & whenever runtime changes
   useEffect(() => {
     fetchAllData()
-  }, [businessUnit, useCase, shortCode, runtimeValue, alertKeeperValue, roleValue, emailValue])
+  }, [runtimeValue])
 
-  // Initialize pie chart
+  // Re-render pie chart when data updates
   useEffect(() => {
-    if (!loading && pieChartRef.current) {
-      renderPieChart()
-    }
+    if (!loading) renderPieChart()
   }, [loading, statusDistribution])
 
-  // Render pie chart
+  // Pie chart renderer
   const renderPieChart = () => {
     const ctx = document.getElementById("statusPieChart") as HTMLCanvasElement
     if (!ctx) return
-
-    if (pieChartRef.current) {
-      pieChartRef.current.destroy()
-    }
-
+    pieChartRef.current?.destroy()
     pieChartRef.current = new Chart(ctx, {
       type: "pie",
       data: {
@@ -218,9 +178,9 @@ export default function Mode1Page(): JSX.Element {
           {
             data: [statusDistribution.good, statusDistribution.warning, statusDistribution.error],
             backgroundColor: [
-              "rgba(52, 211, 153, 0.8)", // Green for Good
-              "rgba(251, 191, 36, 0.8)", // Yellow for Warning
-              "rgba(239, 68, 68, 0.8)", // Red for Error
+              "rgba(52, 211, 153, 0.8)",
+              "rgba(251, 191, 36, 0.8)",
+              "rgba(239, 68, 68, 0.8)",
             ],
             borderColor: ["rgba(52, 211, 153, 1)", "rgba(251, 191, 36, 1)", "rgba(239, 68, 68, 1)"],
             borderWidth: 1,
@@ -235,34 +195,21 @@ export default function Mode1Page(): JSX.Element {
             position: "right",
             labels: {
               color: "#e5e7eb",
-              font: {
-                size: 14,
-              },
-              generateLabels: (chart) => {
-                const data = chart.data
-                if (data.labels && data.datasets.length) {
-                  return data.labels.map((label, i) => {
-                    const value = data.datasets[0].data[i] as number
-                    return {
-                      text: `${label}: ${value}%`,
-                      fillStyle: data.datasets[0].backgroundColor?.[i] as string,
-                      strokeStyle: data.datasets[0].borderColor?.[i] as string,
-                      lineWidth: 1,
-                      hidden: false,
-                      index: i,
-                    }
-                  })
-                }
-                return []
-              },
+              font: { size: 14 },
+              generateLabels: (chart) =>
+                chart.data.labels!.map((l, i) => ({
+                  text: `${l}: ${chart.data.datasets![0].data[i]}%`,
+                  fillStyle: chart.data.datasets![0].backgroundColor![i] as string,
+                  strokeStyle: chart.data.datasets![0].borderColor![i] as string,
+                  lineWidth: 1,
+                  hidden: false,
+                  index: i,
+                })),
             },
           },
           tooltip: {
             callbacks: {
-              label: (context) => {
-                const value = context.raw as number
-                return `${context.label}: ${value}%`
-              },
+              label: (ctx) => `${ctx.label}: ${ctx.raw}%`,
             },
           },
         },
@@ -270,27 +217,18 @@ export default function Mode1Page(): JSX.Element {
     })
   }
 
-  // Handlers for filter controls
-  const handleBusinessUnitChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    setBusinessUnit(e.target.value)
-    setUseCase("")
-    setShortCode("")
+  // Helpers for KPIs
+  const calculateMseChange = () => {
+    const refMse = parseFloat(kpis.find((k) => k.rowKey === "mseRef")?.value || "0")
+    const currMse = parseFloat(kpis.find((k) => k.rowKey === "mseCurrent")?.value || "0")
+    if (refMse === 0) return "N/A"
+    const change = ((currMse - refMse) / refMse) * 100
+    return `${change >= 0 ? "+" : ""}${change.toFixed(2)}%`
   }
-  const handleUseCaseChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    setUseCase(e.target.value)
-    setShortCode("")
-  }
-  const handleShortCodeChange = (e: React.ChangeEvent<HTMLSelectElement>) => setShortCode(e.target.value)
-  const handleRuntimeChange = (e: React.ChangeEvent<HTMLSelectElement>) =>
-    setRuntimeValue(Number.parseInt(e.target.value, 10))
-  const handleAlertKeeperChange = (e: React.ChangeEvent<HTMLSelectElement>) => setAlertKeeperValue(e.target.value)
-  const handleRoleChange = (e: React.ChangeEvent<HTMLSelectElement>) => setRoleValue(e.target.value)
-  const handleEmailChange = (e: React.ChangeEvent<HTMLSelectElement>) => setEmailValue(e.target.value)
 
-  // Helpers for KPI status display
-  const getStatusColor = (status?: string) => {
-    if (!status) return "text-gray-400"
-    switch (status.toLowerCase()) {
+  const getStatusColor = (s?: string) => {
+    if (!s) return "text-gray-400"
+    switch (s.toLowerCase()) {
       case "warning":
         return "text-amber-400"
       case "error":
@@ -301,9 +239,9 @@ export default function Mode1Page(): JSX.Element {
         return "text-sky-400"
     }
   }
-  const getStatusIcon = (status?: string) => {
-    if (!status) return <Info className="h-5 w-5 text-gray-400" />
-    switch (status.toLowerCase()) {
+  const getStatusIcon = (s?: string) => {
+    if (!s) return <Info className="h-5 w-5 text-gray-400" />
+    switch (s.toLowerCase()) {
       case "warning":
         return <AlertTriangle className="h-5 w-5 text-amber-400" />
       case "error":
@@ -323,213 +261,80 @@ export default function Mode1Page(): JSX.Element {
       <main className="flex-grow container mx-auto px-4 py-8">
         {/* Backend Error */}
         {backendError && (
-          <div className="bg-rose-950/40 border border-rose-800/60 rounded-lg p-4 mb-6 backdrop-blur-sm shadow-lg animate-fade-in">
+          <div className="bg-rose-950/40 border border-rose-800/60 rounded-lg p-4 mb-6 backdrop-blur-sm shadow-lg">
             <div className="flex items-center">
               <AlertCircle className="h-5 w-5 text-rose-400 mr-2" />
               <h3 className="text-lg font-medium text-rose-300">Backend Error</h3>
             </div>
             <p className="mt-2 text-rose-200">{backendError}</p>
-            <p className="mt-2 text-rose-200/80 text-sm">Displaying fallback data. Some features may be limited.</p>
             <button
               onClick={fetchAllData}
-              className="mt-3 px-4 py-2 bg-rose-800/50 hover:bg-rose-700/70 text-white rounded-md text-sm font-medium transition-colors duration-200 flex items-center gap-2"
+              className="mt-3 px-4 py-2 bg-rose-800/50 hover:bg-rose-700/70 text-white rounded-md text-sm flex items-center gap-2"
             >
-              <RefreshCw className="h-4 w-4" /> Retry Connection
+              <RefreshCw className="h-4 w-4" /> Retry
             </button>
           </div>
         )}
 
-        {/* Header & Filters */}
-        <div className="bg-gray-900/80 rounded-xl shadow-xl overflow-hidden p-6 mb-6 border border-gray-700/50 backdrop-blur-sm">
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-6">
+        {/* Header */}
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-6">
+          <h2 className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-sky-600 mb-2">
+            OCTAVE – RG Dashboard
+          </h2>
+          <p className="text-sky-300 flex items-center gap-2">
+            <span className="inline-block h-2 w-2 rounded-full bg-sky-400 animate-pulse" />
+            Current Period: {loading ? "Loading..." : currentPeriod}
+          </p>
+        </div>
+
+        {/* Static Filters Box */}
+        <div className="bg-gradient-to-br from-sky-950/40 to-sky-900/20 p-6 rounded-lg border border-sky-800/30 shadow-md mb-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
-              <h2 className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-sky-600 mb-2">
-                OCTAVE - RG Dashboard
-              </h2>
-              <p className="text-sky-300 flex items-center gap-2">
-                <span className="inline-block h-2 w-2 rounded-full bg-sky-400 animate-pulse" />
-                Current Period: {loading ? "Loading..." : currentPeriod}
-              </p>
+              <h3 className="text-lg font-medium text-sky-300 mb-2">Business Unit</h3>
+              <ul className="list-disc list-inside text-sky-200 mb-4">
+                <li>{loading ? "Loading…" : businessUnit || "Not Selected"}</li>
+              </ul>
+              <h3 className="text-lg font-medium text-sky-300 mb-2">Use Case</h3>
+              <ul className="list-disc list-inside text-sky-200">
+                <li>{loading ? "Loading…" : useCase || "Not Selected"}</li>
+              </ul>
             </div>
-            <button
-              onClick={fetchAllData}
-              className="mt-4 md:mt-0 px-4 py-2 bg-sky-800/40 hover:bg-sky-700/60 text-white rounded-md text-sm font-medium transition-colors duration-200 flex items-center gap-2"
+            <div>
+              <h3 className="text-lg font-medium text-sky-300 mb-2">Short Code</h3>
+              <ul className="list-disc list-inside text-sky-200 mb-4">
+                <li>{loading ? "Loading…" : shortCode || "Not Available"}</li>
+              </ul>
+              <h3 className="text-lg font-medium text-sky-300 mb-2">Alert Keeper</h3>
+              <ul className="list-disc list-inside text-sky-200">
+                <li>{loading ? "Loading…" : alertKeeperValue || "Not Selected"}</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+
+        {/* Runtime & Status Distribution */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-6">
+          {/* Runtime */}
+          <div className="lg:col-span-2 bg-gradient-to-br from-sky-950/40 to-sky-900/20 p-6 rounded-lg border border-sky-800/30 shadow-md">
+            <h3 className="text-lg font-medium text-sky-300 mb-2">Runtime</h3>
+            <select
+              className="w-full bg-gray-800/80 border border-sky-700/50 rounded-md p-2 text-white focus:ring-2 focus:ring-sky-500"
+              value={runtimeValue}
+              onChange={(e) => setRuntimeValue(Number(e.target.value))}
             >
-              <RefreshCw className="h-4 w-4" /> Refresh Data
-            </button>
+              <option value={1}>1</option>
+              <option value={2}>2</option>
+              <option value={3}>3</option>
+              <option value={4}>4</option>
+            </select>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 mb-4">
-            <div className="lg:col-span-3">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-                {/* 1. Business Unit */}
-                <div className="bg-gradient-to-br from-sky-950/40 to-sky-900/20 p-4 rounded-lg border border-sky-800/30 shadow-md">
-                  <h3 className="text-lg font-medium text-sky-300 mb-2 flex items-center gap-2">
-                    <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-sky-800/40 text-xs">
-                      1
-                    </span>
-                    Business Unit
-                  </h3>
-                  <select
-                    className="w-full bg-gray-800/80 border border-sky-700/50 rounded-md p-2 text-white focus:ring-2 focus:ring-sky-500 transition-all duration-200"
-                    value={businessUnit}
-                    onChange={handleBusinessUnitChange}
-                  >
-                    <option value="">Select Business Unit</option>
-                    {Object.keys(useCasesByUnit).map((bu) => (
-                      <option key={bu} value={bu}>
-                        {bu}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                {/* 2. Use Case */}
-                <div className="bg-gradient-to-br from-sky-950/40 to-sky-900/20 p-4 rounded-lg border border-sky-800/30 shadow-md">
-                  <h3 className="text-lg font-medium text-sky-300 mb-2 flex items-center gap-2">
-                    <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-sky-800/40 text-xs">
-                      2
-                    </span>
-                    Use Case
-                  </h3>
-                  <select
-                    className="w-full bg-gray-800/80 border border-sky-700/50 rounded-md p-2 text-white focus:ring-2 focus:ring-sky-500 transition-all duration-200"
-                    value={useCase}
-                    onChange={handleUseCaseChange}
-                    disabled={!businessUnit}
-                  >
-                    <option value="">Select Use Case</option>
-                    {businessUnit &&
-                      useCasesByUnit[businessUnit].map((uc) => (
-                        <option key={uc} value={uc}>
-                          {uc}
-                        </option>
-                      ))}
-                  </select>
-                </div>
-
-                {/* 3. Short Code */}
-                <div className="bg-gradient-to-br from-sky-950/40 to-sky-900/20 p-4 rounded-lg border border-sky-800/30 shadow-md">
-                  <h3 className="text-lg font-medium text-sky-300 mb-2 flex items-center gap-2">
-                    <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-sky-800/40 text-xs">
-                      3
-                    </span>
-                    Short Code
-                  </h3>
-                  <select
-                    className="w-full bg-gray-800/80 border border-sky-700/50 rounded-md p-2 text-white focus:ring-2 focus:ring-sky-500 transition-all duration-200"
-                    value={shortCode}
-                    onChange={handleShortCodeChange}
-                    disabled={computedShortCodes.length === 0}
-                  >
-                    <option value="">Select Short Code</option>
-                    {computedShortCodes.map((code) => (
-                      <option key={code} value={code}>
-                        {code}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                {/* 4. Runtime */}
-                <div className="bg-gradient-to-br from-sky-950/40 to-sky-900/20 p-4 rounded-lg border border-sky-800/30 shadow-md">
-                  <h3 className="text-lg font-medium text-sky-300 mb-2 flex items-center gap-2">
-                    <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-sky-800/40 text-xs">
-                      4
-                    </span>
-                    Runtime
-                  </h3>
-                  <select
-                    className="w-full bg-gray-800/80 border border-sky-700/50 rounded-md p-2 text-white focus:ring-2 focus:ring-sky-500 transition-all duration-200"
-                    value={runtimeValue}
-                    onChange={handleRuntimeChange}
-                  >
-                    <option value={1}>1</option>
-                    <option value={2}>2</option>
-                    <option value={3}>3</option>
-                    <option value={4}>4</option>
-                  </select>
-                </div>
-
-                {/* 5. Alert Keeper */}
-                <div className="bg-gradient-to-br from-sky-950/40 to-sky-900/20 p-4 rounded-lg border border-sky-800/30 shadow-md">
-                  <h3 className="text-lg font-medium text-sky-300 mb-2 flex items-center gap-2">
-                    <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-sky-800/40 text-xs">
-                      5
-                    </span>
-                    Alert Keeper
-                  </h3>
-                  <select
-                    className="w-full bg-gray-800/80 border border-sky-700/50 rounded-md p-2 text-white focus:ring-2 focus:ring-sky-500 transition-all duration-200"
-                    value={alertKeeperValue}
-                    onChange={handleAlertKeeperChange}
-                    disabled={!availableAlertKeepers.length}
-                  >
-                    <option value="">Select Keeper</option>
-                    {availableAlertKeepers.map((k) => (
-                      <option key={k} value={k}>
-                        {k}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                {/* 6. Role */}
-                <div className="bg-gradient-to-br from-sky-950/40 to-sky-900/20 p-4 rounded-lg border border-sky-800/30 shadow-md">
-                  <h3 className="text-lg font-medium text-sky-300 mb-2 flex items-center gap-2">
-                    <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-sky-800/40 text-xs">
-                      6
-                    </span>
-                    Role
-                  </h3>
-                  <select
-                    className="w-full bg-gray-800/80 border border-sky-700/50 rounded-md p-2 text-white focus:ring-2 focus:ring-sky-500 transition-all duration-200"
-                    value={roleValue}
-                    onChange={handleRoleChange}
-                    disabled={!availableRoles.length}
-                  >
-                    <option value="">Select Role</option>
-                    {availableRoles.map((r) => (
-                      <option key={r} value={r}>
-                        {r}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                {/* 7. Email */}
-                <div className="bg-gradient-to-br from-sky-950/40 to-sky-900/20 p-4 rounded-lg border border-sky-800/30 shadow-md">
-                  <h3 className="text-lg font-medium text-sky-300 mb-2 flex items-center gap-2">
-                    <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-sky-800/40 text-xs">
-                      7
-                    </span>
-                    Email
-                  </h3>
-                  <select
-                    className="w-full bg-gray-800/80 border	border-sky-700/50 rounded-md p-2 text-white focus:ring-2 focus:ring-sky-500 transition-all duration-200"
-                    value={emailValue}
-                    onChange={handleEmailChange}
-                    disabled={!availableEmails.length}
-                  >
-                    <option value="">Select Email</option>
-                    {availableEmails.map((e) => (
-                      <option key={e} value={e}>
-                        {e}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-            </div>
-
-            {/* Status Distribution Pie Chart */}
-            <div className="bg-gradient-to-br from-sky-950/40 to-sky-900/20 p-4 rounded-lg border border-sky-800/30 shadow-md">
-              <h3 className="text-lg font-medium text-sky-300 mb-2">Status Distribution</h3>
-              <div className="h-[200px] relative">
-                <canvas id="statusPieChart"></canvas>
-              </div>
+          {/* Status Distribution */}
+          <div className="bg-gradient-to-br from-sky-950/40 to-sky-900/20 p-6 rounded-lg border border-sky-800/30 shadow-md">
+            <h3 className="text-lg font-medium text-sky-300 mb-2">Status Distribution</h3>
+            <div className="h-48">
+              <canvas id="statusPieChart"></canvas>
             </div>
           </div>
         </div>
@@ -540,7 +345,7 @@ export default function Mode1Page(): JSX.Element {
             Key Performance Indicators
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {/* Combined KStest and Wasserstein */}
+            {/* KS-test & Wasserstein */}
             <div className="bg-gradient-to-br from-sky-950/40 to-sky-900/20 p-4 rounded-lg border border-sky-800/30 shadow-md hover:shadow-sky-900/20 hover:border-sky-700/50 transition-all relative">
               <button
                 onClick={() => setActiveTooltip("kstest")}
@@ -578,42 +383,34 @@ export default function Mode1Page(): JSX.Element {
               </div>
             </div>
 
-            {/* Combined MSE and Status */}
+            {/* MSE Metrics */}
             <div className="bg-gradient-to-br from-sky-950/40 to-sky-900/20 p-4 rounded-lg border border-sky-800/30 shadow-md hover:shadow-sky-900/20 hover:border-sky-700/50 transition-all">
               <h3 className="text-lg font-medium text-sky-300 mb-2">MSE Metrics</h3>
               <div className="space-y-4">
-                <div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm text-gray-400">Ref MSE:</span>
-                    <span className="text-sm font-medium text-white">
-                      {loading ? "Loading..." : kpis.find((k) => k.rowKey === "mseRef")?.value || "N/A"}
-                    </span>
-                  </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-gray-400">Ref MSE:</span>
+                  <span className="text-sm font-medium text-white">
+                    {loading ? "Loading..." : kpis.find((k) => k.rowKey === "mseRef")?.value || "N/A"}
+                  </span>
                 </div>
-                <div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm text-gray-400">Curr MSE:</span>
-                    <span className="text-sm font-medium text-white">
-                      {loading ? "Loading..." : kpis.find((k) => k.rowKey === "mseCurrent")?.value || "N/A"}
-                    </span>
-                  </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-gray-400">Curr MSE:</span>
+                  <span className="text-sm font-medium text-white">
+                    {loading ? "Loading..." : kpis.find((k) => k.rowKey === "mseCurrent")?.value || "N/A"}
+                  </span>
                 </div>
-                <div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm text-gray-400">Change:</span>
-                    <span className="text-sm font-medium text-white">
-                      {loading ? "Loading..." : calculateMseChange()}
-                    </span>
-                  </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-gray-400">Change:</span>
+                  <span className="text-sm font-medium text-white">
+                    {loading ? "Loading..." : calculateMseChange()}
+                  </span>
                 </div>
                 <div className="pt-2 border-t border-sky-800/30">
                   <div className="flex items-center">
                     <div className="w-10 h-10 rounded-full bg-sky-800/40 flex items-center justify-center mr-3">
                       {getStatusIcon(kpis.find((k) => k.rowKey === "status")?.value)}
                     </div>
-                    <p
-                      className={`text-xl font-semibold ${getStatusColor(kpis.find((k) => k.rowKey === "status")?.value)}`}
-                    >
+                    <p className={`text-xl font-semibold ${getStatusColor(kpis.find((k) => k.rowKey === "status")?.value)}`}>
                       {loading ? "Loading..." : kpis.find((k) => k.rowKey === "status")?.value || "N/A"}
                     </p>
                   </div>
@@ -621,7 +418,7 @@ export default function Mode1Page(): JSX.Element {
               </div>
             </div>
 
-            {/* Other KPIs can go here */}
+            {/* Additional Metrics */}
             <div className="bg-gradient-to-br from-sky-950/40 to-sky-900/20 p-4 rounded-lg border border-sky-800/30 shadow-md hover:shadow-sky-900/20 hover:border-sky-700/50 transition-all">
               <h3 className="text-lg font-medium text-sky-300 mb-2">Additional Metrics</h3>
               <div className="space-y-4">
@@ -837,7 +634,7 @@ export default function Mode1Page(): JSX.Element {
           {/* Threshold Exceedances */}
           <div className="bg-gradient-to-br from-rose-950/30 to-gray-900/90 rounded-xl shadow-xl overflow-hidden p-6 border border-rose-900/30 backdrop-blur-sm">
             <h2 className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-rose-400 to-rose-600 mb-4">
-              Threshold Exceedances&nbsp;
+              Threshold Exceedances{" "}
               <span className="text-sm text-rose-200">(Threshold: {errorPercentageThreshold.toFixed(2)}%)</span>
             </h2>
             {loading ? (
@@ -901,7 +698,7 @@ export default function Mode1Page(): JSX.Element {
           </div>
         </div>
 
-        {/* XAI Result Section - Moved to bottom */}
+        {/* XAI Result Section */}
         <div className="bg-gray-900/80 rounded-xl shadow-xl overflow-hidden p-6 mb-6 border border-gray-700/50 backdrop-blur-sm">
           <h2 className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-sky-600 mb-4">
             XAI Result
@@ -940,49 +737,6 @@ export default function Mode1Page(): JSX.Element {
             )}
           </div>
         </div>
-
-        {/* Info Tooltips */}
-        {activeTooltip && (
-          <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
-            <div className="bg-gray-900 rounded-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto border border-sky-800/50 shadow-xl">
-              <div className="p-6">
-                <div className="flex justify-between items-center mb-4">
-                  <h3 className="text-xl font-bold text-sky-400">
-                    {tooltipContent[activeTooltip as keyof typeof tooltipContent].title}
-                  </h3>
-                  <button
-                    onClick={() => setActiveTooltip(null)}
-                    className="text-gray-400 hover:text-white transition-colors"
-                  >
-                    <X className="h-5 w-5" />
-                  </button>
-                </div>
-                <div className="prose prose-invert prose-sky max-w-none">
-                  <p className="text-gray-300 whitespace-pre-line">
-                    {tooltipContent[activeTooltip as keyof typeof tooltipContent].content}
-                  </p>
-                  <div className="mt-4 bg-gray-800 p-4 rounded-lg">
-                    <img
-                      src={tooltipContent[activeTooltip as keyof typeof tooltipContent].image || "/placeholder.svg"}
-                      alt={`${tooltipContent[activeTooltip as keyof typeof tooltipContent].title} visualization`}
-                      className="max-w-full h-auto rounded"
-                      onError={(e) => {
-                        const target = e.target as HTMLImageElement
-                        target.src = "/placeholder.svg?height=200&width=400"
-                        target.alt = "Visualization placeholder (image not available)"
-                      }}
-                    />
-                    <p className="text-sm text-gray-400 mt-2 text-center">
-                      {activeTooltip === "kstest"
-                        ? "Visual representation of the KS test comparing two distributions"
-                        : "Visual representation of the Wasserstein distance between two distributions"}
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
       </main>
     </div>
   )

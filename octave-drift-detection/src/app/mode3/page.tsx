@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Head from "next/head";
 import D3ConfusionMatrix from "../../components/D3ConfusionMatrix";
 import { AlertCircle, AlertTriangle, CheckCircle, RefreshCw, Info } from "lucide-react";
+import { Chart, registerables } from "chart.js";
 import {
   fetchData,
   type KPI,
@@ -11,6 +12,8 @@ import {
   type TableDataPoint,
 } from "../../services/backendService2";
 import ReactMarkdown from "react-markdown";
+
+Chart.register(...registerables);
 
 interface DetailedMetric {
   total_samples: number;
@@ -20,52 +23,23 @@ interface DetailedMetric {
 }
 
 export default function Mode3Page() {
-  // --- STATE HOOKS ---
+  // --- FILTER STATES (for dashboard) ---
   const [businessUnit, setBusinessUnit] = useState<string>("");
   const [useCase, setUseCase] = useState<string>("");
   const [shortCode, setShortCode] = useState<string>("");
-  const [runtimeValue, setRuntimeValue] = useState<number>(1);
   const [alertKeeperValue, setAlertKeeperValue] = useState<string>("");
-  const [roleValue, setRoleValue] = useState<string>("");
-  const [emailValue, setEmailValue] = useState<string>("");
+  const [runtimeValue, setRuntimeValue] = useState<number>(1);
 
-  const [availableAlertKeepers, setAvailableAlertKeepers] = useState<string[]>([]);
-  const [availableRoles, setAvailableRoles] = useState<string[]>([]);
-  const [availableEmails, setAvailableEmails] = useState<string[]>([]);
+  // Stubbed keeper list (or fetch from your backend)
+  const [availableAlertKeepers] = useState<string[]>(["KeeperA", "KeeperB", "KeeperC"]);
 
+  // Map business → use-cases
   const useCases: Record<string, string[]> = {
     CCS: ["CC-Di", "CC-MT"],
     JMSL: ["JM-Ch"],
   };
 
-  const handleBusinessUnitChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const v = e.target.value;
-    setBusinessUnit(v);
-    setUseCase("");
-    setShortCode("");
-  };
-  const handleUseCaseChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const v = e.target.value;
-    setUseCase(v);
-    setShortCode("");
-  };
-  const handleShortCodeChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    setShortCode(e.target.value);
-  };
-  const handleRuntimeChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    setRuntimeValue(Number(e.target.value));
-  };
-  const handleAlertKeeperChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    setAlertKeeperValue(e.target.value);
-  };
-  const handleRoleChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    setRoleValue(e.target.value);
-  };
-  const handleEmailChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    setEmailValue(e.target.value);
-  };
-
-  // Core data states
+  // --- CORE DATA STATES ---
   const [kpis, setKpis] = useState<KPI[]>([]);
   const [errors, setErrors] = useState<{ plotData: PlotDataPoint[]; tableData: TableDataPoint[] }>({
     plotData: [],
@@ -74,23 +48,21 @@ export default function Mode3Page() {
   const [referenceMatrix, setReferenceMatrix] = useState<number[][]>([]);
   const [currentMatrix, setCurrentMatrix] = useState<number[][]>([]);
   const [detailedMetrics, setDetailedMetrics] = useState<Record<string, DetailedMetric>>({});
-
-  const [stateVal, setStateVal] = useState<string>("Unknown");
-  const [coverage, setCoverage] = useState<any>({});
-  const [clusters, setClusters] = useState<any>({});
-  const [backwardAnalysis, setBackwardAnalysis] = useState<any>({});
-  const [currentPeriod, setCurrentPeriod] = useState<string>("N/A");
-  const [totalOutlets, setTotalOutlets] = useState<number>(0);
-  const [outletsExceedingThresholdCount, setOutletsExceedingThresholdCount] = useState<number>(0);
   const [xaiExplanation, setXaiExplanation] = useState<string>("No explanation available");
   const [backendError, setBackendError] = useState<string | null>(null);
-
   const [loading, setLoading] = useState<boolean>(true);
+  const [currentPeriod, setCurrentPeriod] = useState<string>("N/A");
+  const [outletsExceedingThresholdCount, setOutletsExceedingThresholdCount] = useState<number>(0);
 
-  // build labels ["0","1",…] for axes
+  // --- STATUS DISTRIBUTION FOR PIE CHART (placeholder) ---
+  const [statusDistribution, setStatusDistribution] = useState({
+    good: 65,
+    warning: 25,
+    error: 10,
+  });
+
+  // --- HELPERS FOR FUN ---
   const makeLabels = (n: number) => Array.from({ length: n }, (_, i) => i.toString());
-
-  // cap matrix square at 300px
   const computeSquareSize = (grid: number[][]) => {
     const maxPx = 300;
     const rows = grid.length;
@@ -99,11 +71,9 @@ export default function Mode3Page() {
     const cellSize = Math.min(maxPx / rows, maxPx / cols);
     return Math.max(rows, cols) * cellSize;
   };
-
-  // Helper for KPI status
-  const getStatusColor = (status?: string) => {
-    if (!status) return "text-gray-400";
-    switch (status.toLowerCase()) {
+  const getStatusColor = (s?: string) => {
+    if (!s) return "text-gray-400";
+    switch (s.toLowerCase()) {
       case "warning":
         return "text-amber-400";
       case "error":
@@ -114,9 +84,9 @@ export default function Mode3Page() {
         return "text-sky-400";
     }
   };
-  const getStatusIcon = (status?: string) => {
-    if (!status) return <Info className="h-5 w-5 text-gray-400" />;
-    switch (status.toLowerCase()) {
+  const getStatusIcon = (s?: string) => {
+    if (!s) return <Info className="h-5 w-5 text-gray-400" />;
+    switch (s.toLowerCase()) {
       case "warning":
         return <AlertTriangle className="h-5 w-5 text-amber-400" />;
       case "error":
@@ -128,7 +98,7 @@ export default function Mode3Page() {
     }
   };
 
-  // --- FETCH DATA ---
+  // --- FETCHING ---
   const initData = async () => {
     setLoading(true);
     setBackendError(null);
@@ -139,34 +109,30 @@ export default function Mode3Page() {
         referenceMatrix: fetchedRefM,
         currentMatrix: fetchedCurrM,
         detailedMetrics: fetchedDetailed,
-        state: fetchedState,
-        coverage: fetchedCoverage,
-        clusters: fetchedClusters,
-        backwardAnalysis: fetchedBackward,
-        currentPeriod: fetchedPeriod,
-        totalOutlets: fetchedTotal,
-        outletsExceedingThresholdCount: fetchedCount,
         xaiExplanation: fetchedXai,
+        currentPeriod: fetchedPeriod,
+        outletsExceedingThresholdCount: fetchedCount,
       } = await fetchData();
+
+      // If your backend returns the dashboard values, set them here:
+      // setBusinessUnit(fetchedBusinessUnit)
+      // setUseCase(fetchedUseCase)
+      // setShortCode(fetchedShortCode)
+      // setAlertKeeperValue(fetchedAlertKeeper)
 
       setKpis(fetchedKpis);
       setErrors(fetchedErrors);
       setReferenceMatrix(fetchedRefM);
       setCurrentMatrix(fetchedCurrM);
       setDetailedMetrics(fetchedDetailed);
-      setStateVal(fetchedState);
-      setCoverage(fetchedCoverage);
-      setClusters(fetchedClusters);
-      setBackwardAnalysis(fetchedBackward);
-      setCurrentPeriod(fetchedPeriod);
-      setTotalOutlets(fetchedTotal);
-      setOutletsExceedingThresholdCount(fetchedCount);
       setXaiExplanation(fetchedXai);
+      setCurrentPeriod(fetchedPeriod);
+      setOutletsExceedingThresholdCount(fetchedCount);
+
+      // (Optionally) recalc statusDistribution here from your new data...
     } catch (err) {
-      console.error("Error fetching data:", err);
-      setBackendError(
-        err instanceof Error ? `Failed to load data: ${err.message}` : "Failed to load data: Unknown error"
-      );
+      console.error(err);
+      setBackendError(err instanceof Error ? err.message : "Unknown error");
     } finally {
       setLoading(false);
     }
@@ -176,14 +142,92 @@ export default function Mode3Page() {
     initData();
   }, []);
 
+  // --- RENDER PIE CHART WHEN READY ---
+  useEffect(() => {
+    if (loading) return;
+    const ctx = document.getElementById("statusPieChart") as HTMLCanvasElement;
+    if (!ctx) return;
+    new Chart(ctx, {
+      type: "pie",
+      data: {
+        labels: ["Good", "Warning", "Error"],
+        datasets: [
+          {
+            data: [
+              statusDistribution.good,
+              statusDistribution.warning,
+              statusDistribution.error,
+            ],
+            backgroundColor: [
+              "rgba(52, 211, 153, 0.8)",
+              "rgba(251, 191, 36, 0.8)",
+              "rgba(239, 68, 68, 0.8)",
+            ],
+            borderColor: [
+              "rgba(52, 211, 153, 1)",
+              "rgba(251, 191, 36, 1)",
+              "rgba(239, 68, 68, 1)",
+            ],
+            borderWidth: 1,
+          },
+        ],
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            position: "right",
+            labels: {
+              color: "#e5e7eb",
+              font: { size: 14 },
+              generateLabels: (chart) =>
+                chart.data.labels!.map((label, i) => ({
+                  text: `${label}: ${chart.data.datasets![0].data[i]}%`,
+                  fillStyle:
+                    chart.data.datasets![0].backgroundColor![i] as string,
+                  strokeStyle:
+                    chart.data.datasets![0].borderColor![i] as string,
+                  lineWidth: 1,
+                  hidden: false,
+                  index: i,
+                })),
+            },
+          },
+          tooltip: {
+            callbacks: {
+              label: (ctx) => `${ctx.label}: ${ctx.raw}%`,
+            },
+          },
+        },
+      },
+    });
+  }, [loading, statusDistribution]);
+
+  // --- HANDLERS for selects (if you ever re-enable editing) ---
+  const handleBusinessUnitChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    setBusinessUnit(e.target.value);
+    setUseCase("");
+    setShortCode("");
+  };
+  const handleUseCaseChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    setUseCase(e.target.value);
+    setShortCode("");
+  };
+  const handleShortCodeChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    setShortCode(e.target.value);
+  };
+  const handleRuntimeChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    setRuntimeValue(Number(e.target.value));
+  };
+  const handleAlertKeeperChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    setAlertKeeperValue(e.target.value);
+  };
+
   return (
     <div className="bg-gradient-to-b from-gray-950 to-gray-900 min-h-screen flex flex-col">
       <Head>
         <title>Mode 3 | CL Dashboard</title>
-        <link
-          rel="stylesheet"
-          href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"
-        />
       </Head>
       <main className="flex-grow container mx-auto px-4 py-8">
         {/* Backend Error */}
@@ -203,73 +247,72 @@ export default function Mode3Page() {
           </div>
         )}
 
-        {/* Header & Filters */}
-        <div className="bg-gray-900/80 rounded-xl shadow-xl overflow-hidden p-6 mb-6 border border-gray-700/50 backdrop-blur-sm">
-          <div className="flex flex-col md:flex-row md:justify-between mb-6">
-            <h2 className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-sky-600 mb-4 md:mb-0">
-              OCTAVE – CL Dashboard
-            </h2>
-            <button
-              onClick={initData}
-              className="inline-flex items-center gap-2 px-4 py-2 bg-sky-800/40 hover:bg-sky-700/60 text-white rounded-md text-sm transition"
-            >
-              <RefreshCw className="h-4 w-4" /> Refresh
-            </button>
+        {/* Header */}
+        <div className="flex flex-col md:flex-row md:justify-between mb-6">
+          <h2 className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-sky-600 mb-4 md:mb-0">
+            OCTAVE – CL Dashboard
+          </h2>
+          <button
+            onClick={initData}
+            className="inline-flex items-center gap-2 px-4 py-2 bg-sky-800/40 hover:bg-sky-700/60 text-white rounded-md text-sm transition"
+          >
+            <RefreshCw className="h-4 w-4" /> Refresh
+          </button>
+        </div>
+
+        {/* Mode-1-Style Dashboard */}
+        <div className="bg-gray-900/80 rounded-xl shadow-xl p-6 mb-6 border border-gray-700/50 backdrop-blur-sm">
+          {/* Static Filters Box */}
+          <div className="bg-gradient-to-br from-sky-950/40 to-sky-900/20 p-6 rounded-lg border border-sky-800/30 shadow-md mb-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <h3 className="text-lg font-medium text-sky-300 mb-2">
+                  Business Unit
+                </h3>
+                <ul className="list-disc list-inside text-sky-200 mb-4">
+                  <li>
+                    {loading ? "Loading…" : businessUnit || "Not Selected"}
+                  </li>
+                </ul>
+                <h3 className="text-lg font-medium text-sky-300 mb-2">
+                  Use Case
+                </h3>
+                <ul className="list-disc list-inside text-sky-200">
+                  <li>
+                    {loading ? "Loading…" : useCase || "Not Selected"}
+                  </li>
+                </ul>
+              </div>
+              <div>
+                <h3 className="text-lg font-medium text-sky-300 mb-2">
+                  Short Code
+                </h3>
+                <ul className="list-disc list-inside text-sky-200 mb-4">
+                  <li>
+                    {loading ? "Loading…" : shortCode || "Not Available"}
+                  </li>
+                </ul>
+                <h3 className="text-lg font-medium text-sky-300 mb-2">
+                  Alert Keeper
+                </h3>
+                <ul className="list-disc list-inside text-sky-200">
+                  <li>
+                    {loading
+                      ? "Loading…"
+                      : alertKeeperValue || "Not Selected"}
+                  </li>
+                </ul>
+              </div>
+            </div>
           </div>
 
-          {/* Filters row 1 */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-            {/* Business Unit */}
-            <div className="p-4 bg-gradient-to-br from-sky-950/40 to-sky-900/20 rounded-lg border border-sky-800/30 shadow-md">
-              <label className="block text-sky-300 mb-2 font-medium">Business Unit</label>
-              <select
-                className="w-full bg-gray-800/80 border border-sky-700/50 rounded-md p-2 text-white focus:ring-2 focus:ring-sky-500"
-                value={businessUnit}
-                onChange={handleBusinessUnitChange}
-              >
-                <option value="">Select</option>
-                <option value="CCS">CCS</option>
-                <option value="JMSL">JMSL</option>
-              </select>
-            </div>
-            {/* Use Case */}
-            <div className="p-4 bg-gradient-to-br from-sky-950/40 to-sky-900/20 rounded-lg border border-sky-800/30 shadow-md">
-              <label className="block text-sky-300 mb-2 font-medium">Use Case</label>
-              <select
-                className="w-full bg-gray-800/80 border border-sky-700/50 rounded-md p-2 text-white focus:ring-2 focus:ring-sky-500"
-                value={useCase}
-                onChange={handleUseCaseChange}
-                disabled={!businessUnit}
-              >
-                <option value="">Select</option>
-                {businessUnit &&
-                  useCases[businessUnit].map((uc) => (
-                    <option key={uc} value={uc}>
-                      {uc}
-                    </option>
-                  ))}
-              </select>
-            </div>
-            {/* Short Code */}
-            <div className="p-4 bg-gradient-to-br from-sky-950/40 to-sky-900/20 rounded-lg border border-sky-800/30 shadow-md">
-              <label className="block text-sky-300 mb-2 font-medium">Short Code</label>
-              <select
-                className="w-full bg-gray-800/80 border border-sky-700/50 rounded-md p-2 text-white focus:ring-2 focus:ring-sky-500"
-                value={shortCode}
-                onChange={handleShortCodeChange}
-                disabled={!businessUnit || !useCase}
-              >
-                <option value="">Select</option>
-                <option value={`${businessUnit.substring(0, 2)}-${useCase.substring(0, 2)}`}>
-                  {businessUnit && useCase
-                    ? `${businessUnit.substring(0, 2)}-${useCase.substring(0, 2)}`
-                    : "-"}
-                </option>
-              </select>
-            </div>
+          {/* Runtime & Status Distribution */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
             {/* Runtime */}
-            <div className="p-4 bg-gradient-to-br from-sky-950/40 to-sky-900/20 rounded-lg border border-sky-800/30 shadow-md">
-              <label className="block text-sky-300 mb-2 font-medium">Runtime</label>
+            <div className="lg:col-span-2 bg-gradient-to-br from-sky-950/40 to-sky-900/20 p-6 rounded-lg border border-sky-800/30 shadow-md">
+              <h3 className="text-lg font-medium text-sky-300 mb-2">
+                Runtime
+              </h3>
               <select
                 className="w-full bg-gray-800/80 border border-sky-700/50 rounded-md p-2 text-white focus:ring-2 focus:ring-sky-500"
                 value={runtimeValue}
@@ -282,60 +325,14 @@ export default function Mode3Page() {
                 ))}
               </select>
             </div>
-          </div>
-
-          {/* Filters row 2 */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-            {/* Alert Keeper */}
-            <div className="p-4 bg-gradient-to-br from-sky-950/40 to-sky-900/20 rounded-lg border border-sky-800/30 shadow-md">
-              <label className="block text-sky-300 mb-2 font-medium">Alert Keeper</label>
-              <select
-                className="w-full bg-gray-800/80 border border-sky-700/50 rounded-md p-2 text-white focus:ring-2 focus:ring-sky-500"
-                value={alertKeeperValue}
-                onChange={handleAlertKeeperChange}
-                disabled={!availableAlertKeepers.length}
-              >
-                <option value="">Select</option>
-                {availableAlertKeepers.map((k) => (
-                  <option key={k} value={k}>
-                    {k}
-                  </option>
-                ))}
-              </select>
-            </div>
-            {/* Role */}
-            <div className="p-4 bg-gradient-to-br from-sky-950/40 to-sky-900/20 rounded-lg border border-sky-800/30 shadow-md">
-              <label className="block text-sky-300 mb-2 font-medium">Role</label>
-              <select
-                className="w-full bg-gray-800/80 border border-sky-700/50 rounded-md p-2 text-white focus:ring-2 focus:ring-sky-500"
-                value={roleValue}
-                onChange={handleRoleChange}
-                disabled={!availableRoles.length}
-              >
-                <option value="">Select</option>
-                {availableRoles.map((r) => (
-                  <option key={r} value={r}>
-                    {r}
-                  </option>
-                ))}
-              </select>
-            </div>
-            {/* Email */}
-            <div className="p-4 bg-gradient-to-br from-sky-950/40 to-sky-900/20 rounded-lg border border-sky-800/30 shadow-md">
-              <label className="block text-sky-300 mb-2 font-medium">Email</label>
-              <select
-                className="w-full bg-gray-800/80 border	border-sky-700/50 rounded-md p-2 text-white focus:ring-2 focus:ring-sky-500"
-                value={emailValue}
-                onChange={handleEmailChange}
-                disabled={!availableEmails.length}
-              >
-                <option value="">Select</option>
-                {availableEmails.map((e) => (
-                  <option key={e} value={e}>
-                    {e}
-                  </option>
-                ))}
-              </select>
+            {/* Status Distribution */}
+            <div className="bg-gradient-to-br from-sky-950/40 to-sky-900/20 p-6 rounded-lg border border-sky-800/30 shadow-md">
+              <h3 className="text-lg font-medium text-sky-300 mb-2">
+                Status Distribution
+              </h3>
+              <div className="h-48">
+                <canvas id="statusPieChart"></canvas>
+              </div>
             </div>
           </div>
         </div>
@@ -351,12 +348,18 @@ export default function Mode3Page() {
                 key={kpi.rowKey}
                 className="bg-gradient-to-br from-sky-950/40 to-sky-900/20 p-4 rounded-lg border border-sky-800/30 shadow-md transition-all duration-300 hover:shadow-sky-900/20 hover:border-sky-700/50"
               >
-                <h3 className="text-lg font-medium text-sky-300 mb-2">{kpi.rowKey}</h3>
+                <h3 className="text-lg font-medium text-sky-300 mb-2">
+                  {kpi.rowKey}
+                </h3>
                 <div className="flex items-center">
                   <div className="w-10 h-10 rounded-full bg-sky-800/40 flex items-center justify-center mr-3">
                     {getStatusIcon(kpi.status)}
                   </div>
-                  <p className={`text-xl font-semibold ${getStatusColor(kpi.status)}`}>
+                  <p
+                    className={`text-xl font-semibold ${getStatusColor(
+                      kpi.status
+                    )}`}
+                  >
                     {loading ? "Loading..." : kpi.value}
                   </p>
                 </div>
@@ -367,9 +370,9 @@ export default function Mode3Page() {
 
         {/* Confusion Matrices */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-          {[
+          {[ 
             { title: "Reference Matrix", grid: referenceMatrix },
-            { title: "Current Matrix", grid: currentMatrix },
+            { title: "Current Matrix", grid: currentMatrix }
           ].map(({ title, grid }, idx) => {
             const side = computeSquareSize(grid);
             return (
@@ -403,14 +406,23 @@ export default function Mode3Page() {
                         fill="none"
                         viewBox="0 0 24 24"
                       >
-                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <circle
+                          className="opacity-25"
+                          cx="12"
+                          cy="12"
+                          r="10"
+                          stroke="currentColor"
+                          strokeWidth="4"
+                        />
                         <path
                           className="opacity-75"
                           fill="currentColor"
                           d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                        ></path>
+                        />
                       </svg>
-                      <div className="text-sky-300">Loading matrix data...</div>
+                      <div className="text-sky-300">
+                        Loading matrix data...
+                      </div>
                     </div>
                   </div>
                 )}
@@ -419,29 +431,34 @@ export default function Mode3Page() {
           })}
         </div>
 
-        {/* Detailed Metrics by Class */}
+        {/* Detailed Metrics */}
         <div className="bg-gray-900/80 rounded-xl shadow-xl overflow-hidden p-6 mb-6 border border-gray-700/50 backdrop-blur-sm">
           <h2 className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-sky-600 mb-4">
             Detailed Metrics by Class
           </h2>
           {loading ? (
             <div className="flex items-center justify-center py-12">
-              <div className="flex flex-col items-center">
-                <svg
-                  className="animate-spin h-8 w-8 text-sky-500 mb-2"
-                  xmlns="http://www.w3.org/2000/svg"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                >
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                  <path
-                    className="opacity-75"
-                    fill="currentColor"
-                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                  ></path>
-                </svg>
-                <div className="text-sky-300">Loading metrics data...</div>
-              </div>
+              <svg
+                className="animate-spin h-8 w-8 text-sky-500 mb-2"
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+              >
+                <circle
+                  className="opacity-25"
+                  cx="12"
+                  cy="12"
+                  r="10"
+                  stroke="currentColor"
+                  strokeWidth="4"
+                />
+                <path
+                  className="opacity-75"
+                  fill="currentColor"
+                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                />
+              </svg>
+              <div className="text-sky-300">Loading metrics data...</div>
             </div>
           ) : (
             <div className="overflow-x-auto rounded-lg border border-gray-700/50">
@@ -467,7 +484,10 @@ export default function Mode3Page() {
                 </thead>
                 <tbody className="bg-gray-800/30 divide-y divide-gray-700/50">
                   {Object.entries(detailedMetrics).map(([cls, dm]) => (
-                    <tr key={cls} className="hover:bg-gray-700/30 transition-colors duration-150">
+                    <tr
+                      key={cls}
+                      className="hover:bg-gray-700/30 transition-colors duration-150"
+                    >
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-white">
                         {cls}
                       </td>
@@ -490,8 +510,10 @@ export default function Mode3Page() {
                         {Object.entries(dm.misclassifications)
                           .map(
                             ([p, m]) =>
-                              `${p}: ${m.count} ${
-                                m.percentage > 0 ? `(${m.percentage.toFixed(1)}%)` : ""
+                              `${p}: ${m.count}${
+                                m.percentage > 0
+                                  ? ` (${m.percentage.toFixed(1)}%)`
+                                  : ""
                               }`
                           )
                           .join(", ")}
@@ -554,7 +576,10 @@ export default function Mode3Page() {
                 <tbody className="bg-gray-800/30 divide-y divide-gray-700/50">
                   {errors.tableData.length > 0 ? (
                     errors.tableData.map((r, i) => (
-                      <tr key={i} className="hover:bg-rose-900/20 transition-colors duration-150">
+                      <tr
+                        key={i}
+                        className="hover:bg-rose-900/20 transition-colors duration-150"
+                      >
                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-white">
                           {r.id}
                         </td>
@@ -565,7 +590,10 @@ export default function Mode3Page() {
                     ))
                   ) : (
                     <tr>
-                      <td colSpan={2} className="px-6 py-4 text-center text-sm text-gray-400">
+                      <td
+                        colSpan={2}
+                        className="px-6 py-4 text-center text-sm text-gray-400"
+                      >
                         No misclassified data
                       </td>
                     </tr>

@@ -1,234 +1,4 @@
 {
-    "indices": {
-        "normal": [
-            0,
-            1,
-            2,
-            3,
-            4,
-            5,
-            6,
-            7,
-            8,
-            9,
-            10,
-            11,
-            12,
-            13,
-            14,
-            15,
-            16,
-            17,
-            18,
-            19,
-            20,
-            21,
-            22,
-            23,
-            24,
-            25,
-            26,
-            27,
-            28,
-            29,
-            30,
-            31,
-            32,
-            33,
-            34,
-            35,
-            36,
-            37,
-            38,
-            39,
-            40,
-            41,
-            42,
-            43,
-            44,
-            45,
-            46,
-            47,
-            48,
-            49,
-            50,
-            51,
-            52,
-            53,
-            54,
-            55,
-            56,
-            57,
-            58,
-            59,
-            60,
-            61,
-            62,
-            63,
-            64,
-            65,
-            66,
-            67,
-            68,
-            69,
-            70,
-            71,
-            72,
-            73,
-            74,
-            75,
-            76,
-            77,
-            78,
-            79,
-            80,
-            81,
-            82,
-            83,
-            84,
-            85,
-            86,
-            87,
-            88,
-            89,
-            90,
-            91,
-            92,
-            93,
-            94,
-            95,
-            96,
-            97,
-            98,
-            99,
-            100,
-            101,
-            102,
-            103,
-            104,
-            105,
-            106,
-            107,
-            108,
-            109,
-            110,
-            111,
-            112,
-            113,
-            114,
-            115,
-            116,
-            117,
-            118,
-            119,
-            120,
-            121,
-            122,
-            123,
-            124,
-            125,
-            126,
-            127,
-            128,
-            129,
-            130,
-            131,
-            132,
-            133,
-            134,
-            135,
-            136,
-            137,
-            138,
-            139,
-            140,
-            141,
-            142,
-            143,
-            144,
-            145,
-            146,
-            147,
-            148,
-            149,
-            150,
-            151,
-            152,
-            153,
-            154,
-            155,
-            156,
-            157,
-            158,
-            159,
-            160,
-            161,
-            162,
-            163,
-            164,
-            165,
-            166,
-            167,
-            168,
-            169,
-            170,
-            171,
-            172,
-            173,
-            174,
-            175,
-            176,
-            177,
-            178,
-            179,
-            180,
-            181,
-            182,
-            183,
-            184,
-            185,
-            186,
-            187,
-            188,
-            189,
-            190,
-            191,
-            192,
-            193,
-            194,
-            195,
-            196,
-            197,
-            198,
-            199
-        ],
-        "warning": [],
-        "drift": [200,201,202]
-    },
-    "clusters": {
-        "warning": [],
-        "drift": [],
-        "combined": []
-    },
-    "state": "Stable",
-    "coverage": {
-        "total_points": 200,
-        "warning_coverage": 0.0,
-        "drift_coverage": 0.0
-    },
-    "locations": {
-        "first_warning_location": null,
-        "last_warning_location": null,
-        "first_drift_location": null,
-        "last_drift_location": null
-    },
-    "backward_analysis": {
-        "backward_10_percent_drift": false,
-        "backward_10_percent_warning": false
-    },
-    "xai": {
-        "explanation": "### Explanation of Drift Detection Using the ADWIN Algorithm\n\nThe **ADWIN (Adaptive Windowing)** algorithm dynamically adjusts its window size based on the data to detect concept drifts. It splits the sliding window into two parts (older and newer sub-windows) and compares their averages to determine if a drift has occurred.\n\n#### Key Parameters:\n- **Delta (\u03b4):** 0.02 (default = 0.002, corresponds to 99.8% confidence)\n  - Smaller \u03b4: Stricter \u2013 requires stronger evidence to declare drift.\n  - Larger \u03b4: Less strict \u2013 detects smaller changes but may trigger more false alarms.\n- **Window Size:** Automatically adjusts based on the data.\n  - Larger windows: Better for detecting gradual drifts.\n  - Smaller windows: Better for detecting abrupt drifts.\n\n#### Sliding Window Splitting:\nThe sliding window is split at index **None**, dividing it into two sub-windows:\n- **Older Sub-Window:** Contains 0 instances with an average value of 6.8002.\n- **Newer Sub-Window:** Contains 0 instances with an average value of 6.8649.\n\n#### Statistical Significance Test:\nTo determine whether the difference between the two sub-windows is significant, ADWIN uses Hoeffding\u2019s inequality:\n- **Threshold (\u03b5_cut):** \u03b5_cut = \u221a((1 / |Left Window|) + (1 / |Right Window|)) * ln(1 / \u03b4)\n- Substituting values: \u03b5_cut = \u221a((1 / 0) + (1 / 0)) * ln(1 / 0.02) = 1.1065\n- **Mean Difference:** |\u03bc_left - \u03bc_right| = |6.8002 - 6.8649| = 0.0648\n\n#### Drift Detected:\nA significant difference was detected between the older and newer sub-windows, indicating a potential concept drift. This conclusion was reached because the mean difference (**0.0648**) exceeded the threshold (**\u03b5_cut = 1.1065**).\n\n#### Window Shrinking:\nWhen a drift is detected, ADWIN shrinks the sliding window by dropping the oldest data. This ensures that the detector stays focused on recent data, adapting quickly to changes.\n\n#### Drift Data Analysis:\n- **Mean of Drift Data Points:** 1.6224\n- **Variance of Drift Data Points:** 0.4250\nThese statistics indicate the central tendency and spread of the data points around the drift event.\n\n#### Warning Data Analysis:\nNo warning data points were available for analysis.\n\n### Summary:\nThe ADWIN algorithm dynamically adjusts its window size and splits the data into two sub-windows to compare their averages. In this case:\n- The **mean difference** between the older and newer sub-windows is 0.0648.\n- The **threshold (\u03b5_cut)** for statistical significance is 1.1065.\n- A **drift** is declared when the mean difference exceeds the threshold.\n\nBased on these calculations, the algorithm determined whether a drift occurred."
-    },
     "current_period": "Period_2",
     "error_percentage_threshold": 10.0,
     "total_outlets": 100,
@@ -934,5 +704,789 @@
             "y_pred": 66.98829598328274,
             "percentage_error": 10.376835454403208
         }
-    ]
+    ],
+    "indices": {
+        "normal": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8,
+            9,
+            10,
+            11,
+            12,
+            13,
+            14,
+            15,
+            16,
+            17,
+            18,
+            19,
+            20,
+            21,
+            22,
+            23,
+            24,
+            25,
+            26,
+            27,
+            28,
+            29,
+            30,
+            31,
+            32,
+            33,
+            34,
+            35,
+            36,
+            37,
+            38,
+            39,
+            40,
+            41,
+            42,
+            43,
+            44,
+            45,
+            46,
+            47,
+            48,
+            49,
+            50,
+            51,
+            52,
+            53,
+            54,
+            55,
+            56,
+            57,
+            58,
+            59,
+            60,
+            61,
+            62,
+            63,
+            64,
+            65,
+            66,
+            67,
+            68,
+            69,
+            70,
+            71,
+            72,
+            73,
+            74,
+            75,
+            76,
+            77,
+            78,
+            79,
+            80,
+            81,
+            82,
+            83,
+            84,
+            85,
+            86,
+            87,
+            88,
+            89,
+            90,
+            91,
+            92,
+            93,
+            94,
+            95,
+            96,
+            97,
+            98,
+            99,
+            100,
+            101,
+            102,
+            103,
+            104,
+            105,
+            106,
+            107,
+            108,
+            109,
+            110,
+            111,
+            112,
+            113,
+            114,
+            115,
+            116,
+            117,
+            118,
+            119,
+            120,
+            121,
+            122,
+            123,
+            124,
+            125,
+            126,
+            127,
+            128,
+            129,
+            130,
+            131,
+            132,
+            133,
+            134,
+            135,
+            136,
+            137,
+            138,
+            139,
+            140,
+            141,
+            142,
+            143,
+            144,
+            145,
+            146,
+            147,
+            148,
+            149,
+            150,
+            151,
+            152,
+            153,
+            154,
+            155,
+            156,
+            157,
+            158,
+            159,
+            160,
+            161,
+            162,
+            163,
+            164,
+            165,
+            166,
+            167,
+            168,
+            169,
+            170,
+            171,
+            172,
+            173,
+            174,
+            175,
+            176,
+            177,
+            178,
+            179,
+            180,
+            181,
+            182,
+            183,
+            184,
+            185,
+            186,
+            187,
+            188,
+            189,
+            190,
+            191,
+            192,
+            193,
+            194,
+            195,
+            196,
+            197,
+            198,
+            199
+        ],
+        "warning": [],
+        "drift": []
+    },
+    "clusters": {
+        "warning": [],
+        "drift": [],
+        "combined": []
+    },
+    "state": "Stable",
+    "coverage": {
+        "total_points": 200,
+        "warning_coverage": 0.0,
+        "drift_coverage": 0.0
+    },
+    "locations": {
+        "first_warning_location": null,
+        "last_warning_location": null,
+        "first_drift_location": null,
+        "last_drift_location": null
+    },
+    "backward_analysis": {
+        "backward_10_percent_drift": false,
+        "backward_10_percent_warning": false
+    },
+    "id_error": [
+        {
+            "id": 101,
+            "time_period": "Period_2",
+            "Mean_Prediction_Error": -1.3159800436882918
+        },
+        {
+            "id": 102,
+            "time_period": "Period_2",
+            "Mean_Prediction_Error": -0.2407241607878774
+        },
+        {
+            "id": 103,
+            "time_period": "Period_2",
+            "Mean_Prediction_Error": 4.989174420493043
+        },
+        {
+            "id": 104,
+            "time_period": "Period_2",
+            "Mean_Prediction_Error": 4.44148106173386
+        },
+        {
+            "id": 105,
+            "time_period": "Period_2",
+            "Mean_Prediction_Error": 1.91639362414341
+        },
+        {
+            "id": 106,
+            "time_period": "Period_2",
+            "Mean_Prediction_Error": 2.4693095332351263
+        },
+        {
+            "id": 107,
+            "time_period": "Period_2",
+            "Mean_Prediction_Error": 7.110659583153705
+        },
+        {
+            "id": 108,
+            "time_period": "Period_2",
+            "Mean_Prediction_Error": -0.3662855553433175
+        },
+        {
+            "id": 109,
+            "time_period": "Period_2",
+            "Mean_Prediction_Error": 4.188389524680154
+        },
+        {
+            "id": 110,
+            "time_period": "Period_2",
+            "Mean_Prediction_Error": 1.191229390264425
+        },
+        {
+            "id": 111,
+            "time_period": "Period_2",
+            "Mean_Prediction_Error": 1.1292751870911175
+        },
+        {
+            "id": 112,
+            "time_period": "Period_2",
+            "Mean_Prediction_Error": 6.395107407948757
+        },
+        {
+            "id": 113,
+            "time_period": "Period_2",
+            "Mean_Prediction_Error": 5.301665395952114
+        },
+        {
+            "id": 114,
+            "time_period": "Period_2",
+            "Mean_Prediction_Error": 5.2540385440025545
+        },
+        {
+            "id": 115,
+            "time_period": "Period_2",
+            "Mean_Prediction_Error": 7.22191522861732
+        },
+        {
+            "id": 116,
+            "time_period": "Period_2",
+            "Mean_Prediction_Error": 2.084015366531034
+        },
+        {
+            "id": 117,
+            "time_period": "Period_2",
+            "Mean_Prediction_Error": 4.727811885179854
+        },
+        {
+            "id": 118,
+            "time_period": "Period_2",
+            "Mean_Prediction_Error": 0.7589329736261732
+        },
+        {
+            "id": 119,
+            "time_period": "Period_2",
+            "Mean_Prediction_Error": 3.296665409953768
+        },
+        {
+            "id": 120,
+            "time_period": "Period_2",
+            "Mean_Prediction_Error": 1.4794277825292639
+        },
+        {
+            "id": 121,
+            "time_period": "Period_2",
+            "Mean_Prediction_Error": 2.3879838599708734
+        },
+        {
+            "id": 122,
+            "time_period": "Period_2",
+            "Mean_Prediction_Error": 4.380628101747654
+        },
+        {
+            "id": 123,
+            "time_period": "Period_2",
+            "Mean_Prediction_Error": -1.272882732933887
+        },
+        {
+            "id": 124,
+            "time_period": "Period_2",
+            "Mean_Prediction_Error": 10.369549102741843
+        },
+        {
+            "id": 125,
+            "time_period": "Period_2",
+            "Mean_Prediction_Error": -2.0240695259988044
+        },
+        {
+            "id": 126,
+            "time_period": "Period_2",
+            "Mean_Prediction_Error": -2.856754451150927
+        },
+        {
+            "id": 127,
+            "time_period": "Period_2",
+            "Mean_Prediction_Error": 6.63244349400027
+        },
+        {
+            "id": 128,
+            "time_period": "Period_2",
+            "Mean_Prediction_Error": 5.166650775851743
+        },
+        {
+            "id": 129,
+            "time_period": "Period_2",
+            "Mean_Prediction_Error": 4.496479268208617
+        },
+        {
+            "id": 130,
+            "time_period": "Period_2",
+            "Mean_Prediction_Error": 4.513382037057113
+        },
+        {
+            "id": 131,
+            "time_period": "Period_2",
+            "Mean_Prediction_Error": 1.9510129086123413
+        },
+        {
+            "id": 132,
+            "time_period": "Period_2",
+            "Mean_Prediction_Error": -1.589017485943323
+        },
+        {
+            "id": 133,
+            "time_period": "Period_2",
+            "Mean_Prediction_Error": 2.3032182327749027
+        },
+        {
+            "id": 134,
+            "time_period": "Period_2",
+            "Mean_Prediction_Error": -0.7086468460484454
+        },
+        {
+            "id": 135,
+            "time_period": "Period_2",
+            "Mean_Prediction_Error": 5.90047893367101
+        },
+        {
+            "id": 136,
+            "time_period": "Period_2",
+            "Mean_Prediction_Error": 1.4117704739914458
+        },
+        {
+            "id": 137,
+            "time_period": "Period_2",
+            "Mean_Prediction_Error": -1.3019887871700462
+        },
+        {
+            "id": 138,
+            "time_period": "Period_2",
+            "Mean_Prediction_Error": 0.7144566333880249
+        },
+        {
+            "id": 139,
+            "time_period": "Period_2",
+            "Mean_Prediction_Error": 3.651725817102495
+        },
+        {
+            "id": 140,
+            "time_period": "Period_2",
+            "Mean_Prediction_Error": -0.2548982112159024
+        },
+        {
+            "id": 141,
+            "time_period": "Period_2",
+            "Mean_Prediction_Error": -1.2888815822657236
+        },
+        {
+            "id": 142,
+            "time_period": "Period_2",
+            "Mean_Prediction_Error": 2.974748845967646
+        },
+        {
+            "id": 143,
+            "time_period": "Period_2",
+            "Mean_Prediction_Error": 2.979866284434891
+        },
+        {
+            "id": 144,
+            "time_period": "Period_2",
+            "Mean_Prediction_Error": -0.0277727014845226
+        },
+        {
+            "id": 145,
+            "time_period": "Period_2",
+            "Mean_Prediction_Error": 0.11584677752670558
+        },
+        {
+            "id": 146,
+            "time_period": "Period_2",
+            "Mean_Prediction_Error": 2.928199749430547
+        },
+        {
+            "id": 147,
+            "time_period": "Period_2",
+            "Mean_Prediction_Error": -3.7923373659892974
+        },
+        {
+            "id": 148,
+            "time_period": "Period_2",
+            "Mean_Prediction_Error": -3.6298550975062227
+        },
+        {
+            "id": 149,
+            "time_period": "Period_2",
+            "Mean_Prediction_Error": -0.8737768850097467
+        },
+        {
+            "id": 150,
+            "time_period": "Period_2",
+            "Mean_Prediction_Error": 1.146211393152612
+        },
+        {
+            "id": 151,
+            "time_period": "Period_2",
+            "Mean_Prediction_Error": 3.243630262392017
+        },
+        {
+            "id": 152,
+            "time_period": "Period_2",
+            "Mean_Prediction_Error": 7.901424867798212
+        },
+        {
+            "id": 153,
+            "time_period": "Period_2",
+            "Mean_Prediction_Error": 5.430638492808072
+        },
+        {
+            "id": 154,
+            "time_period": "Period_2",
+            "Mean_Prediction_Error": 1.3602458801462944
+        },
+        {
+            "id": 155,
+            "time_period": "Period_2",
+            "Mean_Prediction_Error": 1.9239351683892423
+        },
+        {
+            "id": 156,
+            "time_period": "Period_2",
+            "Mean_Prediction_Error": -2.0101174585512354
+        },
+        {
+            "id": 157,
+            "time_period": "Period_2",
+            "Mean_Prediction_Error": 1.9259474560304426
+        },
+        {
+            "id": 158,
+            "time_period": "Period_2",
+            "Mean_Prediction_Error": 0.845365444319448
+        },
+        {
+            "id": 159,
+            "time_period": "Period_2",
+            "Mean_Prediction_Error": 3.2908742413523555
+        },
+        {
+            "id": 160,
+            "time_period": "Period_2",
+            "Mean_Prediction_Error": -1.3089237742092905
+        },
+        {
+            "id": 161,
+            "time_period": "Period_2",
+            "Mean_Prediction_Error": 4.077386056964691
+        },
+        {
+            "id": 162,
+            "time_period": "Period_2",
+            "Mean_Prediction_Error": 8.130955652010307
+        },
+        {
+            "id": 163,
+            "time_period": "Period_2",
+            "Mean_Prediction_Error": 1.5649594061725693
+        },
+        {
+            "id": 164,
+            "time_period": "Period_2",
+            "Mean_Prediction_Error": 3.606846888395765
+        },
+        {
+            "id": 165,
+            "time_period": "Period_2",
+            "Mean_Prediction_Error": 4.760575966844449
+        },
+        {
+            "id": 166,
+            "time_period": "Period_2",
+            "Mean_Prediction_Error": 0.3951181124566574
+        },
+        {
+            "id": 167,
+            "time_period": "Period_2",
+            "Mean_Prediction_Error": 2.8963699272416648
+        },
+        {
+            "id": 168,
+            "time_period": "Period_2",
+            "Mean_Prediction_Error": 2.05036960312718
+        },
+        {
+            "id": 169,
+            "time_period": "Period_2",
+            "Mean_Prediction_Error": 2.3907043941953248
+        },
+        {
+            "id": 170,
+            "time_period": "Period_2",
+            "Mean_Prediction_Error": -1.0920391354218637
+        },
+        {
+            "id": 171,
+            "time_period": "Period_2",
+            "Mean_Prediction_Error": 2.0980406970357706
+        },
+        {
+            "id": 172,
+            "time_period": "Period_2",
+            "Mean_Prediction_Error": 3.9919931649817997
+        },
+        {
+            "id": 173,
+            "time_period": "Period_2",
+            "Mean_Prediction_Error": 7.804574431180171
+        },
+        {
+            "id": 174,
+            "time_period": "Period_2",
+            "Mean_Prediction_Error": 5.83708330434083
+        },
+        {
+            "id": 175,
+            "time_period": "Period_2",
+            "Mean_Prediction_Error": 10.612729830046227
+        },
+        {
+            "id": 176,
+            "time_period": "Period_2",
+            "Mean_Prediction_Error": -1.0693902515521998
+        },
+        {
+            "id": 177,
+            "time_period": "Period_2",
+            "Mean_Prediction_Error": 5.489282546882713
+        },
+        {
+            "id": 178,
+            "time_period": "Period_2",
+            "Mean_Prediction_Error": 2.7333680229534068
+        },
+        {
+            "id": 179,
+            "time_period": "Period_2",
+            "Mean_Prediction_Error": 10.759211732870689
+        },
+        {
+            "id": 180,
+            "time_period": "Period_2",
+            "Mean_Prediction_Error": -1.2331931414206068
+        },
+        {
+            "id": 181,
+            "time_period": "Period_2",
+            "Mean_Prediction_Error": -1.358887368723103
+        },
+        {
+            "id": 182,
+            "time_period": "Period_2",
+            "Mean_Prediction_Error": -0.39757058177608684
+        },
+        {
+            "id": 183,
+            "time_period": "Period_2",
+            "Mean_Prediction_Error": -6.495582897239231
+        },
+        {
+            "id": 184,
+            "time_period": "Period_2",
+            "Mean_Prediction_Error": -0.10302008672304197
+        },
+        {
+            "id": 185,
+            "time_period": "Period_2",
+            "Mean_Prediction_Error": -1.0365306462147856
+        },
+        {
+            "id": 186,
+            "time_period": "Period_2",
+            "Mean_Prediction_Error": 2.6015751459048317
+        },
+        {
+            "id": 187,
+            "time_period": "Period_2",
+            "Mean_Prediction_Error": 3.367023903108638
+        },
+        {
+            "id": 188,
+            "time_period": "Period_2",
+            "Mean_Prediction_Error": 9.504683356863538
+        },
+        {
+            "id": 189,
+            "time_period": "Period_2",
+            "Mean_Prediction_Error": 5.801695352744204
+        },
+        {
+            "id": 190,
+            "time_period": "Period_2",
+            "Mean_Prediction_Error": -0.30761462264960926
+        },
+        {
+            "id": 191,
+            "time_period": "Period_2",
+            "Mean_Prediction_Error": -1.5936586853934287
+        },
+        {
+            "id": 192,
+            "time_period": "Period_2",
+            "Mean_Prediction_Error": 3.9676766860260244
+        },
+        {
+            "id": 193,
+            "time_period": "Period_2",
+            "Mean_Prediction_Error": -3.2809328280825696
+        },
+        {
+            "id": 194,
+            "time_period": "Period_2",
+            "Mean_Prediction_Error": 9.325835063417415
+        },
+        {
+            "id": 195,
+            "time_period": "Period_2",
+            "Mean_Prediction_Error": 6.717760482885147
+        },
+        {
+            "id": 196,
+            "time_period": "Period_2",
+            "Mean_Prediction_Error": 0.12329739158118258
+        },
+        {
+            "id": 197,
+            "time_period": "Period_2",
+            "Mean_Prediction_Error": -4.852538116363512
+        },
+        {
+            "id": 198,
+            "time_period": "Period_2",
+            "Mean_Prediction_Error": 7.415489496661657
+        },
+        {
+            "id": 199,
+            "time_period": "Period_2",
+            "Mean_Prediction_Error": 1.541840618989525
+        },
+        {
+            "id": 200,
+            "time_period": "Period_2",
+            "Mean_Prediction_Error": 6.9512652478938435
+        }
+    ],
+    "top_10_ids": [
+        {
+            "id": 183,
+            "time_period": "Period_2",
+            "Mean_Prediction_Error": -6.495582897239231
+        },
+        {
+            "id": 197,
+            "time_period": "Period_2",
+            "Mean_Prediction_Error": -4.852538116363512
+        },
+        {
+            "id": 147,
+            "time_period": "Period_2",
+            "Mean_Prediction_Error": -3.7923373659892974
+        },
+        {
+            "id": 148,
+            "time_period": "Period_2",
+            "Mean_Prediction_Error": -3.6298550975062227
+        },
+        {
+            "id": 193,
+            "time_period": "Period_2",
+            "Mean_Prediction_Error": -3.2809328280825696
+        },
+        {
+            "id": 126,
+            "time_period": "Period_2",
+            "Mean_Prediction_Error": -2.856754451150927
+        },
+        {
+            "id": 125,
+            "time_period": "Period_2",
+            "Mean_Prediction_Error": -2.0240695259988044
+        },
+        {
+            "id": 156,
+            "time_period": "Period_2",
+            "Mean_Prediction_Error": -2.0101174585512354
+        },
+        {
+            "id": 191,
+            "time_period": "Period_2",
+            "Mean_Prediction_Error": -1.5936586853934287
+        },
+        {
+            "id": 132,
+            "time_period": "Period_2",
+            "Mean_Prediction_Error": -1.589017485943323
+        }
+    ],
+    "xai": {
+        "explanation": "### Explanation of Drift Detection Using the ADWIN Algorithm\n\nThe **ADWIN (Adaptive Windowing)** algorithm dynamically adjusts its window size based on the data to detect concept drifts. It splits the sliding window into two parts (older and newer sub-windows) and compares their averages to determine if a drift has occurred.\n\n#### Key Parameters:\n- **Delta (\u03b4):** 0.02 (default = 0.002, corresponds to 99.8% confidence)\n  - Smaller \u03b4: Stricter \u2013 requires stronger evidence to declare drift.\n  - Larger \u03b4: Less strict \u2013 detects smaller changes but may trigger more false alarms.\n- **Window Size:** Automatically adjusts based on the data.\n  - Larger windows: Better for detecting gradual drifts.\n  - Smaller windows: Better for detecting abrupt drifts.\n\n#### Sliding Window Splitting:\nThe sliding window is split at index **None**, dividing it into two sub-windows:\n- **Older Sub-Window:** Contains 0 instances with an average value of 6.8002.\n- **Newer Sub-Window:** Contains 0 instances with an average value of 6.8649.\n\n#### Statistical Significance Test:\nTo determine whether the difference between the two sub-windows is significant, ADWIN uses Hoeffding\u2019s inequality:\n- **Threshold (\u03b5_cut):** \u03b5_cut = \u221a((1 / |Left Window|) + (1 / |Right Window|)) * ln(1 / \u03b4)\n- Substituting values: \u03b5_cut = \u221a((1 / 0) + (1 / 0)) * ln(1 / 0.02) = 1.1065\n- **Mean Difference:** |\u03bc_left - \u03bc_right| = |6.8002 - 6.8649| = 0.0648\n\n#### Drift Detected:\nA significant difference was detected between the older and newer sub-windows, indicating a potential concept drift. This conclusion was reached because the mean difference (**0.0648**) exceeded the threshold (**\u03b5_cut = 1.1065**).\n\n#### Window Shrinking:\nWhen a drift is detected, ADWIN shrinks the sliding window by dropping the oldest data. This ensures that the detector stays focused on recent data, adapting quickly to changes.\n\n#### Drift Data Analysis:\n- **Mean of Drift Data Points:** 1.6224\n- **Variance of Drift Data Points:** 0.4250\nThese statistics indicate the central tendency and spread of the data points around the drift event.\n\n#### Warning Data Analysis:\nNo warning data points were available for analysis.\n\n### Summary:\nThe ADWIN algorithm dynamically adjusts its window size and splits the data into two sub-windows to compare their averages. In this case:\n- The **mean difference** between the older and newer sub-windows is 0.0648.\n- The **threshold (\u03b5_cut)** for statistical significance is 1.1065.\n- A **drift** is declared when the mean difference exceeds the threshold.\n\nBased on these calculations, the algorithm determined whether a drift occurred."
+    }
 }

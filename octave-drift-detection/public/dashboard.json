@@ -1,0 +1,26 @@
+[
+  {
+    "mode": "mode1",
+    "businessUnit": "JMSL",
+    "useCase": "Churn",
+    "ShortCode": "JMSL_Churn",
+    "alertKeeper": ["Shadatsharan"],
+    "runtime": 1
+  },
+  {
+    "mode": "mode2",
+    "businessUnit": "JMSL",
+    "useCase": "DrySales",
+    "ShortCode": "JMSL_Churn",
+    "alertKeeper": ["Senum","Shadatsharan"],
+    "runtime": 3
+  },
+  {
+    "mode": "mode3",
+    "businessUnit": "CCS",
+    "useCase": "MT",
+    "ShortCode": "CCS_MT",
+    "alertKeeper": ["Senum","Shadatsharan","Susara"],
+    "runtime": 2
+  }
+]

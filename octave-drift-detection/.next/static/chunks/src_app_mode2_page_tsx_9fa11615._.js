@@ -8,7 +8,7 @@
     "static/chunks/src_2a741c99._.js",
     "static/chunks/node_modules_micromark-core-commonmark_dev_lib_36a4b45d._.js",
     "static/chunks/node_modules_chart_js_dist_0784fa71._.js",
-    "static/chunks/node_modules_5952962f._.js"
+    "static/chunks/node_modules_81a61e60._.js"
   ],
   "source": "dynamic"
 });

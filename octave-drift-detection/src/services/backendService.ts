@@ -28,14 +28,34 @@ export interface OutletsExceedingThreshold {
   percentage_error: number
 }
 
-export async function fetchData(): Promise<{
+export interface DashboardData {
+  mode: string
+  businessUnit: string
+  useCase: string
+  ShortCode: string
+  alertKeeper: string
+  runtime: number
+}
+
+export interface AllOutlets {
+  id: number
+  percentage_error: number
+  y_pred: number
+  y_true: number
+}
+
+export interface FetchDataResult {
   kpis: KPI[]
   errors: { plotData: PlotDataPoint[]; tableData: TableDataPoint[] }
   outletsExceedingThreshold: OutletsExceedingThreshold[]
   xaiExplanation: string
   currentPeriod: string
   error_percentage_threshold: number
-}> {
+  dashboardData: DashboardData
+  all_outlets: AllOutlets[]
+}
+
+export async function fetchData(): Promise<FetchDataResult> {
   try {
     console.log("Fetching data from backend via proxy: /api/mode1/data")
     const response = await fetch(`/api/mode1/data`, {
@@ -49,6 +69,14 @@ export async function fetchData(): Promise<{
 
     const rawData = await response.json()
     console.log("Parsed data:", rawData)
+
+    // Fetch dashboard.json separately
+    console.log("Fetching dashboard.json from public folder")
+    const dashResponse = await fetch(`/dashboard.json`)
+    if (!dashResponse.ok) {
+      throw new Error(`HTTP error fetching dashboard.json! Status: ${dashResponse.status}`)
+    }
+    const dashboardData = await dashResponse.json()
 
     const driftMetrics = rawData.drift_state?.metrics || {}
 
@@ -134,7 +162,6 @@ export async function fetchData(): Promise<{
 
     const xaiExplanation = rawData.explanation || "No explanation available"
 
-    // --- new: currentPeriod, same as backendService2 ---
     const currentPeriod =
       rawData.current_period ?? rawData.currentPeriod ?? "N/A"
 
@@ -145,6 +172,8 @@ export async function fetchData(): Promise<{
       xaiExplanation,
       currentPeriod,
       error_percentage_threshold: rawData.error_percentage_threshold || 0,
+      dashboardData,
+      all_outlets: rawData.all_outlets || [],
     }
   } catch (error) {
     console.error("Error fetching data:", error)

@@ -57,10 +57,19 @@ export async function fetchData(): Promise<{
   outletsExceedingThresholdCount: number
   xaiExplanation: string
   error_percentage_threshold: number
+  dashboardData: any
+  all_outlets: any[]
 }> {
   const res = await fetch('/api/mode2/data', { credentials: 'include' })
   if (!res.ok) throw new Error(`HTTP error! Status: ${res.status}`)
   const raw = await res.json()
+
+  // Fetch dashboard.json separately
+  const dashResponse = await fetch(`/dashboard.json`)
+  if (!dashResponse.ok) {
+    throw new Error(`HTTP error fetching dashboard.json! Status: ${dashResponse.status}`)
+  }
+  const dashboardData = await dashResponse.json()
 
   // 1) KPIs (as before)…
   const driftMetrics = raw.drift_state?.metrics || {}
@@ -201,5 +210,7 @@ export async function fetchData(): Promise<{
     outletsExceedingThresholdCount,
     xaiExplanation,
     error_percentage_threshold: raw.error_percentage_threshold || 0,
+    dashboardData,
+    all_outlets: raw.all_outlets || [],
   }
 }

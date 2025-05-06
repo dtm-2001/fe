@@ -447,6 +447,10 @@
     }
   }
 
+  .mx-4 {
+    margin-inline: calc(var(--spacing) * 4);
+  }
+
   .mx-auto {
     margin-inline: auto;
   }
@@ -505,6 +509,10 @@
 
   .mb-2 {
     margin-bottom: calc(var(--spacing) * 2);
+  }
+
+  .mb-3 {
+    margin-bottom: calc(var(--spacing) * 3);
   }
 
   .mb-4 {
@@ -617,10 +625,6 @@
 
   .h-80 {
     height: calc(var(--spacing) * 80);
-  }
-
-  .h-\[200px\] {
-    height: 200px;
   }
 
   .h-auto {
@@ -839,6 +843,20 @@
     }
   }
 
+  :where(.divide-sky-800 > :not(:last-child)) {
+    border-color: var(--color-sky-800);
+  }
+
+  :where(.divide-sky-800\/30 > :not(:last-child)) {
+    border-color: #0059864d;
+  }
+
+  @supports (color: color-mix(in lab, red, red)) {
+    :where(.divide-sky-800\/30 > :not(:last-child)) {
+      border-color: color-mix(in oklab, var(--color-sky-800) 30%, transparent);
+    }
+  }
+
   .self-start {
     align-self: flex-start;
   }
@@ -1032,6 +1050,16 @@
     background-color: var(--color-black);
   }
 
+  .bg-black\/50 {
+    background-color: #00000080;
+  }
+
+  @supports (color: color-mix(in lab, red, red)) {
+    .bg-black\/50 {
+      background-color: color-mix(in oklab, var(--color-black) 50%, transparent);
+    }
+  }
+
   .bg-blue-50 {
     background-color: var(--color-blue-50);
   }
@@ -1201,6 +1229,30 @@
   @supports (color: color-mix(in lab, red, red)) {
     .bg-sky-800\/60 {
       background-color: color-mix(in oklab, var(--color-sky-800) 60%, transparent);
+    }
+  }
+
+  .bg-sky-900 {
+    background-color: var(--color-sky-900);
+  }
+
+  .bg-sky-900\/10 {
+    background-color: #024a701a;
+  }
+
+  @supports (color: color-mix(in lab, red, red)) {
+    .bg-sky-900\/10 {
+      background-color: color-mix(in oklab, var(--color-sky-900) 10%, transparent);
+    }
+  }
+
+  .bg-sky-900\/20 {
+    background-color: #024a7033;
+  }
+
+  @supports (color: color-mix(in lab, red, red)) {
+    .bg-sky-900\/20 {
+      background-color: color-mix(in oklab, var(--color-sky-900) 20%, transparent);
     }
   }
 
@@ -1637,16 +1689,6 @@
     color: var(--color-rose-200);
   }
 
-  .text-rose-200\/80 {
-    color: #ffccd3cc;
-  }
-
-  @supports (color: color-mix(in lab, red, red)) {
-    .text-rose-200\/80 {
-      color: color-mix(in oklab, var(--color-rose-200) 80%, transparent);
-    }
-  }
-
   .text-rose-300 {
     color: var(--color-rose-300);
   }
@@ -1862,18 +1904,6 @@
   }
 
   @media (hover: hover) {
-    .hover\:bg-gray-700\/70:hover {
-      background-color: #364153b3;
-    }
-
-    @supports (color: color-mix(in lab, red, red)) {
-      .hover\:bg-gray-700\/70:hover {
-        background-color: color-mix(in oklab, var(--color-gray-700) 70%, transparent);
-      }
-    }
-  }
-
-  @media (hover: hover) {
     .hover\:bg-rose-700\/70:hover {
       background-color: #c20039b3;
     }
@@ -1922,6 +1952,18 @@
   }
 
   @media (hover: hover) {
+    .hover\:bg-sky-900\/20:hover {
+      background-color: #024a7033;
+    }
+
+    @supports (color: color-mix(in lab, red, red)) {
+      .hover\:bg-sky-900\/20:hover {
+        background-color: color-mix(in oklab, var(--color-sky-900) 20%, transparent);
+      }
+    }
+  }
+
+  @media (hover: hover) {
     .hover\:text-\[\#d40e9a\]:hover {
       color: #d40e9a;
     }
@@ -1930,6 +1972,12 @@
   @media (hover: hover) {
     .hover\:text-sky-300:hover {
       color: var(--color-sky-300);
+    }
+  }
+
+  @media (hover: hover) {
+    .hover\:text-white:hover {
+      color: var(--color-white);
     }
   }
 
@@ -1987,12 +2035,6 @@
   }
 
   @media (width >= 48rem) {
-    .md\:mt-0 {
-      margin-top: calc(var(--spacing) * 0);
-    }
-  }
-
-  @media (width >= 48rem) {
     .md\:mb-0 {
       margin-bottom: calc(var(--spacing) * 0);
     }
@@ -2007,12 +2049,6 @@
   @media (width >= 48rem) {
     .md\:grid-cols-3 {
       grid-template-columns: repeat(3, minmax(0, 1fr));
-    }
-  }
-
-  @media (width >= 48rem) {
-    .md\:grid-cols-4 {
-      grid-template-columns: repeat(4, minmax(0, 1fr));
     }
   }
 
@@ -2047,12 +2083,6 @@
   }
 
   @media (width >= 64rem) {
-    .lg\:col-span-3 {
-      grid-column: span 3 / span 3;
-    }
-  }
-
-  @media (width >= 64rem) {
     .lg\:grid-cols-2 {
       grid-template-columns: repeat(2, minmax(0, 1fr));
     }
@@ -2061,12 +2091,6 @@
   @media (width >= 64rem) {
     .lg\:grid-cols-3 {
       grid-template-columns: repeat(3, minmax(0, 1fr));
-    }
-  }
-
-  @media (width >= 64rem) {
-    .lg\:grid-cols-4 {
-      grid-template-columns: repeat(4, minmax(0, 1fr));
     }
   }
 }

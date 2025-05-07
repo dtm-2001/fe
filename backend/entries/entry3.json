@@ -1,0 +1,18 @@
+[
+  {
+    "user": "Susara",
+    "Runtime": "2024-01-03T10:00:00Z-1",
+    "BusinessUnit": "CCS",
+    "useCase": "Distribution Efficiency",
+    "ShortCode": "SC003",
+    "JSONLink": "/entries/entry3.json"
+  },
+  {
+    "user": "Susara",
+    "Runtime": "2024-01-03T10:00:00Z-2",
+    "BusinessUnit": "CCS",
+    "useCase": "Distribution Efficiency",
+    "ShortCode": "SC003",
+    "JSONLink": "/entries/entry3.json"
+  }
+]

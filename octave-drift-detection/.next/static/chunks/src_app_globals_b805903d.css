@@ -83,6 +83,7 @@
     --container-md: 28rem;
     --container-2xl: 42rem;
     --container-6xl: 72rem;
+    --container-7xl: 80rem;
     --text-xs: .75rem;
     --text-xs--line-height: calc(1 / .75);
     --text-sm: .875rem;
@@ -379,6 +380,18 @@
     z-index: 50;
   }
 
+  .col-span-1 {
+    grid-column: span 1 / span 1;
+  }
+
+  .col-span-2 {
+    grid-column: span 2 / span 2;
+  }
+
+  .col-span-3 {
+    grid-column: span 3 / span 3;
+  }
+
   .\!container {
     width: 100% !important;
   }
@@ -503,6 +516,10 @@
     margin-right: calc(var(--spacing) * 4);
   }
 
+  .-mb-px {
+    margin-bottom: -1px;
+  }
+
   .mb-1 {
     margin-bottom: calc(var(--spacing) * 1);
   }
@@ -537,6 +554,10 @@
 
   .ml-3 {
     margin-left: calc(var(--spacing) * 3);
+  }
+
+  .ml-4 {
+    margin-left: calc(var(--spacing) * 4);
   }
 
   .ml-auto {
@@ -611,12 +632,28 @@
     height: calc(var(--spacing) * 12);
   }
 
+  .h-24 {
+    height: calc(var(--spacing) * 24);
+  }
+
+  .h-32 {
+    height: calc(var(--spacing) * 32);
+  }
+
   .h-48 {
     height: calc(var(--spacing) * 48);
   }
 
+  .h-60 {
+    height: calc(var(--spacing) * 60);
+  }
+
   .h-64 {
     height: calc(var(--spacing) * 64);
+  }
+
+  .h-70 {
+    height: calc(var(--spacing) * 70);
   }
 
   .h-72 {
@@ -671,8 +708,20 @@
     width: calc(var(--spacing) * 12);
   }
 
+  .w-16 {
+    width: calc(var(--spacing) * 16);
+  }
+
   .w-32 {
     width: calc(var(--spacing) * 32);
+  }
+
+  .w-60 {
+    width: calc(var(--spacing) * 60);
+  }
+
+  .w-70 {
+    width: calc(var(--spacing) * 70);
   }
 
   .w-full {
@@ -685,6 +734,10 @@
 
   .max-w-6xl {
     max-width: var(--container-6xl);
+  }
+
+  .max-w-7xl {
+    max-width: var(--container-7xl);
   }
 
   .max-w-full {
@@ -749,6 +802,14 @@
 
   .grid-cols-1 {
     grid-template-columns: repeat(1, minmax(0, 1fr));
+  }
+
+  .grid-cols-3 {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .grid-cols-4 {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
   }
 
   .flex-col {
@@ -865,6 +926,10 @@
     overflow: hidden;
   }
 
+  .overflow-visible {
+    overflow: visible;
+  }
+
   .overflow-x-auto {
     overflow-x: auto;
   }
@@ -908,6 +973,11 @@
     border-bottom-width: 1px;
   }
 
+  .border-b-2 {
+    border-bottom-style: var(--tw-border-style);
+    border-bottom-width: 2px;
+  }
+
   .border-\[\#F910B2\] {
     border-color: #f910b2;
   }
@@ -928,6 +998,10 @@
 
   .border-blue-600 {
     border-color: var(--color-blue-600);
+  }
+
+  .border-cyan-400 {
+    border-color: var(--color-cyan-400);
   }
 
   .border-emerald-800 {
@@ -1050,16 +1124,6 @@
     background-color: var(--color-black);
   }
 
-  .bg-black\/50 {
-    background-color: #00000080;
-  }
-
-  @supports (color: color-mix(in lab, red, red)) {
-    .bg-black\/50 {
-      background-color: color-mix(in oklab, var(--color-black) 50%, transparent);
-    }
-  }
-
   .bg-blue-50 {
     background-color: var(--color-blue-50);
   }
@@ -1138,6 +1202,10 @@
     }
   }
 
+  .bg-gray-950 {
+    background-color: var(--color-gray-950);
+  }
+
   .bg-rose-800 {
     background-color: var(--color-rose-800);
   }
@@ -1200,6 +1268,16 @@
 
   .bg-sky-800 {
     background-color: var(--color-sky-800);
+  }
+
+  .bg-sky-800\/20 {
+    background-color: #00598633;
+  }
+
+  @supports (color: color-mix(in lab, red, red)) {
+    .bg-sky-800\/20 {
+      background-color: color-mix(in oklab, var(--color-sky-800) 20%, transparent);
+    }
   }
 
   .bg-sky-800\/40 {
@@ -1645,6 +1723,10 @@
     color: var(--color-blue-600);
   }
 
+  .text-cyan-400 {
+    color: var(--color-cyan-400);
+  }
+
   .text-emerald-200 {
     color: var(--color-emerald-200);
   }
@@ -1976,12 +2058,6 @@
   }
 
   @media (hover: hover) {
-    .hover\:text-white:hover {
-      color: var(--color-white);
-    }
-  }
-
-  @media (hover: hover) {
     .hover\:shadow-sky-900\/20:hover {
       --tw-shadow-color: #024a7033;
     }
@@ -2035,8 +2111,8 @@
   }
 
   @media (width >= 48rem) {
-    .md\:mb-0 {
-      margin-bottom: calc(var(--spacing) * 0);
+    .md\:mt-0 {
+      margin-top: calc(var(--spacing) * 0);
     }
   }
 

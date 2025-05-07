@@ -1,0 +1,44 @@
+[
+  {
+    "user": "Susara",
+    "businessUnit": "JMSL",
+    "useCase": "Churn",
+    "mode": "mode1"
+  },
+  {
+    "user": "Susara",
+    "businessUnit": "CCS",
+    "useCase": "MT Promo",
+    "mode": "mode2"
+  },
+  {
+    "user": "Susara",
+    "businessUnit": "CCS",
+    "useCase": "Distribution Efficiency",
+    "mode": "mode4"
+  },
+  {
+    "user": "Senum",
+    "businessUnit": "JMSL",
+    "useCase": "Churn",
+    "mode": "mode1"
+  },
+  {
+    "user": "Senum",
+    "businessUnit": "CCS",
+    "useCase": "MT Promo",
+    "mode": "mode2"
+  },
+  {
+    "user": "Senum",
+    "businessUnit": "CCS",
+    "useCase": "ICE",
+    "mode": "mode3"
+  },
+  {
+    "user": "Senum",
+    "businessUnit": "CHML",
+    "useCase": "VUbljkljoih",
+    "mode": "mode3"
+  }
+]

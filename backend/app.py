@@ -91,6 +91,16 @@ async def read_root():
             "/mode1/data",
             "/mode2/data",
             "/mode3/data",
-            "/mode4/data"
+            "/mode4/data",
+            "/mode-selection-data"
         ],
     }
+
+MODE_SELECTION_JSON = os.path.join(BASE_DIR, "modeSelectionData.json")
+
+@app.get("/mode-selection-data")
+async def mode_selection_data():
+    data = load_json(MODE_SELECTION_JSON)
+    if data is None:
+        raise HTTPException(status_code=404, detail="modeSelectionData.json not found or invalid")
+    return data

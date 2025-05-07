@@ -30,18 +30,12 @@ interface DetailedMetric {
 }
 
 export default function Mode4Page(): React.ReactElement {
-  // --- DASHBOARD FILTER STATES ---
-  const [businessUnit, setBusinessUnit] = useState<string>("");
-  const [useCase, setUseCase] = useState<string>("");
-  const [shortCode, setShortCode] = useState<string>("");
-  const [alertKeeperValue, setAlertKeeperValue] = useState<string>("");
-  const [runtimeValue, setRuntimeValue] = useState<number>(1);
-
-  const availableAlertKeepers = ["KeeperA", "KeeperB", "KeeperC"];
-  const useCases: Record<string, string[]> = {
-    CCS: ["CC-Di", "CC-MT"],
-    JMSL: ["JM-Ch"],
-  };
+  // --- FILTER STATES ---
+  const [businessUnit, setBusinessUnit] = useState("");
+  const [useCase, setUseCase] = useState("");
+  const [shortCode, setShortCode] = useState("");
+  const [alertKeeperValue, setAlertKeeperValue] = useState("");
+  const [runtimeValue, setRuntimeValue] = useState(1);
 
   // --- CORE DATA STATES ---
   const [kpis, setKpis] = useState<KPI[]>([]);
@@ -54,25 +48,30 @@ export default function Mode4Page(): React.ReactElement {
   const [detailedMetrics, setDetailedMetrics] = useState<
     Record<string, DetailedMetric>
   >({});
-  const [xaiExplanation, setXaiExplanation] = useState<string>(
-    "No explanation available"
-  );
+  const [xaiExplanation, setXaiExplanation] = useState("No explanation available");
   const [backendError, setBackendError] = useState<string | null>(null);
-  const [loading, setLoading] = useState<boolean>(true);
-  const [currentPeriod, setCurrentPeriod] = useState<string>("N/A");
-  const [outletsExceedingThresholdCount, setOutletsExceedingThresholdCount] =
-    useState<number>(0);
+  const [loading, setLoading] = useState(true);
 
-  // --- STATUS DISTRIBUTION FOR PIE CHART ---
-  const [statusDistribution, setStatusDistribution] = useState({
-    good: 65,
-    warning: 25,
-    error: 10,
-  });
+  // --- TABS & PIE STATES ---
+  const [activeTab, setActiveTab] = useState<"errorByClass" | "driftStates">(
+    "errorByClass"
+  );
+  const [selectedClass, setSelectedClass] = useState("");
+
+  // --- KPI EXCLUSION LIST ---
+  const excludedKPIs = [
+    "Jensen–Shannon Divergence",
+    "Population Stability Index",
+    "Precision (Reference)",
+    "Precision (Current)",
+    "Recall (Reference)",
+    "Recall (Current)",
+    "F1 Score (Reference)",
+    "F1 Score (Current)",
+  ];
 
   // --- HELPERS ---
-  const makeLabels = (n: number) =>
-    Array.from({ length: n }, (_, i) => i.toString());
+  const makeLabels = (n: number) => Array.from({ length: n }, (_, i) => i.toString());
   const computeSquareSize = (grid: number[][]) => {
     const maxPx = 300;
     const rows = grid.length;
@@ -80,20 +79,6 @@ export default function Mode4Page(): React.ReactElement {
     if (!rows || !cols) return maxPx;
     const cellSize = Math.min(maxPx / rows, maxPx / cols);
     return Math.max(rows, cols) * cellSize;
-  };
-  const getStatusColor = (s?: string) => {
-    if (!s) return "text-gray-400";
-    switch (s.toLowerCase()) {
-      case "warning":
-        return "text-amber-400";
-      case "error":
-        return "text-rose-500";
-      case "success":
-      case "normal":
-        return "text-emerald-400";
-      default:
-        return "text-sky-400";
-    }
   };
   const getStatusIcon = (s?: string) => {
     if (!s) return <Info className="h-5 w-5 text-gray-400" />;
@@ -109,6 +94,20 @@ export default function Mode4Page(): React.ReactElement {
         return <Info className="h-5 w-5 text-sky-400" />;
     }
   };
+  const getStatusColor = (s?: string) => {
+    if (!s) return "text-gray-400";
+    switch (s.toLowerCase()) {
+      case "warning":
+        return "text-amber-400";
+      case "error":
+        return "text-rose-500";
+      case "success":
+      case "normal":
+        return "text-emerald-400";
+      default:
+        return "text-sky-400";
+    }
+  };
 
   // --- FETCH DATA ---
   const initData = async () => {
@@ -116,25 +115,21 @@ export default function Mode4Page(): React.ReactElement {
     setBackendError(null);
     try {
       const {
-        kpis: fetchedKpis,
-        errors: fetchedErrors,
-        referenceMatrix: fetchedRefM,
-        currentMatrix: fetchedCurrM,
-        detailedMetrics: fetchedDetailed,
-        xaiExplanation: fetchedXai,
-        currentPeriod: fetchedPeriod,
-        outletsExceedingThresholdCount: fetchedCount,
+        kpis: fk,
+        errors: fe,
+        referenceMatrix: frm,
+        currentMatrix: fcm,
+        detailedMetrics: fdm,
+        xaiExplanation: fxai,
       } = await fetchData();
-
-      setKpis(fetchedKpis);
-      setErrors(fetchedErrors);
-      setReferenceMatrix(fetchedRefM);
-      setCurrentMatrix(fetchedCurrM);
-      setDetailedMetrics(fetchedDetailed);
-      setXaiExplanation(fetchedXai);
-      setCurrentPeriod(fetchedPeriod);
-      setOutletsExceedingThresholdCount(fetchedCount);
-      // Optionally recalc statusDistribution from fetched data here
+      setKpis(fk);
+      setErrors(fe);
+      setReferenceMatrix(frm);
+      setCurrentMatrix(fcm);
+      setDetailedMetrics(fdm);
+      setXaiExplanation(fxai);
+      const classes = Object.keys(fdm);
+      if (classes.length) setSelectedClass(classes[0]);
     } catch (err) {
       console.error(err);
       setBackendError(err instanceof Error ? err.message : "Unknown error");
@@ -146,247 +141,279 @@ export default function Mode4Page(): React.ReactElement {
     initData();
   }, []);
 
-  // --- RENDER PIE CHART ONCE LOADED ---
+  // --- PIE CHARTS EFFECT ---
   useEffect(() => {
     if (loading) return;
-    const ctx = document.getElementById(
-      "statusPieChart"
-    ) as HTMLCanvasElement;
-    if (!ctx) return;
-    new Chart(ctx, {
-      type: "pie",
-      data: {
-        labels: ["Good", "Warning", "Error"],
-        datasets: [
-          {
-            data: [
-              statusDistribution.good,
-              statusDistribution.warning,
-              statusDistribution.error,
-            ],
-            backgroundColor: [
-              "rgba(52,211,153,0.8)",
-              "rgba(251,191,36,0.8)",
-              "rgba(239,68,68,0.8)",
-            ],
-            borderColor: [
-              "rgba(52,211,153,1)",
-              "rgba(251,191,36,1)",
-              "rgba(239,68,68,1)",
-            ],
-            borderWidth: 1,
-          },
-        ],
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-          legend: {
-            position: "right",
-            labels: {
-              color: "#e5e7eb",
-              font: { size: 14 },
-              generateLabels: (chart) =>
-                chart.data.labels!.map((label, i) => ({
-                  text: `${label}: ${
-                    chart.data.datasets![0].data[i]
-                  }%`,
-                  fillStyle:
-                    chart.data.datasets![0].backgroundColor![i] as string,
-                  strokeStyle:
-                    chart.data.datasets![0].borderColor![i] as string,
-                  lineWidth: 1,
-                  hidden: false,
-                  index: i,
-                })),
-            },
-          },
-          tooltip: {
-            callbacks: {
-              label: (ctx) => `${ctx.label}: ${ctx.raw}%`,
-            },
+
+    if (activeTab === "errorByClass") {
+      const ctx = document.getElementById(
+        "errorClassPieChart"
+      ) as HTMLCanvasElement;
+      if (!ctx) return;
+      Chart.getChart(ctx)?.destroy();
+
+      const classes = Object.keys(detailedMetrics);
+      const data = classes.map(
+        (cls) => detailedMetrics[cls].incorrect_predictions.percentage
+      );
+      const colors = classes.map(
+        (_, i) => `hsl(${(i * 360) / classes.length}, 70%, 50%)`
+      );
+
+      new Chart(ctx, {
+        type: "pie",
+        data: {
+          labels: classes,
+          datasets: [{ data, backgroundColor: colors, borderColor: colors, borderWidth: 1 }],
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { position: "right", labels: { color: "#e5e7eb", font: { size: 12 } } },
+            tooltip: { callbacks: { label: (c) => `${c.label}: ${c.raw.toFixed(1)}%` } },
           },
         },
-      },
-    });
-  }, [loading, statusDistribution]);
+      });
+    }
+
+    if (activeTab === "driftStates") {
+      const ctx = document.getElementById("driftPieChart") as HTMLCanvasElement;
+      if (!ctx) return;
+      Chart.getChart(ctx)?.destroy();
+
+      const counts = errors.plotData.reduce(
+        (acc, p) => {
+          const s = (p as any).state?.toLowerCase();
+          if (s === "warning") acc.warning++;
+          else if (s === "drift") acc.drift++;
+          else acc.normal++;
+          return acc;
+        },
+        { normal: 0, warning: 0, drift: 0 }
+      );
+      const total = counts.normal + counts.warning + counts.drift || 1;
+      const data = [
+        (counts.normal / total) * 100,
+        (counts.warning / total) * 100,
+        (counts.drift / total) * 100,
+      ].map((v) => +v.toFixed(1));
+
+      new Chart(ctx, {
+        type: "pie",
+        data: {
+          labels: ["Normal", "Warning", "Drift"],
+          datasets: [
+            {
+              data,
+              backgroundColor: [
+                "rgba(52,211,153,0.8)",
+                "rgba(251,191,36,0.8)",
+                "rgba(239,68,68,0.8)",
+              ],
+              borderColor: [
+                "rgba(52,211,153,1)",
+                "rgba(251,191,36,1)",
+                "rgba(239,68,68,1)",
+              ],
+              borderWidth: 1,
+            },
+          ],
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { position: "right", labels: { color: "#e5e7eb", font: { size: 12 } } },
+            tooltip: { callbacks: { label: (c) => `${c.label}: ${c.raw}%` } },
+          },
+        },
+      });
+    }
+  }, [loading, activeTab, detailedMetrics, errors.plotData]);
 
   return (
     <div className="bg-gradient-to-b from-gray-950 to-gray-900 min-h-screen flex flex-col">
       <Head>
         <title>Mode 4 | CL Dashboard</title>
       </Head>
-      <main className="flex-grow container mx-auto px-4 py-8">
-        {/* Backend Error */}
+      <main className="flex-grow container mx-auto px-4 py-8 space-y-6">
         {backendError && (
-          <div className="bg-rose-950/40 border border-rose-800/60 rounded-lg p-4 mb-6 backdrop-blur-sm shadow-lg">
+          <div className="bg-rose-950/40 border border-rose-800/60 rounded-lg p-4">
             <div className="flex items-center">
               <AlertCircle className="h-5 w-5 text-rose-400 mr-2" />
-              <h3 className="text-lg font-medium text-rose-300">
-                Backend Error
-              </h3>
+              <p className="text-rose-300">{backendError}</p>
             </div>
-            <p className="mt-2 text-rose-200">{backendError}</p>
             <button
               onClick={initData}
-              className="mt-3 inline-flex items-center gap-2 px-4 py-2 bg-rose-800/50 hover:bg-rose-700/70 text-white rounded-md text-sm transition"
+              className="mt-2 inline-flex items-center gap-2 px-4 py-2 bg-rose-800/50 text-white rounded text-sm"
             >
               <RefreshCw className="h-4 w-4" /> Retry
             </button>
           </div>
         )}
 
-        {/* Header */}
-        <div className="flex flex-col md:flex-row md:justify-between mb-6">
-          <h2 className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-sky-600 mb-4 md:mb-0">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+          <h1 className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-cyan-400 to-sky-600">
             OCTAVE – CL Dashboard
-          </h2>
+          </h1>
           <button
             onClick={initData}
-            className="inline-flex items-center gap-2 px-4 py-2 bg-sky-800/40 hover:bg-sky-700/60 text-white rounded-md text-sm transition"
+            className="inline-flex items-center gap-2 px-4 py-2 bg-sky-800/40 text-white rounded-md text-sm"
           >
             <RefreshCw className="h-4 w-4" /> Refresh
           </button>
         </div>
 
-        {/* Mode-1-Style Dashboard */}
-        <div className="bg-gray-900/80 rounded-xl shadow-xl p-6 mb-6 border border-gray-700/50 backdrop-blur-sm">
-          {/* Static Filters Box */}
-          <div className="bg-gradient-to-br from-sky-950/40 to-sky-900/20 p-6 rounded-lg border border-sky-800/30 shadow-md mb-6">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+          <div className="lg:col-span-2 bg-gradient-to-br from-sky-950/40 to-sky-900/20 p-6 rounded-lg border border-sky-800/30">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
-                <h3 className="text-lg font-medium text-sky-300 mb-2">
-                  Business Unit
-                </h3>
-                <ul className="list-disc list-inside text-sky-200 mb-4">
-                  <li>
-                    {loading
-                      ? "Loading…"
-                      : businessUnit || "Not Selected"}
-                  </li>
-                </ul>
-                <h3 className="text-lg font-medium text-sky-300 mb-2">
-                  Use Case
-                </h3>
-                <ul className="list-disc list-inside text-sky-200">
-                  <li>
-                    {loading ? "Loading…" : useCase || "Not Selected"}
-                  </li>
-                </ul>
+                <p className="text-sm text-sky-300">Business Unit:</p>
+                <p className="text-lg text-white">
+                  {loading ? "…" : businessUnit || "Not Selected"}
+                </p>
+                <p className="mt-4 text-sm text-sky-300">Use Case:</p>
+                <p className="text-lg text-white">
+                  {loading ? "…" : useCase || "Not Selected"}
+                </p>
               </div>
               <div>
-                <h3 className="text-lg font-medium text-sky-300 mb-2">
-                  Short Code
-                </h3>
-                <ul className="list-disc list-inside text-sky-200 mb-4">
-                  <li>
-                    {loading
-                      ? "Loading…"
-                      : shortCode || "Not Available"}
-                  </li>
-                </ul>
-                <h3 className="text-lg font-medium text-sky-300 mb-2">
-                  Alert Keeper
-                </h3>
-                <ul className="list-disc list-inside text-sky-200">
-                  <li>
-                    {loading
-                      ? "Loading…"
-                      : alertKeeperValue || "Not Selected"}
-                  </li>
-                </ul>
+                <p className="text-sm text-sky-300">Short Code:</p>
+                <p className="text-lg text-white">
+                  {loading ? "…" : shortCode || "Not Available"}
+                </p>
+                <p className="mt-4 text-sm text-sky-300">Alert Keeper:</p>
+                <p className="text-lg text-white">
+                  {loading ? "…" : alertKeeperValue || "Not Selected"}
+                </p>
               </div>
             </div>
           </div>
-
-          {/* Runtime & Status Distribution */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-            {/* Runtime */}
-            <div className="lg:col-span-2 bg-gradient-to-br from-sky-950/40 to-sky-900/20 p-6 rounded-lg border border-sky-800/30 shadow-md">
-              <h3 className="text-lg font-medium text-sky-300 mb-2">
-                Runtime
-              </h3>
-              <select
-                className="w-full bg-gray-800/80 border border-sky-700/50 rounded-md p-2 text-white focus:ring-2 focus:ring-sky-500"
-                value={runtimeValue}
-                onChange={(e) =>
-                  setRuntimeValue(Number(e.target.value))
-                }
-              >
-                {[1, 2, 3, 4].map((n) => (
-                  <option key={n} value={n}>
-                    {n}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            {/* Status Distribution */}
-            <div className="bg-gradient-to-br from-sky-950/40 to-sky-900/20 p-6 rounded-lg border border-sky-800/30 shadow-md">
-              <h3 className="text-lg font-medium text-sky-300 mb-2">
-                Status Distribution
-              </h3>
-              <div className="h-48">
-                <canvas id="statusPieChart"></canvas>
-              </div>
-            </div>
+          <div className="bg-gradient-to-br from-sky-950/40 to-sky-900/20 p-6 rounded-lg border border-sky-800/30">
+            <p className="text-sm text-sky-300">Runtime</p>
+            <select
+              className="mt-1 w-full bg-gray-800/80 border border-sky-700/50 rounded-md p-2 text-white"
+              value={runtimeValue}
+              onChange={(e) => setRuntimeValue(Number(e.target.value))}
+            >
+              {[1, 2, 3, 4].map((n) => (
+                <option key={n} value={n}>
+                  {n}
+                </option>
+              ))}
+            </select>
           </div>
         </div>
 
-        {/* KPI Section */}
-        <div className="bg-gray-900/80 rounded-xl shadow-xl overflow-hidden p-6 mb-6 border border-gray-700/50 backdrop-blur-sm">
-          <h2 className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-sky-600 mb-4">
-            Key Performance Indicators
-          </h2>
-          <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
-            {kpis.map((kpi) => (
-              <div
-                key={kpi.rowKey}
-                className="bg-gradient-to-br from-sky-950/40 to-sky-900/20 p-4 rounded-lg border border-sky-800/30 shadow-md hover:shadow-sky-900/20 hover:border-sky-700/50 transition"
-              >
-                <h3 className="text-lg font-medium text-sky-300 mb-2">
-                  {kpi.rowKey}
-                </h3>
-                <div className="flex items-center">
-                  <div className="w-10 h-10 rounded-full bg-sky-800/40 flex items-center justify-center mr-3">
-                    {getStatusIcon(kpi.status)}
-                  </div>
-                  <p
-                    className={`text-xl font-semibold ${getStatusColor(
-                      kpi.status
-                    )}`}
-                  >
-                    {loading ? "Loading..." : kpi.value}
-                  </p>
+        {/* Drift & Warning / Status Distribution */}
+        <div className="grid grid-cols-3 gap-4">
+          <div className="col-span-2 bg-gray-900/80 rounded-xl shadow-xl p-6 border border-gray-700/50">
+            <h2 className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-cyan-400 to-sky-600 mb-4">
+              Drift & Warning Over Time
+            </h2>
+            <div className="bg-gray-800/60 rounded-lg p-4 border border-gray-700/50 h-80">
+              {!loading ? (
+                <DriftWarningChart plotData={errors.plotData} />
+              ) : (
+                <div className="flex items-center justify-center h-full">
+                  <RefreshCw className="animate-spin h-8 w-8 text-sky-500" />
                 </div>
-              </div>
-            ))}
+              )}
+            </div>
           </div>
-        </div>
 
-        {/* Drift & Warning Chart */}
-        <div className="bg-gray-900/80 rounded-xl shadow-xl overflow-hidden p-6 mb-6 border border-gray-700/50 backdrop-blur-sm">
-          <h2 className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-sky-600 mb-4">
-            Drift & Warning Over Time
-          </h2>
-          <div className="bg-gray-800/60 rounded-lg p-4 border border-gray-700/50 h-72 relative">
-            {!loading ? (
-              <DriftWarningChart plotData={errors.plotData} />
+          <div className="col-span-1 bg-gray-900/80 rounded-xl shadow-xl p-6 border border-gray-700/50">
+            <h2 className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-cyan-400 to-sky-600 mb-4">
+              Status Distribution
+            </h2>
+            <div className="flex border-b border-gray-700/50 mb-4">
+              <button
+                onClick={() => setActiveTab("errorByClass")}
+                className={`px-3 py-1 -mb-px ${
+                  activeTab === "errorByClass"
+                    ? "border-b-2 border-cyan-400 text-cyan-400"
+                    : "text-gray-400"
+                }`}
+              >
+                Errors
+              </button>
+              <button
+                onClick={() => setActiveTab("driftStates")}
+                className={`ml-3 px-3 py-1 -mb-px ${
+                  activeTab === "driftStates"
+                    ? "border-b-2 border-cyan-400 text-cyan-400"
+                    : "text-gray-400"
+                }`}
+              >
+                States
+              </button>
+            </div>
+
+            {activeTab === "errorByClass" ? (
+              <>
+                <select
+                  className="mb-4 w-full bg-gray-800/80 border border-sky-700/50 rounded-md p-2 text-white"
+                  value={selectedClass}
+                  onChange={(e) => setSelectedClass(e.target.value)}
+                >
+                  {Object.keys(detailedMetrics).map((cls) => (
+                    <option key={cls} value={cls}>
+                      {cls}
+                    </option>
+                  ))}
+                </select>
+                <div className="w-70 h-70 mx-auto">
+                  <canvas id="errorClassPieChart"></canvas>
+                </div>
+              </>
             ) : (
-              <div className="flex items-center justify-center h-full">
-                <RefreshCw className="animate-spin h-8 w-8 text-sky-500" />
+              <div className="w-70 h-70 mx-auto">
+                <canvas id="driftPieChart"></canvas>
               </div>
             )}
           </div>
         </div>
 
-        {/* Confusion Matrix */}
+        {/* KPI Section */}
+        <div className="bg-gray-900/80 rounded-xl shadow-xl overflow-hidden p-6 mb-6 border border-gray-700/50">
+          <h2 className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-cyan-400 to-sky-600 mb-4">
+            Key Performance Indicators
+          </h2>
+          <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+            {kpis
+              .filter((kpi) => !excludedKPIs.includes(kpi.rowKey))
+              .map((kpi) => (
+                <div
+                  key={kpi.rowKey}
+                  className="bg-gradient-to-br from-sky-950/40 to-sky-900/20 p-4 rounded-lg border border-sky-800/30 shadow-md hover:shadow-sky-900/20 hover:border-sky-700/50 transition"
+                >
+                  <h3 className="text-lg font-medium text-sky-300 mb-2">
+                    {kpi.rowKey}
+                  </h3>
+                  <div className="flex items-center">
+                    <div className="w-10 h-10 rounded-full bg-sky-800/40 flex items-center justify-center mr-3">
+                      {getStatusIcon(kpi.status)}
+                    </div>
+                    <p
+                      className={`text-xl font-semibold ${getStatusColor(
+                        kpi.status
+                      )}`}
+                    >
+                      {loading ? "…" : kpi.value}
+                    </p>
+                  </div>
+                </div>
+              ))}
+          </div>
+        </div>
+
+        {/* Reference Matrix */}
         <div className="bg-gray-900/80 rounded-xl shadow-xl p-6 mb-6 border border-gray-700/50 backdrop-blur-sm flex flex-col items-center">
-          <h2 className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-sky-600 mb-4">
+          <h2 className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-cyan-400 to-sky-600 mb-4">
             Reference Matrix
           </h2>
-          {!loading && referenceMatrix.length > 0 ? (
+          {!loading && referenceMatrix.length ? (
             <div
               className="bg-gray-800/60 rounded-lg p-4 border border-gray-700/50"
               style={{
@@ -417,7 +444,7 @@ export default function Mode4Page(): React.ReactElement {
 
         {/* Detailed Metrics */}
         <div className="bg-gray-900/80 rounded-xl shadow-xl overflow-hidden p-6 mb-6 border border-gray-700/50 backdrop-blur-sm">
-          <h2 className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-sky-600 mb-4">
+          <h2 className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-cyan-400 to-sky-600 mb-4">
             Detailed Metrics by Class
           </h2>
           {loading ? (
@@ -452,25 +479,25 @@ export default function Mode4Page(): React.ReactElement {
                       key={cls}
                       className="hover:bg-gray-700/30 transition-colors duration-150"
                     >
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-white">
+                      <td className="px-6 py-4 text-sm font-medium text-white">
                         {cls}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
+                      <td className="px-6 py-4 text-sm text-gray-300">
                         {dm.total_samples}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-emerald-400">
+                      <td className="px-6 py-4 text-sm text-emerald-400">
                         {dm.correct_predictions.count}{" "}
                         <span className="text-gray-400">
                           ({dm.correct_predictions.percentage.toFixed(1)}%)
                         </span>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-rose-400">
+                      <td className="px-6 py-4 text-sm text-rose-400">
                         {dm.incorrect_predictions.count}{" "}
                         <span className="text-gray-400">
                           ({dm.incorrect_predictions.percentage.toFixed(1)}%)
                         </span>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
+                      <td className="px-6 py-4 text-sm text-gray-300">
                         {Object.entries(dm.misclassifications)
                           .map(
                             ([p, m]) =>
@@ -492,12 +519,14 @@ export default function Mode4Page(): React.ReactElement {
 
         {/* XAI Result */}
         <div className="bg-gray-900/80 rounded-xl shadow-xl overflow-hidden p-6 border border-gray-700/50 backdrop-blur-sm">
-          <h2 className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-sky-600 mb-4">
+          <h2 className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-cyan-400 to-sky-600 mb-4">
             XAI Result
           </h2>
           <div className="bg-gray-800/60 rounded-lg p-6 border border-gray-700/50">
             {loading ? (
-              <RefreshCw className="animate-spin h-8 w-8 text-sky-500 mx-auto" />
+              <div className="flex justify-center py-8">
+                <RefreshCw className="animate-spin h-8 w-8 text-sky-500" />
+              </div>
             ) : (
               <div className="prose prose-invert prose-sky max-w-none">
                 <ReactMarkdown>{xaiExplanation}</ReactMarkdown>
@@ -508,11 +537,11 @@ export default function Mode4Page(): React.ReactElement {
 
         {/* Misclassified Table */}
         <div className="bg-gray-900/80 rounded-xl shadow-xl overflow-hidden p-6 border border-gray-700/50 backdrop-blur-sm max-h-96 overflow-y-auto">
-          <h2 className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-sky-600 mb-4">
+          <h2 className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-cyan-400 to-sky-600 mb-4">
             Misclassified Table
           </h2>
           {loading ? (
-            <div className="flex items-center justify-center py-12">
+            <div className="flex justify-center py-12">
               <RefreshCw className="animate-spin h-8 w-8 text-sky-500" />
             </div>
           ) : (
@@ -524,7 +553,7 @@ export default function Mode4Page(): React.ReactElement {
                       ID
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-sky-300 uppercase tracking-wider">
-                      True &rarr; Pred
+                      True → Pred
                     </th>
                   </tr>
                 </thead>
@@ -535,10 +564,10 @@ export default function Mode4Page(): React.ReactElement {
                         key={i}
                         className="hover:bg-rose-900/20 transition-colors duration-150"
                       >
-                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-white">
+                        <td className="px-6 py-4 text-sm font-medium text-white">
                           {r.id}
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-rose-300">
+                        <td className="px-6 py-4 text-sm text-rose-300">
                           {r.timePeriod}
                         </td>
                       </tr>

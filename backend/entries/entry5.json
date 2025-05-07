@@ -1,0 +1,18 @@
+[
+  {
+    "user": "Senum",
+    "Runtime": "2024-01-02T11:00:00Z-1",
+    "BusinessUnit": "CCS",
+    "useCase": "MT Promo",
+    "ShortCode": "SC005",
+    "JSONLink": "/entries/entry5.json"
+  },
+  {
+    "user": "Senum",
+    "Runtime": "2024-01-02T11:00:00Z-2",
+    "BusinessUnit": "CCS",
+    "useCase": "MT Promo",
+    "ShortCode": "SC005",
+    "JSONLink": "/entries/entry6.json"
+  }
+]

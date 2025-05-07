@@ -1,0 +1,82 @@
+[
+  {
+    "user": "Susara",
+    "Runtime": "2024-01-01T10:00:00Z-1",
+    "BusinessUnit": "JMSL",
+    "useCase": "Churn",
+    "ShortCode": "SC001",
+    "JSONLink": "/entries/entry1.json"
+  },
+  {
+    "user": "Susara",
+    "Runtime": "2024-01-01T10:00:00Z-2",
+    "BusinessUnit": "JMSL",
+    "useCase": "Churn",
+    "ShortCode": "SC001",
+    "JSONLink": "/entries/entry1.json"
+  },
+  {
+    "user": "Susara",
+    "Runtime": "2024-01-02T10:00:00Z-1",
+    "BusinessUnit": "CCS",
+    "useCase": "MT Promo",
+    "ShortCode": "SC002",
+    "JSONLink": "/entries/entry2.json"
+  },
+  {
+    "user": "Susara",
+    "Runtime": "2024-01-02T10:00:00Z-2",
+    "BusinessUnit": "CCS",
+    "useCase": "MT Promo",
+    "ShortCode": "SC002",
+    "JSONLink": "/entries/entry2.json"
+  },
+  {
+    "user": "Susara",
+    "Runtime": "2024-01-03T10:00:00Z-1",
+    "BusinessUnit": "CCS",
+    "useCase": "Distribution Efficiency",
+    "ShortCode": "SC003",
+    "JSONLink": "/entries/entry3.json"
+  },
+  {
+    "user": "Susara",
+    "Runtime": "2024-01-03T10:00:00Z-2",
+    "BusinessUnit": "CCS",
+    "useCase": "Distribution Efficiency",
+    "ShortCode": "SC003",
+    "JSONLink": "/entries/entry3.json"
+  },
+  {
+    "user": "Senum",
+    "Runtime": "2024-01-01T11:00:00Z-1",
+    "BusinessUnit": "JMSL",
+    "useCase": "Churn",
+    "ShortCode": "SC004",
+    "JSONLink": "/entries/entry4.json"
+  },
+  {
+    "user": "Senum",
+    "Runtime": "2024-01-01T11:00:00Z-2",
+    "BusinessUnit": "JMSL",
+    "useCase": "Churn",
+    "ShortCode": "SC004",
+    "JSONLink": "/entries/entry4.json"
+  },
+  {
+    "user": "Senum",
+    "Runtime": "2024-01-02T11:00:00Z-1",
+    "BusinessUnit": "CCS",
+    "useCase": "MT Promo",
+    "ShortCode": "SC005",
+    "JSONLink": "/entries/entry5.json"
+  },
+  {
+    "user": "Senum",
+    "Runtime": "2024-01-02T11:00:00Z-2",
+    "BusinessUnit": "CCS",
+    "useCase": "MT Promo",
+    "ShortCode": "SC005",
+    "JSONLink": "/entries/entry6.json"
+  }
+]

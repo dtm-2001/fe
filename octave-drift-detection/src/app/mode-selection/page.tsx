@@ -1,21 +1,10 @@
+
 "use client"
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { ArrowRight, AlertCircle } from "lucide-react"
-
-const userAccess = {
-  Senum: [
-    { name: "JMSL-Churn", mode: "mode1", type: "OCTAVE RGCD" },
-    { name: "CCS-Distribution Efficiency", mode: "mode4", type: "Other CL" },
-  ],
-  Susara: [
-    { name: "JMSL-Churn", mode: "mode1", type: "OCTAVE RGCD" },
-    { name: "CCS-MT Promo", mode: "mode3", type: "OCTAVE CLCD" },
-    { name: "CCS-Distribution Efficiency", mode: "mode4", type: "Other CL" },
-  ],
-  Shada: [{ name: "JMSL-Dry Sales", mode: "mode2", type: "Other RG" }],
-}
+import { getUseCasesForUser } from "@/services/modeSelectionService"
 
 // Helper function to get type color
 const getTypeColor = (type: string) => {
@@ -46,21 +35,29 @@ export default function ModeSelection() {
   const router = useRouter()
 
   useEffect(() => {
-    try {
-      setLoading(true)
-      const user = localStorage.getItem("currentUser")
-      if (!user || !userAccess[user as keyof typeof userAccess]) {
-        router.push("/login")
-        return
+    async function loadUseCases() {
+      try {
+        setLoading(true)
+        const user = localStorage.getItem("currentUser")
+        if (!user) {
+          router.push("/login")
+          return
+        }
+        setCurrentUser(user)
+        const userUseCases = await getUseCasesForUser(user)
+        if (userUseCases.length === 0) {
+          setError("No use cases found for the current user.")
+          return
+        }
+        setUseCases(userUseCases)
+      } catch (err) {
+        setError("Failed to load user data. Please try logging in again.")
+        console.error("Error loading user data:", err)
+      } finally {
+        setLoading(false)
       }
-      setCurrentUser(user)
-      setUseCases(userAccess[user as keyof typeof userAccess])
-    } catch (err) {
-      setError("Failed to load user data. Please try logging in again.")
-      console.error("Error loading user data:", err)
-    } finally {
-      setLoading(false)
     }
+    loadUseCases()
   }, [router])
 
   if (loading) {
@@ -115,29 +112,40 @@ export default function ModeSelection() {
           </h1>
           <p className="text-sky-300 mb-4">Please select a use case to continue</p>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {useCases.map((uc, index) => (
-              <Link
-                key={index}
-                href={`/${uc.mode}`}
-                className={`bg-gradient-to-br ${getTypeColor(uc.type)} p-6 rounded-lg border shadow-md transition-all duration-300 hover:shadow-sky-900/20 hover:border-sky-700/50 flex flex-col h-full`}
-              >
-                <div className="flex justify-between items-start mb-4">
-                  <span className={`text-xs font-medium px-2 py-1 rounded-full ${getTypeBadgeColor(uc.type)}`}>
-                    {uc.type}
-                  </span>
-                  <div className="w-10 h-10 rounded-full bg-gray-800/60 flex items-center justify-center">
-                    <span className="text-lg font-bold text-sky-400">M{getModeNumber(uc.mode)}</span>
-                  </div>
-                </div>
-                <h2 className="text-xl font-semibold text-white mb-2">{uc.name}</h2>
-                <div className="mt-auto pt-4 flex items-center text-sky-300 text-sm font-medium">
-                  <span>Open Dashboard</span>
-                  <ArrowRight className="h-4 w-4 ml-2" />
-                </div>
-              </Link>
-            ))}
-          </div>
+          {Object.entries(
+            useCases.reduce((groups, uc) => {
+              const typedUc = uc as { businessUnit: string; name: string; mode: string; type: string }
+              (groups[typedUc.businessUnit] = groups[typedUc.businessUnit] || []).push(typedUc)
+              return groups
+            }, {} as Record<string, Array<{ businessUnit: string; name: string; mode: string; type: string }>>)
+          ).map(([businessUnit, cases]) => (
+            <div key={businessUnit} className="mb-8">
+              <h2 className="text-2xl font-bold text-white mb-4">{businessUnit}</h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {cases.map((uc, index) => (
+                  <Link
+                    key={index}
+                    href={`/${uc.mode}`}
+                    className={`bg-gradient-to-br ${getTypeColor(uc.type)} p-6 rounded-lg border shadow-md transition-all duration-300 hover:shadow-sky-900/20 hover:border-sky-700/50 flex flex-col h-full`}
+                  >
+                    <div className="flex justify-between items-start mb-4">
+                      <span className={`text-xs font-medium px-2 py-1 rounded-full ${getTypeBadgeColor(uc.type)}`}>
+                        {uc.type}
+                      </span>
+                      <div className="w-10 h-10 rounded-full bg-gray-800/60 flex items-center justify-center">
+                        <span className="text-lg font-bold text-sky-400">M{getModeNumber(uc.mode)}</span>
+                      </div>
+                    </div>
+                    <h2 className="text-xl font-semibold text-white mb-2">{uc.name}</h2>
+                    <div className="mt-auto pt-4 flex items-center text-sky-300 text-sm font-medium">
+                      <span>Open Dashboard</span>
+                      <ArrowRight className="h-4 w-4 ml-2" />
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            </div>
+          ))}
         </div>
       </div>
     </div>

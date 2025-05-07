@@ -1,12 +1,14 @@
-import React, { useRef, useEffect } from 'react'
-import * as d3 from 'd3'
+"use client";
+
+import React, { useRef, useEffect } from "react";
+import * as d3 from "d3";
 
 export interface D3ConfusionMatrixProps {
-  data: number[][]
-  labels: string[]
-  title?: string
-  width: number
-  height: number
+  data: number[][];
+  labels: string[];
+  title?: string;
+  width: number;   // the “inner” width (cells only)
+  height: number;  // the “inner” height (cells only)
 }
 
 const D3ConfusionMatrix: React.FC<D3ConfusionMatrixProps> = ({
@@ -16,87 +18,129 @@ const D3ConfusionMatrix: React.FC<D3ConfusionMatrixProps> = ({
   width,
   height,
 }) => {
-  const svgRef = useRef<SVGSVGElement>(null)
+  const svgRef = useRef<SVGSVGElement>(null);
 
   useEffect(() => {
-    if (!data.length) return
+    if (!data.length || !svgRef.current) return;
 
-    const maxVal = d3.max(data.flat()) ?? 1
-    const margin = { top: title ? 30 : 10, right: 10, bottom: 10, left: 10 }
-    const innerW = width - margin.left - margin.right
-    const innerH = height - margin.top - margin.bottom
+    // --- margins around the matrix, in pixels
+    const margin = { top: title ? 30 : 10, right: 10, bottom: 10, left: 10 };
 
-    const x = d3
+    // total SVG coordinate size
+    const totalWidth = width + margin.left + margin.right;
+    const totalHeight = height + margin.top + margin.bottom;
+
+    // scales for cells
+    const xScale = d3
       .scaleBand<string>()
       .domain(labels)
-      .range([0, innerW])
-      .padding(0.05)
+      .range([0, width])
+      .padding(0.05);
 
-    const y = d3
+    const yScale = d3
       .scaleBand<string>()
       .domain(labels)
-      .range([0, innerH])
-      .padding(0.05)
+      .range([0, height])
+      .padding(0.05);
 
-    const color = d3
-      .scaleSequential(d3.interpolateBlues)
-      .domain([0, maxVal])
+    // color ramp
+    const maxVal = d3.max(data.flat()) ?? 1;
+    const colorScale = d3.scaleSequential(d3.interpolateBlues).domain([0, maxVal]);
 
-    const svg = d3.select(svgRef.current!)
-    svg.selectAll('*').remove()
-    svg.attr('viewBox', `0 0 ${width} ${height}`)
+    // set up the SVG
+    const svg = d3.select(svgRef.current);
+    svg.selectAll("*").remove();
+    svg.attr("viewBox", `0 0 ${totalWidth} ${totalHeight}`);
 
     // optional title
     if (title) {
       svg
-        .append('text')
-        .attr('x', width / 2)
-        .attr('y', margin.top / 2)
-        .attr('text-anchor', 'middle')
-        .style('fill', 'white')
-        .style('font-size', '14px')
-        .text(title)
+        .append("text")
+        .attr("x", totalWidth / 2)
+        .attr("y", margin.top / 2)
+        .attr("text-anchor", "middle")
+        .style("fill", "white")
+        .style("font-size", "14px")
+        .text(title);
     }
 
+    // container for everything, offset by margin
     const g = svg
-      .append('g')
-      .attr('transform', `translate(${margin.left},${margin.top})`)
+      .append("g")
+      .attr("transform", `translate(${margin.left},${margin.top})`);
 
-    // cells + centered text
+    // draw cells + numbers
     data.forEach((row, i) => {
       row.forEach((val, j) => {
-        const xpos = x(labels[j])!
-        const ypos = y(labels[i])!
+        // raw positions in the inner 0..width / 0..height
+        const rx = xScale(labels[j])!;
+        const ry = yScale(labels[i])!;
+        const rw = xScale.bandwidth();
+        const rh = yScale.bandwidth();
 
-        g.append('rect')
-          .attr('x', xpos)
-          .attr('y', ypos)
-          .attr('width', x.bandwidth())
-          .attr('height', y.bandwidth())
-          .attr('fill', color(val))
+        // round to integers so that both rect and text align perfectly
+        const x = Math.round(rx);
+        const y = Math.round(ry);
+        const w = Math.round(rw);
+        const h = Math.round(rh);
 
-        g.append('text')
-          .attr('x', xpos + x.bandwidth() / 2)
-          .attr('y', ypos + y.bandwidth() / 2)
-          .attr('text-anchor', 'middle')
-          .attr('dominant-baseline', 'middle')
-          .style('font-size', `${Math.min(x.bandwidth(), y.bandwidth()) * 0.4}px`)
-          .attr('fill', val > maxVal / 2 ? 'white' : 'black')
-          .text(val)
-      })
-    })
+        // background rect
+        g.append("rect")
+          .attr("x", x)
+          .attr("y", y)
+          .attr("width", w)
+          .attr("height", h)
+          .attr("fill", colorScale(val))
+          .attr("stroke", "#334155")
+          .attr("stroke-width", 0.5);
 
-    // axes (no tick lines)
-    g.append('g')
-      .call(d3.axisTop(x).tickSize(0))
-      .selectAll('text')
-      .style('font-size', '10px')
+        // centered text
+        g.append("text")
+          .attr("x", x + w / 2)
+          .attr("y", y + h / 2)
+          .attr("text-anchor", "middle")
+          .attr("dominant-baseline", "middle")
+          .style("font-size", `${Math.floor(Math.min(w, h) * 0.4)}px`)
+          .attr("fill", val > maxVal / 2 ? "white" : "black")
+          .text(val);
+      });
+    });
 
-    g.append('g')
-      .call(d3.axisLeft(y).tickSize(0))
-      .selectAll('text')
-      .style('font-size', '10px')
-  }, [data, labels, width, height, title])
+    // X axis (top)
+    g.append("g")
+      .attr("transform", `translate(0,0)`)
+      .call(d3.axisTop(xScale).tickSize(0))
+      .selectAll("text")
+      .style("font-size", "10px")
+      .attr("dy", "-0.3em");
+
+    // Y axis (left)
+    g.append("g")
+      .attr("transform", `translate(0,0)`)
+      .call(d3.axisLeft(yScale).tickSize(0))
+      .selectAll("text")
+      .style("font-size", "10px")
+      .attr("dx", "-0.3em");
+
+    // remove domain lines
+    g.selectAll(".domain").remove();
+
+    // axis labels
+    g.append("text")
+      .attr("x", width / 2)
+      .attr("y", -margin.top / 2)
+      .attr("text-anchor", "middle")
+      .style("fill", "#94a3b8")
+      .style("font-size", "12px")
+      .text("Predicted");
+
+    g.append("text")
+      .attr("transform", `translate(${-margin.left / 2},${height / 2}) rotate(-90)`)
+      .attr("text-anchor", "middle")
+      .style("fill", "#94a3b8")
+      .style("font-size", "12px")
+      .text("Actual");
+  }, [data, labels, title, width, height]);
 
   return (
     <svg
@@ -105,7 +149,7 @@ const D3ConfusionMatrix: React.FC<D3ConfusionMatrixProps> = ({
       height="100%"
       preserveAspectRatio="xMidYMid meet"
     />
-  )
-}
+  );
+};
 
-export default D3ConfusionMatrix
+export default D3ConfusionMatrix;

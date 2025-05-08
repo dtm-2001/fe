@@ -1,142 +1,213 @@
-"use client";
+"use client"
 
-import { useEffect, useState } from "react";
-import Head from "next/head";
-import D3ConfusionMatrix from "../../components/D3ConfusionMatrix";
-import { AlertCircle, AlertTriangle, CheckCircle, RefreshCw, Info } from "lucide-react";
-import { Chart, registerables } from "chart.js";
-import {
-  fetchData,
-  type KPI,
-  type PlotDataPoint,
-  type TableDataPoint,
-} from "../../services/backendService2";
-import ReactMarkdown from "react-markdown";
+import { useEffect, useState } from "react"
+import ReactMarkdown from "react-markdown"
+import D3ConfusionMatrix from "../../components/D3ConfusionMatrix"
+import { AlertCircle, AlertTriangle, CheckCircle, RefreshCw, Info } from "lucide-react"
+import { Chart, registerables } from "chart.js"
+import { useSearchParams } from "next/navigation"
+import { fetchData, type KPI, type PlotDataPoint, type TableDataPoint } from "../../services/backendService2"
+import { fetchEntriesTable } from "../../services/dashboardService"
 
-Chart.register(...registerables);
+Chart.register(...registerables)
+
+// Define the entry table interface
+interface EntryTableItem {
+  BusinessUnit: string
+  useCase: string
+  ShortCode: string
+  Runtime: string
+  alertKeeper: string
+}
 
 interface DetailedMetric {
-  total_samples: number;
-  correct_predictions: { count: number; percentage: number };
-  incorrect_predictions: { count: number; percentage: number };
-  misclassifications: Record<string, { count: number; percentage: number }>;
+  total_samples: number
+  correct_predictions: { count: number; percentage: number }
+  incorrect_predictions: { count: number; percentage: number }
+  misclassifications: Record<string, { count: number; percentage: number }>
 }
 
 export default function Mode3Page() {
+  const searchParams = useSearchParams()
+  const businessUnitParam = searchParams.get("businessUnit") || ""
+  const useCaseParam = searchParams.get("useCase") || ""
+
   // --- FILTER STATES ---
-  const [businessUnit, setBusinessUnit] = useState<string>("");
-  const [useCase, setUseCase] = useState<string>("");
-  const [shortCode, setShortCode] = useState<string>("");
-  const [alertKeeperValue, setAlertKeeperValue] = useState<string>("");
-  const [runtimeValue, setRuntimeValue] = useState<number>(1);
+  const [businessUnit, setBusinessUnit] = useState<string>("")
+  const [useCase, setUseCase] = useState<string>("")
+  const [shortCode, setShortCode] = useState<string>("")
+  const [alertKeeperValue, setAlertKeeperValue] = useState<string>("")
+
+  // Entries state (fetched via dashboardService)
+  const [entries, setEntries] = useState<EntryTableItem[]>([])
+  const [runtimeValue, setRuntimeValue] = useState<string>("")
+  const [runtimeOptions, setRuntimeOptions] = useState<string[]>([])
 
   // --- CORE DATA STATES ---
-  const [kpis, setKpis] = useState<KPI[]>([]);
+  const [kpis, setKpis] = useState<KPI[]>([])
   const [errors, setErrors] = useState<{ plotData: PlotDataPoint[]; tableData: TableDataPoint[] }>({
     plotData: [],
     tableData: [],
-  });
-  const [referenceMatrix, setReferenceMatrix] = useState<number[][]>([]);
-  const [currentMatrix, setCurrentMatrix] = useState<number[][]>([]);
-  const [detailedMetrics, setDetailedMetrics] = useState<Record<string, DetailedMetric>>({});
-  const [xaiExplanation, setXaiExplanation] = useState<string>("No explanation available");
-  const [backendError, setBackendError] = useState<string | null>(null);
-  const [loading, setLoading] = useState<boolean>(true);
+  })
+  const [referenceMatrix, setReferenceMatrix] = useState<number[][]>([])
+  const [currentMatrix, setCurrentMatrix] = useState<number[][]>([])
+  const [detailedMetrics, setDetailedMetrics] = useState<Record<string, DetailedMetric>>({})
+  const [xaiExplanation, setXaiExplanation] = useState<string>("No explanation available")
+  const [backendError, setBackendError] = useState<string | null>(null)
+  const [loading, setLoading] = useState<boolean>(true)
 
   // --- CLASS ACCURACY STATE ---
-  const [selectedClass, setSelectedClass] = useState<string>("");
+  const [selectedClass, setSelectedClass] = useState<string>("")
 
   // --- HELPERS ---
-  const makeLabels = (n: number) => Array.from({ length: n }, (_, i) => i.toString());
+  const makeLabels = (n: number) => Array.from({ length: n }, (_, i) => i.toString())
   const computeSquareSize = (grid: number[][]) => {
-    const maxPx = 300;
-    const rows = grid.length, cols = grid[0]?.length || 0;
-    if (!rows || !cols) return maxPx;
-    const cellSize = Math.min(maxPx / rows, maxPx / cols);
-    return Math.max(rows, cols) * cellSize;
-  };
+    const maxPx = 300
+    const rows = grid.length,
+      cols = grid[0]?.length || 0
+    if (!rows || !cols) return maxPx
+    const cellSize = Math.min(maxPx / rows, maxPx / cols)
+    return Math.max(rows, cols) * cellSize
+  }
   const getStatusIcon = (s?: string) => {
-    if (!s) return <Info className="h-5 w-5 text-gray-400" />;
+    if (!s) return <Info className="h-5 w-5 text-gray-400" />
     switch (s.toLowerCase()) {
-      case "warning": return <AlertTriangle className="h-5 w-5 text-amber-400" />;
-      case "error":   return <AlertCircle   className="h-5 w-5 text-rose-500" />;
-      case "success": return <CheckCircle    className="h-5 w-5 text-emerald-400" />;
-      default:        return <Info           className="h-5 w-5 text-sky-400" />;
+      case "warning":
+        return <AlertTriangle className="h-5 w-5 text-amber-400" />
+      case "error":
+        return <AlertCircle className="h-5 w-5 text-rose-500" />
+      case "success":
+        return <CheckCircle className="h-5 w-5 text-emerald-400" />
+      default:
+        return <Info className="h-5 w-5 text-sky-400" />
     }
-  };
+  }
   const getStatusColor = (s?: string) => {
-    if (!s) return "text-gray-400";
+    if (!s) return "text-gray-400"
     switch (s.toLowerCase()) {
-      case "warning": return "text-amber-400";
-      case "error":   return "text-rose-500";
-      case "success": return "text-emerald-400";
-      default:        return "text-sky-400";
+      case "warning":
+        return "text-amber-400"
+      case "error":
+        return "text-rose-500"
+      case "success":
+        return "text-emerald-400"
+      default:
+        return "text-sky-400"
     }
-  };
+  }
+
+  // 1) Fetch entries when businessUnitParam or useCaseParam change
+  useEffect(() => {
+    if (!businessUnitParam || !useCaseParam) return
+
+    const loadEntries = async () => {
+      try {
+        const fetched = await fetchEntriesTable({
+          BusinessUnit: businessUnitParam,
+          useCase: useCaseParam,
+        })
+        // Filter out any placeholder rows
+        const filtered = fetched.filter(
+          (entry) =>
+            entry.BusinessUnit !== "Not Selected" &&
+            entry.useCase !== "Not Selected" &&
+            entry.ShortCode !== "Not Available",
+        )
+        setEntries(filtered)
+
+        if (filtered.length === 0) {
+          setBusinessUnit("Not Selected")
+          setUseCase("Not Selected")
+          setShortCode("Not Available")
+          setRuntimeOptions([])
+          setAlertKeeperValue("Not Selected")
+          setRuntimeValue("")
+        } else {
+          // Initialize with first entry
+          setBusinessUnit(filtered[0].BusinessUnit)
+          setUseCase(filtered[0].useCase)
+          setShortCode(filtered[0].ShortCode)
+
+          const uniqueRuntimes = Array.from(new Set(filtered.map((e) => e.Runtime)))
+          setRuntimeOptions(uniqueRuntimes)
+          setRuntimeValue(uniqueRuntimes[0])
+
+          const initialKeeper = filtered.find((e) => e.Runtime === uniqueRuntimes[0])?.alertKeeper || ""
+          setAlertKeeperValue(initialKeeper)
+        }
+      } catch (err) {
+        console.error(err)
+        setBackendError(err instanceof Error ? err.message : "Failed to load entries")
+      }
+    }
+
+    loadEntries()
+  }, [businessUnitParam, useCaseParam])
+
+  // 2) Update alertKeeper when runtimeValue or entries change
+  useEffect(() => {
+    if (!runtimeValue) return
+
+    const matched = entries.find((e) => e.Runtime === runtimeValue)
+    setAlertKeeperValue(matched?.alertKeeper || "Not Selected")
+  }, [runtimeValue, entries])
 
   // --- FETCH DATA ---
-  const initData = async () => {
-    setLoading(true);
-    setBackendError(null);
+  const fetchAllData = async () => {
+    setLoading(true)
+    setBackendError(null)
     try {
-      const {
-        kpis: fetchedKpis,
-        errors: fetchedErrors,
-        referenceMatrix: fetchedRefM,
-        currentMatrix: fetchedCurrM,
-        detailedMetrics: fetchedDetailed,
-        xaiExplanation: fetchedXai,
-      } = await fetchData();
+      const data = await fetchData({ runtime: runtimeValue })
 
-      setKpis(fetchedKpis);
-      setErrors(fetchedErrors);
-      setReferenceMatrix(fetchedRefM);
-      setCurrentMatrix(fetchedCurrM);
-      setDetailedMetrics(fetchedDetailed);
-      setXaiExplanation(fetchedXai);
+      setKpis(data.kpis)
+      setErrors(data.errors)
+      setReferenceMatrix(data.referenceMatrix)
+      setCurrentMatrix(data.currentMatrix)
+      setDetailedMetrics(data.detailedMetrics)
+      setXaiExplanation(data.xaiExplanation)
 
-      const classes = Object.keys(fetchedDetailed);
-      if (classes.length) setSelectedClass(classes[0]);
+      const classes = Object.keys(data.detailedMetrics)
+      if (classes.length) setSelectedClass(classes[0])
     } catch (err) {
-      console.error(err);
-      setBackendError(err instanceof Error ? err.message : "Unknown error");
+      console.error(err)
+      setBackendError(err instanceof Error ? err.message : "Unknown error")
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
-  };
-  useEffect(() => { initData(); }, []);
+  }
+
+  // 3) Fetch dynamic data when runtimeValue changes
+  useEffect(() => {
+    if (runtimeValue) {
+      fetchAllData()
+    }
+  }, [runtimeValue])
 
   // --- CHART RENDERING WITH DESTROY LOGIC ---
   useEffect(() => {
-    if (loading) return;
+    if (loading) return
 
     // Full status distribution
-    const pieCanvas = document.getElementById("statusPieChart") as HTMLCanvasElement;
+    const pieCanvas = document.getElementById("statusPieChart") as HTMLCanvasElement
     if (pieCanvas) {
-      const existing = Chart.getChart(pieCanvas);
-      if (existing) existing.destroy();
+      const existing = Chart.getChart(pieCanvas)
+      if (existing) existing.destroy()
       new Chart(pieCanvas, {
         type: "pie",
         data: {
           labels: ["Good", "Warning", "Error"],
-          datasets: [{
-            data: [
-              kpis.filter(k => k.status === "success").length,
-              kpis.filter(k => k.status === "warning").length,
-              kpis.filter(k => k.status === "error").length,
-            ],
-            backgroundColor: [
-              "rgba(52, 211, 153, 0.8)",
-              "rgba(251, 191, 36, 0.8)",
-              "rgba(239,  68, 68, 0.8)",
-            ],
-            borderColor: [
-              "rgba(52, 211, 153, 1)",
-              "rgba(251, 191, 36, 1)",
-              "rgba(239,  68, 68, 1)",
-            ],
-            borderWidth: 1,
-          }],
+          datasets: [
+            {
+              data: [
+                kpis.filter((k) => k.status === "success").length,
+                kpis.filter((k) => k.status === "warning").length,
+                kpis.filter((k) => k.status === "error").length,
+              ],
+              backgroundColor: ["rgba(52, 211, 153, 0.8)", "rgba(251, 191, 36, 0.8)", "rgba(239,  68, 68, 0.8)"],
+              borderColor: ["rgba(52, 211, 153, 1)", "rgba(251, 191, 36, 1)", "rgba(239,  68, 68, 1)"],
+              borderWidth: 1,
+            },
+          ],
         },
         options: {
           responsive: true,
@@ -147,7 +218,7 @@ export default function Mode3Page() {
               labels: {
                 color: "#e5e7eb",
                 font: { size: 14 },
-                generateLabels: chart =>
+                generateLabels: (chart) =>
                   chart.data.labels!.map((label, i) => ({
                     text: `${label}: ${chart.data.datasets![0].data[i]} pts`,
                     fillStyle: chart.data.datasets![0].backgroundColor![i] as string,
@@ -160,31 +231,33 @@ export default function Mode3Page() {
             },
             tooltip: {
               callbacks: {
-                label: ctx => `${ctx.label}: ${ctx.raw}`,
+                label: (ctx) => `${ctx.label}: ${ctx.raw}`,
               },
             },
           },
         },
-      });
+      })
     }
 
     // Per-class Correct vs Incorrect
-    const classCanvas = document.getElementById("classAccuracyChart") as HTMLCanvasElement;
+    const classCanvas = document.getElementById("classAccuracyChart") as HTMLCanvasElement
     if (classCanvas && selectedClass) {
-      const existing2 = Chart.getChart(classCanvas);
-      if (existing2) existing2.destroy();
+      const existing2 = Chart.getChart(classCanvas)
+      if (existing2) existing2.destroy()
 
-      const dm = detailedMetrics[selectedClass];
+      const dm = detailedMetrics[selectedClass]
       new Chart(classCanvas, {
         type: "pie",
         data: {
           labels: ["Correct", "Incorrect"],
-          datasets: [{
-            data: [dm.correct_predictions.count, dm.incorrect_predictions.count],
-            backgroundColor: ["rgba(52,211,153,0.8)", "rgba(239,68,68,0.8)"],
-            borderColor:   ["rgba(52,211,153,1)",   "rgba(239,68,68,1)"],
-            borderWidth: 1,
-          }],
+          datasets: [
+            {
+              data: [dm.correct_predictions.count, dm.incorrect_predictions.count],
+              backgroundColor: ["rgba(52,211,153,0.8)", "rgba(239,68,68,0.8)"],
+              borderColor: ["rgba(52,211,153,1)", "rgba(239,68,68,1)"],
+              borderWidth: 1,
+            },
+          ],
         },
         options: {
           responsive: true,
@@ -195,7 +268,7 @@ export default function Mode3Page() {
               labels: {
                 color: "#e5e7eb",
                 font: { size: 14 },
-                generateLabels: chart =>
+                generateLabels: (chart) =>
                   chart.data.labels!.map((label, i) => ({
                     text: `${label}: ${chart.data.datasets![0].data[i]}`,
                     fillStyle: chart.data.datasets![0].backgroundColor![i] as string,
@@ -208,13 +281,13 @@ export default function Mode3Page() {
             },
           },
         },
-      });
+      })
     }
-  }, [loading, selectedClass, detailedMetrics, kpis]);
+  }, [loading, selectedClass, detailedMetrics, kpis])
 
   return (
     <div className="bg-gradient-to-b from-gray-950 to-gray-900 min-h-screen">
-      <Head><title>Mode 3 | CL Dashboard</title></Head>
+      <title>Mode 3 | CL Dashboard</title>
       <main className="container mx-auto px-4 py-8">
         {/* Backend Error */}
         {backendError && (
@@ -224,7 +297,7 @@ export default function Mode3Page() {
               <p className="text-rose-300 font-medium">{backendError}</p>
             </div>
             <button
-              onClick={initData}
+              onClick={fetchAllData}
               className="mt-2 inline-flex items-center gap-2 px-4 py-2 bg-rose-800/50 text-white rounded text-sm"
             >
               <RefreshCw className="h-4 w-4" /> Retry
@@ -238,7 +311,7 @@ export default function Mode3Page() {
             OCTAVE – CL Dashboard
           </h1>
           <button
-            onClick={initData}
+            onClick={fetchAllData}
             className="mt-4 md:mt-0 inline-flex items-center gap-2 px-4 py-2 bg-sky-800/40 text-white rounded"
           >
             <RefreshCw className="h-4 w-4" /> Refresh
@@ -268,9 +341,18 @@ export default function Mode3Page() {
             <select
               className="mt-1 w-full bg-gray-800/80 border border-sky-700/50 rounded p-2 text-white"
               value={runtimeValue}
-              onChange={e => setRuntimeValue(Number(e.target.value))}
+              onChange={(e) => setRuntimeValue(e.target.value)}
+              disabled={runtimeOptions.length === 0}
             >
-              {[1,2,3,4].map(n => <option key={n} value={n}>{n}</option>)}
+              {runtimeOptions.length === 0 ? (
+                <option value="">No runtimes available</option>
+              ) : (
+                runtimeOptions.map((runtime) => (
+                  <option key={runtime} value={runtime}>
+                    {runtime}
+                  </option>
+                ))
+              )}
             </select>
           </div>
         </div>
@@ -279,9 +361,9 @@ export default function Mode3Page() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
           {[
             { title: "Reference Matrix", grid: referenceMatrix },
-            { title: "Current Matrix",   grid: currentMatrix   },
+            { title: "Current Matrix", grid: currentMatrix },
           ].map(({ title, grid }, idx) => {
-            const side = computeSquareSize(grid);
+            const side = computeSquareSize(grid)
             return (
               <div key={idx} className="bg-gray-900/80 p-6 rounded border border-gray-700/50 text-center">
                 <h2 className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-cyan-400 to-sky-600 mb-4">
@@ -297,7 +379,7 @@ export default function Mode3Page() {
                   </div>
                 )}
               </div>
-            );
+            )
           })}
 
           {/* Per-Class Accuracy */}
@@ -306,10 +388,12 @@ export default function Mode3Page() {
             <select
               className="w-full bg-gray-800/80 border border-sky-700/50 rounded p-2 mb-4 text-white"
               value={selectedClass}
-              onChange={e => setSelectedClass(e.target.value)}
+              onChange={(e) => setSelectedClass(e.target.value)}
             >
-              {Object.keys(detailedMetrics).map(cls => (
-                <option key={cls} value={cls}>{cls}</option>
+              {Object.keys(detailedMetrics).map((cls) => (
+                <option key={cls} value={cls}>
+                  {cls}
+                </option>
               ))}
             </select>
             <div className="h-48">
@@ -367,16 +451,15 @@ export default function Mode3Page() {
             Key Performance Indicators
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
-            {kpis.map(kpi => (
-              <div key={kpi.rowKey} className="bg-gradient-to-br from-sky-950/40 to-sky-900/20 p-4 rounded border border-sky-800/30">
+            {kpis.map((kpi) => (
+              <div
+                key={kpi.rowKey}
+                className="bg-gradient-to-br from-sky-950/40 to-sky-900/20 p-4 rounded border border-sky-800/30"
+              >
                 <p className="text-sky-300">{kpi.rowKey}</p>
                 <div className="flex items-center mt-2">
-                  <div className="w-8 h-8 flex items-center justify-center mr-2">
-                    {getStatusIcon(kpi.status)}
-                  </div>
-                  <p className={`text-xl font-semibold ${getStatusColor(kpi.status)}`}>
-                    {loading ? "…" : kpi.value}
-                  </p>
+                  <div className="w-8 h-8 flex items-center justify-center mr-2">{getStatusIcon(kpi.status)}</div>
+                  <p className={`text-xl font-semibold ${getStatusColor(kpi.status)}`}>{loading ? "…" : kpi.value}</p>
                 </div>
               </div>
             ))}
@@ -437,5 +520,5 @@ export default function Mode3Page() {
         </div>
       </main>
     </div>
-  );
+  )
 }

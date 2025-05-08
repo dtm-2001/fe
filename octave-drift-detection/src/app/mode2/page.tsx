@@ -1,11 +1,11 @@
 "use client"
 import type React from "react"
 import { useState, useEffect, useMemo, useRef, useCallback } from "react"
-import Head from "next/head"
 import ReactMarkdown from "react-markdown"
 import { Chart, registerables } from "chart.js"
 import DriftWarningChart from "./DriftWarningChart"
 import { AlertCircle, AlertTriangle, CheckCircle, RefreshCw, Info, X } from "lucide-react"
+import { useSearchParams } from "next/navigation"
 import {
   fetchData,
   type KPI,
@@ -15,8 +15,18 @@ import {
   type Indices,
   type AllOutlets,
 } from "../../services/backendService1"
+import { fetchEntriesTable } from "../../services/dashboardService"
 
 Chart.register(...registerables)
+
+// Define the entry table interface
+interface EntryTableItem {
+  BusinessUnit: string
+  useCase: string
+  ShortCode: string
+  Runtime: string
+  alertKeeper: string
+}
 
 // Error percentage ranges for the bar chart
 const ERROR_RANGES = [
@@ -34,6 +44,10 @@ const ERROR_RANGES = [
 ]
 
 export default function Mode2Page(): React.ReactElement {
+  const searchParams = useSearchParams()
+  const businessUnitParam = searchParams.get("businessUnit") || ""
+  const useCaseParam = searchParams.get("useCase") || ""
+
   // --- STATE HOOKS ---
   const [kpis, setKpis] = useState<KPI[]>([])
   const [errorData, setErrorData] = useState<{ plotData: PlotDataPoint[]; tableData: TableDataPoint[] }>({
@@ -54,7 +68,11 @@ export default function Mode2Page(): React.ReactElement {
   const [useCase, setUseCase] = useState<string>("")
   const [shortCode, setShortCode] = useState<string>("")
   const [alertKeeperValue, setAlertKeeperValue] = useState<string>("")
-  const [runtimeValue, setRuntimeValue] = useState<number>(1)
+
+  // Entries state (fetched via dashboardService)
+  const [entries, setEntries] = useState<EntryTableItem[]>([])
+  const [runtimeValue, setRuntimeValue] = useState<string>("")
+  const [runtimeOptions, setRuntimeOptions] = useState<string[]>([])
 
   // Status distribution for pie chart
   const [statusDistribution, setStatusDistribution] = useState({ good: 65, warning: 25, error: 10 })
@@ -127,59 +145,95 @@ export default function Mode2Page(): React.ReactElement {
     })
   }, [])
 
+  // 1) Fetch entries when businessUnitParam or useCaseParam change
+  useEffect(() => {
+    if (!businessUnitParam || !useCaseParam) return
+
+    const loadEntries = async () => {
+      try {
+        const fetched = await fetchEntriesTable({
+          BusinessUnit: businessUnitParam,
+          useCase: useCaseParam,
+        })
+        // Filter out any placeholder rows
+        const filtered = fetched.filter(
+          (entry) =>
+            entry.BusinessUnit !== "Not Selected" &&
+            entry.useCase !== "Not Selected" &&
+            entry.ShortCode !== "Not Available",
+        )
+        setEntries(filtered)
+
+        if (filtered.length === 0) {
+          setBusinessUnit("Not Selected")
+          setUseCase("Not Selected")
+          setShortCode("Not Available")
+          setRuntimeOptions([])
+          setAlertKeeperValue("Not Selected")
+          setRuntimeValue("")
+        } else {
+          // Initialize with first entry
+          setBusinessUnit(filtered[0].BusinessUnit)
+          setUseCase(filtered[0].useCase)
+          setShortCode(filtered[0].ShortCode)
+
+          const uniqueRuntimes = Array.from(new Set(filtered.map((e) => e.Runtime)))
+          setRuntimeOptions(uniqueRuntimes)
+          setRuntimeValue(uniqueRuntimes[0])
+
+          const initialKeeper = filtered.find((e) => e.Runtime === uniqueRuntimes[0])?.alertKeeper || ""
+          setAlertKeeperValue(initialKeeper)
+        }
+      } catch (err) {
+        console.error(err)
+        setBackendError(err instanceof Error ? err.message : "Failed to load entries")
+      }
+    }
+
+    loadEntries()
+  }, [businessUnitParam, useCaseParam])
+
+  // 2) Update alertKeeper when runtimeValue or entries change
+  useEffect(() => {
+    if (!runtimeValue) return
+
+    const matched = entries.find((e) => e.Runtime === runtimeValue)
+    setAlertKeeperValue(matched?.alertKeeper || "Not Selected")
+  }, [runtimeValue, entries])
+
   // Fetch & prepare all data
-  const initData = useCallback(async (): Promise<void> => {
+  const fetchAllData = useCallback(async (): Promise<void> => {
     setLoading(true)
     setBackendError(null)
     try {
-      const {
-        businessUnit: fBU,
-        useCase: fUC,
-        shortCode: fSC,
-        alertKeeper: fAK,
-        kpis: fetchedKpis,
-        errors: fetchedErrors,
-        outletsExceedingThreshold: fetchedOutlets,
-        indices: fetchedIndices,
-        currentPeriod: fetchedPeriod,
-        outletsExceedingThresholdCount: fetchedCount,
-        xaiExplanation: fetchedXai,
-        error_percentage_threshold,
-        all_outlets: fetchedAllOutlets,
-      } = await fetchData()
-
-      // Static filters
-      setBusinessUnit(fBU || "")
-      setUseCase(fUC || "")
-      setShortCode(fSC || "")
-      setAlertKeeperValue(fAK || "")
+      const data = await fetchData({ runtime: runtimeValue })
 
       // Build the "drift & warning over time" plotData from indices
       const driftPlot: PlotDataPoint[] = []
-      fetchedIndices.normal.forEach((x) => driftPlot.push({ x, y: 0, exceedsThreshold: false }))
-      fetchedIndices.warning.forEach((x) => driftPlot.push({ x, y: 1, exceedsThreshold: false }))
-      fetchedIndices.drift.forEach((x) => driftPlot.push({ x, y: 2, exceedsThreshold: false }))
+      data.indices.normal.forEach((x) => driftPlot.push({ x, y: 0, exceedsThreshold: false }))
+      data.indices.warning.forEach((x) => driftPlot.push({ x, y: 1, exceedsThreshold: false }))
+      data.indices.drift.forEach((x) => driftPlot.push({ x, y: 2, exceedsThreshold: false }))
       driftPlot.sort((a, b) => a.x - b.x)
 
       // Dynamic data
       setKpis(
-        fetchedKpis.filter((k) =>
+        data.kpis.filter((k) =>
           ["kstest", "wasserstein", "mseref", "msecurrent"].includes(k.rowKey.toLowerCase()) ? false : true,
         ),
       )
-      setErrorData({ plotData: driftPlot, tableData: fetchedErrors.tableData })
-      setOutletsExceedingThreshold(fetchedOutlets)
-      setIndices(fetchedIndices)
-      setCurrentPeriod(fetchedPeriod)
-      setOutletsExceedingThresholdCount(fetchedCount)
-      setXaiExplanation(fetchedXai)
-      setErrorPercentageThreshold(error_percentage_threshold ?? 0)
-      setAllOutlets(fetchedAllOutlets || [])
+      setErrorData({ plotData: driftPlot, tableData: data.errors.tableData })
+      setOutletsExceedingThreshold(data.outletsExceedingThreshold)
+      setIndices(data.indices)
+      setCurrentPeriod(data.currentPeriod)
+      setOutletsExceedingThresholdCount(data.outletsExceedingThresholdCount)
+      setXaiExplanation(data.xaiExplanation)
+      setErrorPercentageThreshold(data.error_percentage_threshold ?? 0)
+      setAllOutlets(data.all_outlets || [])
 
       // Status distribution
-      const normalCount = fetchedIndices.normal.length
-      const warningCount = fetchedIndices.warning.length
-      const driftCount = fetchedIndices.drift.length
+      const normalCount = data.indices.normal.length
+      const warningCount = data.indices.warning.length
+      const driftCount = data.indices.drift.length
       const total = normalCount + warningCount + driftCount || 1
       setStatusDistribution({
         good: Math.round((normalCount / total) * 100),
@@ -188,8 +242,8 @@ export default function Mode2Page(): React.ReactElement {
       })
 
       // Error‐range bar chart data
-      if (fetchedAllOutlets?.length) {
-        setErrorRangeData(calculateErrorRangeData(fetchedAllOutlets))
+      if (data.all_outlets?.length) {
+        setErrorRangeData(calculateErrorRangeData(data.all_outlets))
       }
     } catch (err) {
       console.error(err)
@@ -197,13 +251,17 @@ export default function Mode2Page(): React.ReactElement {
     } finally {
       setLoading(false)
     }
-  }, [calculateErrorRangeData])
+  }, [calculateErrorRangeData, runtimeValue])
 
-  // Initial data load
+  // 3) Fetch dynamic data when runtimeValue changes
   useEffect(() => {
-    initData()
+    if (runtimeValue) {
+      fetchAllData()
+    }
+  }, [runtimeValue, fetchAllData])
 
-    // Cleanup function to destroy charts when component unmounts
+  // Cleanup function to destroy charts when component unmounts
+  useEffect(() => {
     return () => {
       if (pieChartRef.current) {
         pieChartRef.current.destroy()
@@ -212,7 +270,7 @@ export default function Mode2Page(): React.ReactElement {
         errorRangeChartRef.current.destroy()
       }
     }
-  }, [initData])
+  }, [])
 
   // Re-draw charts any time data changes
   useEffect(() => {
@@ -389,9 +447,7 @@ export default function Mode2Page(): React.ReactElement {
 
   return (
     <div className="bg-gradient-to-b from-gray-950 to-gray-900 min-h-screen flex flex-col">
-      <Head>
-        <title>Mode 2 | Business Dashboard</title>
-      </Head>
+      <title>Mode 2 | Business Dashboard</title>
       <main className="flex-grow container mx-auto px-4 py-8">
         {/* Backend Error */}
         {backendError && (
@@ -402,7 +458,7 @@ export default function Mode2Page(): React.ReactElement {
             </div>
             <p className="mt-2 text-rose-200">{backendError}</p>
             <button
-              onClick={initData}
+              onClick={fetchAllData}
               className="mt-3 px-4 py-2 bg-rose-800/50 hover:bg-rose-700/70 text-white rounded-md text-sm flex items-center gap-2"
             >
               <RefreshCw className="h-4 w-4" /> Retry
@@ -447,12 +503,18 @@ export default function Mode2Page(): React.ReactElement {
             <select
               className="w-full bg-gray-800/80 border border-sky-700/50 rounded-md p-2 text-white focus:ring-2 focus:ring-sky-500"
               value={runtimeValue}
-              onChange={(e) => setRuntimeValue(Number(e.target.value))}
+              onChange={(e) => setRuntimeValue(e.target.value)}
+              disabled={runtimeOptions.length === 0}
             >
-              <option value={1}>1</option>
-              <option value={2}>2</option>
-              <option value={3}>3</option>
-              <option value={4}>4</option>
+              {runtimeOptions.length === 0 ? (
+                <option value="">No runtimes available</option>
+              ) : (
+                runtimeOptions.map((runtime) => (
+                  <option key={runtime} value={runtime}>
+                    {runtime}
+                  </option>
+                ))
+              )}
             </select>
           </div>
         </div>

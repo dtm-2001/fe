@@ -1,10 +1,18 @@
-
 "use client"
+
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { ArrowRight, AlertCircle } from "lucide-react"
 import { getUseCasesForUser } from "@/services/modeSelectionService"
+
+// Define a proper interface for the use case data
+interface UseCase {
+  name: string
+  mode: string
+  type: string
+  businessUnit: string
+}
 
 // Helper function to get type color
 const getTypeColor = (type: string) => {
@@ -29,7 +37,7 @@ const getModeNumber = (mode: string) => {
 
 export default function ModeSelection() {
   const [currentUser, setCurrentUser] = useState("")
-  const [useCases, setUseCases] = useState<Array<{ name: string; mode: string; type: string }>>([])
+  const [useCases, setUseCases] = useState<UseCase[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const router = useRouter()
@@ -44,7 +52,10 @@ export default function ModeSelection() {
           return
         }
         setCurrentUser(user)
-        const userUseCases = await getUseCasesForUser(user)
+
+        // Explicitly type the return value from getUseCasesForUser
+        const userUseCases = (await getUseCasesForUser(user)) as UseCase[]
+
         if (userUseCases.length === 0) {
           setError("No use cases found for the current user.")
           return
@@ -103,6 +114,19 @@ export default function ModeSelection() {
     )
   }
 
+  // Group use cases by business unit
+  const groupedUseCases: Record<string, UseCase[]> = useCases.reduce(
+    (groups, useCase) => {
+      const businessUnit = useCase.businessUnit || "Other"
+      if (!groups[businessUnit]) {
+        groups[businessUnit] = []
+      }
+      groups[businessUnit].push(useCase)
+      return groups
+    },
+    {} as Record<string, UseCase[]>,
+  )
+
   return (
     <div className="bg-gradient-to-b from-gray-950 to-gray-900 min-h-screen p-8">
       <div className="container mx-auto max-w-6xl">
@@ -112,31 +136,25 @@ export default function ModeSelection() {
           </h1>
           <p className="text-sky-300 mb-4">Please select a use case to continue</p>
 
-          {Object.entries(
-            useCases.reduce((groups, uc) => {
-              const typedUc = uc as { businessUnit: string; name: string; mode: string; type: string }
-              (groups[typedUc.businessUnit] = groups[typedUc.businessUnit] || []).push(typedUc)
-              return groups
-            }, {} as Record<string, Array<{ businessUnit: string; name: string; mode: string; type: string }>>)
-          ).map(([businessUnit, cases]) => (
+          {Object.entries(groupedUseCases).map(([businessUnit, cases]) => (
             <div key={businessUnit} className="mb-8">
               <h2 className="text-2xl font-bold text-white mb-4">{businessUnit}</h2>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {cases.map((uc, index) => (
+                {cases.map((useCase, index) => (
                   <Link
                     key={index}
-                    href={`/${uc.mode}`}
-                    className={`bg-gradient-to-br ${getTypeColor(uc.type)} p-6 rounded-lg border shadow-md transition-all duration-300 hover:shadow-sky-900/20 hover:border-sky-700/50 flex flex-col h-full`}
+                    href={`/${useCase.mode}?businessUnit=${encodeURIComponent(useCase.businessUnit || "")}&useCase=${encodeURIComponent(useCase.name || "")}`}
+                    className={`bg-gradient-to-br ${getTypeColor(useCase.type)} p-6 rounded-lg border shadow-md transition-all duration-300 hover:shadow-sky-900/20 hover:border-sky-700/50 flex flex-col h-full`}
                   >
                     <div className="flex justify-between items-start mb-4">
-                      <span className={`text-xs font-medium px-2 py-1 rounded-full ${getTypeBadgeColor(uc.type)}`}>
-                        {uc.type}
+                      <span className={`text-xs font-medium px-2 py-1 rounded-full ${getTypeBadgeColor(useCase.type)}`}>
+                        {useCase.type}
                       </span>
                       <div className="w-10 h-10 rounded-full bg-gray-800/60 flex items-center justify-center">
-                        <span className="text-lg font-bold text-sky-400">M{getModeNumber(uc.mode)}</span>
+                        <span className="text-lg font-bold text-sky-400">M{getModeNumber(useCase.mode)}</span>
                       </div>
                     </div>
-                    <h2 className="text-xl font-semibold text-white mb-2">{uc.name}</h2>
+                    <h2 className="text-xl font-semibold text-white mb-2">{useCase.name}</h2>
                     <div className="mt-auto pt-4 flex items-center text-sky-300 text-sm font-medium">
                       <span>Open Dashboard</span>
                       <ArrowRight className="h-4 w-4 ml-2" />

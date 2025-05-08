@@ -128,7 +128,6 @@ __turbopack_context__.s({
 });
 var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/node_modules/next/dist/compiled/react/jsx-dev-runtime.js [app-client] (ecmascript)");
 var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/node_modules/next/dist/compiled/react/index.js [app-client] (ecmascript)");
-var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$client$2f$components$2f$noop$2d$head$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/node_modules/next/dist/client/components/noop-head.js [app-client] (ecmascript)");
 var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$react$2d$markdown$2f$lib$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$export__Markdown__as__default$3e$__ = __turbopack_context__.i("[project]/node_modules/react-markdown/lib/index.js [app-client] (ecmascript) <export Markdown as default>");
 var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$chart$2e$js$2f$dist$2f$chart$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$module__evaluation$3e$__ = __turbopack_context__.i("[project]/node_modules/chart.js/dist/chart.mjs [app-client] (ecmascript) <module evaluation>");
 var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$chart$2e$js$2f$dist$2f$chart$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$locals$3e$__ = __turbopack_context__.i("[project]/node_modules/chart.js/dist/chart.mjs [app-client] (ecmascript) <locals>");
@@ -143,7 +142,6 @@ var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$re
 ;
 var _s = __turbopack_context__.k.signature();
 "use client";
-;
 ;
 ;
 ;
@@ -226,6 +224,94 @@ const ERROR_RANGES = [
         label: ">100%"
     }
 ];
+// Add this tooltip component after the ERROR_RANGES constant and before the Mode1Page function
+const TooltipPopup = ({ type, onClose })=>{
+    const content = tooltipContent[type];
+    if (!content) return null;
+    return /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+        className: "fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4",
+        onClick: onClose,
+        children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+            className: "bg-gray-800 border border-sky-700 rounded-lg shadow-xl max-w-2xl w-full p-6",
+            onClick: (e)=>e.stopPropagation(),
+            children: [
+                /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                    className: "flex justify-between items-start mb-4",
+                    children: [
+                        /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("h3", {
+                            className: "text-xl font-bold text-sky-400",
+                            children: content.title
+                        }, void 0, false, {
+                            fileName: "[project]/src/app/mode1/page.tsx",
+                            lineNumber: 98,
+                            columnNumber: 11
+                        }, this),
+                        /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("button", {
+                            onClick: onClose,
+                            className: "text-gray-400 hover:text-white transition-colors",
+                            "aria-label": "Close tooltip",
+                            children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$x$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$export__default__as__X$3e$__["X"], {
+                                className: "h-5 w-5"
+                            }, void 0, false, {
+                                fileName: "[project]/src/app/mode1/page.tsx",
+                                lineNumber: 104,
+                                columnNumber: 13
+                            }, this)
+                        }, void 0, false, {
+                            fileName: "[project]/src/app/mode1/page.tsx",
+                            lineNumber: 99,
+                            columnNumber: 11
+                        }, this)
+                    ]
+                }, void 0, true, {
+                    fileName: "[project]/src/app/mode1/page.tsx",
+                    lineNumber: 97,
+                    columnNumber: 9
+                }, this),
+                /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                    className: "prose prose-invert prose-sky max-w-none mb-4",
+                    children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
+                        className: "text-gray-300 whitespace-pre-line",
+                        children: content.content
+                    }, void 0, false, {
+                        fileName: "[project]/src/app/mode1/page.tsx",
+                        lineNumber: 108,
+                        columnNumber: 11
+                    }, this)
+                }, void 0, false, {
+                    fileName: "[project]/src/app/mode1/page.tsx",
+                    lineNumber: 107,
+                    columnNumber: 9
+                }, this),
+                content.image && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                    className: "mt-4 flex justify-center",
+                    children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("img", {
+                        src: content.image || "/placeholder.svg",
+                        alt: `${content.title} visualization`,
+                        className: "max-w-full h-auto rounded-md border border-gray-700"
+                    }, void 0, false, {
+                        fileName: "[project]/src/app/mode1/page.tsx",
+                        lineNumber: 112,
+                        columnNumber: 13
+                    }, this)
+                }, void 0, false, {
+                    fileName: "[project]/src/app/mode1/page.tsx",
+                    lineNumber: 111,
+                    columnNumber: 11
+                }, this)
+            ]
+        }, void 0, true, {
+            fileName: "[project]/src/app/mode1/page.tsx",
+            lineNumber: 93,
+            columnNumber: 7
+        }, this)
+    }, void 0, false, {
+        fileName: "[project]/src/app/mode1/page.tsx",
+        lineNumber: 92,
+        columnNumber: 5
+    }, this);
+};
+_c = TooltipPopup;
 function Mode1Page() {
     _s();
     const chartRef = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useRef"])(null);
@@ -345,15 +431,19 @@ function Mode1Page() {
     ]);
     // Handle bar chart click
     const handleBarClick = (rangeIndex)=>{
-        const range = errorRangeData[rangeIndex];
-        setSelectedRange(range.range);
-        setSelectedRangeOutlets(range.outlets);
+        if (rangeIndex >= 0 && rangeIndex < errorRangeData.length) {
+            const range = errorRangeData[rangeIndex];
+            setSelectedRange(range.range);
+            setSelectedRangeOutlets(range.outlets);
+        }
     };
     // Pie chart renderer
     const renderPieChart = ()=>{
         const ctx = document.getElementById("statusPieChart");
         if (!ctx) return;
-        pieChartRef.current?.destroy();
+        if (pieChartRef.current) {
+            pieChartRef.current.destroy();
+        }
         pieChartRef.current = new __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$chart$2e$js$2f$dist$2f$chart$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$locals$3e$__["Chart"](ctx, {
             type: "pie",
             data: {
@@ -418,7 +508,9 @@ function Mode1Page() {
         const ctx = document.getElementById("errorRangeChart");
         if (!ctx) return;
         console.log("Rendering error range chart with data:", errorRangeData);
-        errorRangeChartRef.current?.destroy();
+        if (errorRangeChartRef.current) {
+            errorRangeChartRef.current.destroy();
+        }
         // Color gradient for the bars - adjusted for the requested ranges
         const gradientColors = [
             "rgba(52, 211, 153, 0.8)",
@@ -543,12 +635,12 @@ function Mode1Page() {
                         }
                     }
                 },
-                onClick: (_, elements)=>{
+                onClick: (_event, elements)=>{
                     if (elements && elements.length > 0) {
                         const index = elements[0].index;
-                        // Use dataToUse for handling clicks
-                        const rangeKey = dataToUse[index].range;
-                        handleBarClick(index);
+                        if (index !== undefined && index >= 0 && index < dataToUse.length) {
+                            handleBarClick(index);
+                        }
                     }
                 }
             }
@@ -580,7 +672,7 @@ function Mode1Page() {
             className: "h-5 w-5 text-gray-400"
         }, void 0, false, {
             fileName: "[project]/src/app/mode1/page.tsx",
-            lineNumber: 418,
+            lineNumber: 463,
             columnNumber: 20
         }, this);
         switch(s.toLowerCase()){
@@ -589,7 +681,7 @@ function Mode1Page() {
                     className: "h-5 w-5 text-amber-400"
                 }, void 0, false, {
                     fileName: "[project]/src/app/mode1/page.tsx",
-                    lineNumber: 421,
+                    lineNumber: 466,
                     columnNumber: 16
                 }, this);
             case "error":
@@ -597,7 +689,7 @@ function Mode1Page() {
                     className: "h-5 w-5 text-rose-500"
                 }, void 0, false, {
                     fileName: "[project]/src/app/mode1/page.tsx",
-                    lineNumber: 423,
+                    lineNumber: 468,
                     columnNumber: 16
                 }, this);
             case "success":
@@ -605,7 +697,7 @@ function Mode1Page() {
                     className: "h-5 w-5 text-emerald-400"
                 }, void 0, false, {
                     fileName: "[project]/src/app/mode1/page.tsx",
-                    lineNumber: 425,
+                    lineNumber: 470,
                     columnNumber: 16
                 }, this);
             default:
@@ -613,7 +705,7 @@ function Mode1Page() {
                     className: "h-5 w-5 text-sky-400"
                 }, void 0, false, {
                     fileName: "[project]/src/app/mode1/page.tsx",
-                    lineNumber: 427,
+                    lineNumber: 472,
                     columnNumber: 16
                 }, this);
         }
@@ -621,17 +713,11 @@ function Mode1Page() {
     return /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
         className: "bg-gradient-to-b from-gray-950 to-gray-900 min-h-screen flex flex-col",
         children: [
-            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$client$2f$components$2f$noop$2d$head$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["default"], {
-                children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("title", {
-                    children: "Mode 1 | Business Dashboard"
-                }, void 0, false, {
-                    fileName: "[project]/src/app/mode1/page.tsx",
-                    lineNumber: 434,
-                    columnNumber: 9
-                }, this)
+            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("title", {
+                children: "Mode 1 | Business Dashboard"
             }, void 0, false, {
                 fileName: "[project]/src/app/mode1/page.tsx",
-                lineNumber: 433,
+                lineNumber: 478,
                 columnNumber: 7
             }, this),
             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("main", {
@@ -647,7 +733,7 @@ function Mode1Page() {
                                         className: "h-5 w-5 text-rose-400 mr-2"
                                     }, void 0, false, {
                                         fileName: "[project]/src/app/mode1/page.tsx",
-                                        lineNumber: 441,
+                                        lineNumber: 484,
                                         columnNumber: 15
                                     }, this),
                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("h3", {
@@ -655,13 +741,13 @@ function Mode1Page() {
                                         children: "Backend Error"
                                     }, void 0, false, {
                                         fileName: "[project]/src/app/mode1/page.tsx",
-                                        lineNumber: 442,
+                                        lineNumber: 485,
                                         columnNumber: 15
                                     }, this)
                                 ]
                             }, void 0, true, {
                                 fileName: "[project]/src/app/mode1/page.tsx",
-                                lineNumber: 440,
+                                lineNumber: 483,
                                 columnNumber: 13
                             }, this),
                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
@@ -669,7 +755,7 @@ function Mode1Page() {
                                 children: backendError
                             }, void 0, false, {
                                 fileName: "[project]/src/app/mode1/page.tsx",
-                                lineNumber: 444,
+                                lineNumber: 487,
                                 columnNumber: 13
                             }, this),
                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("button", {
@@ -680,20 +766,20 @@ function Mode1Page() {
                                         className: "h-4 w-4"
                                     }, void 0, false, {
                                         fileName: "[project]/src/app/mode1/page.tsx",
-                                        lineNumber: 449,
+                                        lineNumber: 492,
                                         columnNumber: 15
                                     }, this),
                                     " Retry"
                                 ]
                             }, void 0, true, {
                                 fileName: "[project]/src/app/mode1/page.tsx",
-                                lineNumber: 445,
+                                lineNumber: 488,
                                 columnNumber: 13
                             }, this)
                         ]
                     }, void 0, true, {
                         fileName: "[project]/src/app/mode1/page.tsx",
-                        lineNumber: 439,
+                        lineNumber: 482,
                         columnNumber: 11
                     }, this),
                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -704,7 +790,7 @@ function Mode1Page() {
                                 children: "OCTAVE – RG Dashboard"
                             }, void 0, false, {
                                 fileName: "[project]/src/app/mode1/page.tsx",
-                                lineNumber: 456,
+                                lineNumber: 499,
                                 columnNumber: 11
                             }, this),
                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
@@ -714,7 +800,7 @@ function Mode1Page() {
                                         className: "inline-block h-2 w-2 rounded-full bg-sky-400 animate-pulse"
                                     }, void 0, false, {
                                         fileName: "[project]/src/app/mode1/page.tsx",
-                                        lineNumber: 460,
+                                        lineNumber: 503,
                                         columnNumber: 13
                                     }, this),
                                     "Current Period: ",
@@ -722,13 +808,13 @@ function Mode1Page() {
                                 ]
                             }, void 0, true, {
                                 fileName: "[project]/src/app/mode1/page.tsx",
-                                lineNumber: 459,
+                                lineNumber: 502,
                                 columnNumber: 11
                             }, this)
                         ]
                     }, void 0, true, {
                         fileName: "[project]/src/app/mode1/page.tsx",
-                        lineNumber: 455,
+                        lineNumber: 498,
                         columnNumber: 9
                     }, this),
                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -749,7 +835,7 @@ function Mode1Page() {
                                                             children: "Business Unit: "
                                                         }, void 0, false, {
                                                             fileName: "[project]/src/app/mode1/page.tsx",
-                                                            lineNumber: 472,
+                                                            lineNumber: 515,
                                                             columnNumber: 19
                                                         }, this),
                                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
@@ -757,13 +843,13 @@ function Mode1Page() {
                                                             children: loading ? "Loading…" : businessUnit || "Not Selected"
                                                         }, void 0, false, {
                                                             fileName: "[project]/src/app/mode1/page.tsx",
-                                                            lineNumber: 473,
+                                                            lineNumber: 516,
                                                             columnNumber: 19
                                                         }, this)
                                                     ]
                                                 }, void 0, true, {
                                                     fileName: "[project]/src/app/mode1/page.tsx",
-                                                    lineNumber: 471,
+                                                    lineNumber: 514,
                                                     columnNumber: 17
                                                 }, this),
                                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -773,7 +859,7 @@ function Mode1Page() {
                                                             children: "Use Case: "
                                                         }, void 0, false, {
                                                             fileName: "[project]/src/app/mode1/page.tsx",
-                                                            lineNumber: 476,
+                                                            lineNumber: 519,
                                                             columnNumber: 19
                                                         }, this),
                                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
@@ -781,19 +867,19 @@ function Mode1Page() {
                                                             children: loading ? "Loading…" : useCase || "Not Selected"
                                                         }, void 0, false, {
                                                             fileName: "[project]/src/app/mode1/page.tsx",
-                                                            lineNumber: 477,
+                                                            lineNumber: 520,
                                                             columnNumber: 19
                                                         }, this)
                                                     ]
                                                 }, void 0, true, {
                                                     fileName: "[project]/src/app/mode1/page.tsx",
-                                                    lineNumber: 475,
+                                                    lineNumber: 518,
                                                     columnNumber: 17
                                                 }, this)
                                             ]
                                         }, void 0, true, {
                                             fileName: "[project]/src/app/mode1/page.tsx",
-                                            lineNumber: 470,
+                                            lineNumber: 513,
                                             columnNumber: 15
                                         }, this),
                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -806,7 +892,7 @@ function Mode1Page() {
                                                             children: "Short Code: "
                                                         }, void 0, false, {
                                                             fileName: "[project]/src/app/mode1/page.tsx",
-                                                            lineNumber: 482,
+                                                            lineNumber: 525,
                                                             columnNumber: 19
                                                         }, this),
                                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
@@ -814,13 +900,13 @@ function Mode1Page() {
                                                             children: loading ? "Loading…" : shortCode || "Not Available"
                                                         }, void 0, false, {
                                                             fileName: "[project]/src/app/mode1/page.tsx",
-                                                            lineNumber: 483,
+                                                            lineNumber: 526,
                                                             columnNumber: 19
                                                         }, this)
                                                     ]
                                                 }, void 0, true, {
                                                     fileName: "[project]/src/app/mode1/page.tsx",
-                                                    lineNumber: 481,
+                                                    lineNumber: 524,
                                                     columnNumber: 17
                                                 }, this),
                                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -830,7 +916,7 @@ function Mode1Page() {
                                                             children: "Alert Keeper: "
                                                         }, void 0, false, {
                                                             fileName: "[project]/src/app/mode1/page.tsx",
-                                                            lineNumber: 486,
+                                                            lineNumber: 529,
                                                             columnNumber: 19
                                                         }, this),
                                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
@@ -838,30 +924,30 @@ function Mode1Page() {
                                                             children: loading ? "Loading…" : alertKeeperValue || "Not Selected"
                                                         }, void 0, false, {
                                                             fileName: "[project]/src/app/mode1/page.tsx",
-                                                            lineNumber: 487,
+                                                            lineNumber: 530,
                                                             columnNumber: 19
                                                         }, this)
                                                     ]
                                                 }, void 0, true, {
                                                     fileName: "[project]/src/app/mode1/page.tsx",
-                                                    lineNumber: 485,
+                                                    lineNumber: 528,
                                                     columnNumber: 17
                                                 }, this)
                                             ]
                                         }, void 0, true, {
                                             fileName: "[project]/src/app/mode1/page.tsx",
-                                            lineNumber: 480,
+                                            lineNumber: 523,
                                             columnNumber: 15
                                         }, this)
                                     ]
                                 }, void 0, true, {
                                     fileName: "[project]/src/app/mode1/page.tsx",
-                                    lineNumber: 469,
+                                    lineNumber: 512,
                                     columnNumber: 13
                                 }, this)
                             }, void 0, false, {
                                 fileName: "[project]/src/app/mode1/page.tsx",
-                                lineNumber: 468,
+                                lineNumber: 511,
                                 columnNumber: 11
                             }, this),
                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -872,7 +958,7 @@ function Mode1Page() {
                                         children: "Runtime"
                                     }, void 0, false, {
                                         fileName: "[project]/src/app/mode1/page.tsx",
-                                        lineNumber: 495,
+                                        lineNumber: 538,
                                         columnNumber: 13
                                     }, this),
                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("select", {
@@ -885,7 +971,7 @@ function Mode1Page() {
                                                 children: "1"
                                             }, void 0, false, {
                                                 fileName: "[project]/src/app/mode1/page.tsx",
-                                                lineNumber: 501,
+                                                lineNumber: 544,
                                                 columnNumber: 15
                                             }, this),
                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("option", {
@@ -893,7 +979,7 @@ function Mode1Page() {
                                                 children: "2"
                                             }, void 0, false, {
                                                 fileName: "[project]/src/app/mode1/page.tsx",
-                                                lineNumber: 502,
+                                                lineNumber: 545,
                                                 columnNumber: 15
                                             }, this),
                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("option", {
@@ -901,7 +987,7 @@ function Mode1Page() {
                                                 children: "3"
                                             }, void 0, false, {
                                                 fileName: "[project]/src/app/mode1/page.tsx",
-                                                lineNumber: 503,
+                                                lineNumber: 546,
                                                 columnNumber: 15
                                             }, this),
                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("option", {
@@ -909,25 +995,25 @@ function Mode1Page() {
                                                 children: "4"
                                             }, void 0, false, {
                                                 fileName: "[project]/src/app/mode1/page.tsx",
-                                                lineNumber: 504,
+                                                lineNumber: 547,
                                                 columnNumber: 15
                                             }, this)
                                         ]
                                     }, void 0, true, {
                                         fileName: "[project]/src/app/mode1/page.tsx",
-                                        lineNumber: 496,
+                                        lineNumber: 539,
                                         columnNumber: 13
                                     }, this)
                                 ]
                             }, void 0, true, {
                                 fileName: "[project]/src/app/mode1/page.tsx",
-                                lineNumber: 494,
+                                lineNumber: 537,
                                 columnNumber: 11
                             }, this)
                         ]
                     }, void 0, true, {
                         fileName: "[project]/src/app/mode1/page.tsx",
-                        lineNumber: 466,
+                        lineNumber: 509,
                         columnNumber: 9
                     }, this),
                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -941,7 +1027,7 @@ function Mode1Page() {
                                         children: "MAPE/MSE Plot"
                                     }, void 0, false, {
                                         fileName: "[project]/src/app/mode1/page.tsx",
-                                        lineNumber: 513,
+                                        lineNumber: 556,
                                         columnNumber: 13
                                     }, this),
                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -964,7 +1050,7 @@ function Mode1Page() {
                                                             strokeWidth: "4"
                                                         }, void 0, false, {
                                                             fileName: "[project]/src/app/mode1/page.tsx",
-                                                            lineNumber: 525,
+                                                            lineNumber: 568,
                                                             columnNumber: 21
                                                         }, this),
                                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("path", {
@@ -973,13 +1059,13 @@ function Mode1Page() {
                                                             d: "M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
                                                         }, void 0, false, {
                                                             fileName: "[project]/src/app/mode1/page.tsx",
-                                                            lineNumber: 526,
+                                                            lineNumber: 569,
                                                             columnNumber: 21
                                                         }, this)
                                                     ]
                                                 }, void 0, true, {
                                                     fileName: "[project]/src/app/mode1/page.tsx",
-                                                    lineNumber: 519,
+                                                    lineNumber: 562,
                                                     columnNumber: 19
                                                 }, this),
                                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
@@ -987,13 +1073,13 @@ function Mode1Page() {
                                                     children: "Loading plot data..."
                                                 }, void 0, false, {
                                                     fileName: "[project]/src/app/mode1/page.tsx",
-                                                    lineNumber: 532,
+                                                    lineNumber: 575,
                                                     columnNumber: 19
                                                 }, this)
                                             ]
                                         }, void 0, true, {
                                             fileName: "[project]/src/app/mode1/page.tsx",
-                                            lineNumber: 518,
+                                            lineNumber: 561,
                                             columnNumber: 17
                                         }, this) : /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("canvas", {
                                             id: "mapeMseChart",
@@ -1002,7 +1088,9 @@ function Mode1Page() {
                                                 if (!loading && el) {
                                                     const ctx = el.getContext("2d");
                                                     if (ctx) {
-                                                        chartRef.current?.destroy();
+                                                        if (chartRef.current) {
+                                                            chartRef.current.destroy();
+                                                        }
                                                         chartRef.current = new __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$chart$2e$js$2f$dist$2f$chart$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$locals$3e$__["Chart"](ctx, {
                                                             type: "line",
                                                             data: {
@@ -1133,18 +1221,18 @@ function Mode1Page() {
                                             }
                                         }, void 0, false, {
                                             fileName: "[project]/src/app/mode1/page.tsx",
-                                            lineNumber: 535,
+                                            lineNumber: 578,
                                             columnNumber: 17
                                         }, this)
                                     }, void 0, false, {
                                         fileName: "[project]/src/app/mode1/page.tsx",
-                                        lineNumber: 516,
+                                        lineNumber: 559,
                                         columnNumber: 13
                                     }, this)
                                 ]
                             }, void 0, true, {
                                 fileName: "[project]/src/app/mode1/page.tsx",
-                                lineNumber: 512,
+                                lineNumber: 555,
                                 columnNumber: 11
                             }, this),
                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -1155,7 +1243,7 @@ function Mode1Page() {
                                         children: "Status Distribution"
                                     }, void 0, false, {
                                         fileName: "[project]/src/app/mode1/page.tsx",
-                                        lineNumber: 656,
+                                        lineNumber: 701,
                                         columnNumber: 13
                                     }, this),
                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -1164,24 +1252,24 @@ function Mode1Page() {
                                             id: "statusPieChart"
                                         }, void 0, false, {
                                             fileName: "[project]/src/app/mode1/page.tsx",
-                                            lineNumber: 658,
+                                            lineNumber: 703,
                                             columnNumber: 15
                                         }, this)
                                     }, void 0, false, {
                                         fileName: "[project]/src/app/mode1/page.tsx",
-                                        lineNumber: 657,
+                                        lineNumber: 702,
                                         columnNumber: 13
                                     }, this)
                                 ]
                             }, void 0, true, {
                                 fileName: "[project]/src/app/mode1/page.tsx",
-                                lineNumber: 655,
+                                lineNumber: 700,
                                 columnNumber: 11
                             }, this)
                         ]
                     }, void 0, true, {
                         fileName: "[project]/src/app/mode1/page.tsx",
-                        lineNumber: 510,
+                        lineNumber: 553,
                         columnNumber: 9
                     }, this),
                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -1192,7 +1280,7 @@ function Mode1Page() {
                                 children: "Key Performance Indicators"
                             }, void 0, false, {
                                 fileName: "[project]/src/app/mode1/page.tsx",
-                                lineNumber: 665,
+                                lineNumber: 710,
                                 columnNumber: 11
                             }, this),
                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -1209,12 +1297,12 @@ function Mode1Page() {
                                                     className: "h-5 w-5"
                                                 }, void 0, false, {
                                                     fileName: "[project]/src/app/mode1/page.tsx",
-                                                    lineNumber: 676,
+                                                    lineNumber: 724,
                                                     columnNumber: 17
                                                 }, this)
                                             }, void 0, false, {
                                                 fileName: "[project]/src/app/mode1/page.tsx",
-                                                lineNumber: 671,
+                                                lineNumber: 719,
                                                 columnNumber: 15
                                             }, this),
                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("h3", {
@@ -1222,7 +1310,7 @@ function Mode1Page() {
                                                 children: "KStest"
                                             }, void 0, false, {
                                                 fileName: "[project]/src/app/mode1/page.tsx",
-                                                lineNumber: 678,
+                                                lineNumber: 726,
                                                 columnNumber: 15
                                             }, this),
                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -1234,12 +1322,12 @@ function Mode1Page() {
                                                             className: "h-5 w-5 text-sky-300"
                                                         }, void 0, false, {
                                                             fileName: "[project]/src/app/mode1/page.tsx",
-                                                            lineNumber: 681,
+                                                            lineNumber: 729,
                                                             columnNumber: 19
                                                         }, this)
                                                     }, void 0, false, {
                                                         fileName: "[project]/src/app/mode1/page.tsx",
-                                                        lineNumber: 680,
+                                                        lineNumber: 728,
                                                         columnNumber: 17
                                                     }, this),
                                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
@@ -1247,13 +1335,13 @@ function Mode1Page() {
                                                         children: loading ? "Loading..." : kpis.find((k)=>k.rowKey === "kstest")?.value || "N/A"
                                                     }, void 0, false, {
                                                         fileName: "[project]/src/app/mode1/page.tsx",
-                                                        lineNumber: 683,
+                                                        lineNumber: 731,
                                                         columnNumber: 17
                                                     }, this)
                                                 ]
                                             }, void 0, true, {
                                                 fileName: "[project]/src/app/mode1/page.tsx",
-                                                lineNumber: 679,
+                                                lineNumber: 727,
                                                 columnNumber: 15
                                             }, this),
                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -1264,7 +1352,7 @@ function Mode1Page() {
                                                         children: "Wasserstein"
                                                     }, void 0, false, {
                                                         fileName: "[project]/src/app/mode1/page.tsx",
-                                                        lineNumber: 688,
+                                                        lineNumber: 736,
                                                         columnNumber: 17
                                                     }, this),
                                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -1276,12 +1364,12 @@ function Mode1Page() {
                                                                     className: "h-5 w-5 text-sky-300"
                                                                 }, void 0, false, {
                                                                     fileName: "[project]/src/app/mode1/page.tsx",
-                                                                    lineNumber: 691,
+                                                                    lineNumber: 739,
                                                                     columnNumber: 21
                                                                 }, this)
                                                             }, void 0, false, {
                                                                 fileName: "[project]/src/app/mode1/page.tsx",
-                                                                lineNumber: 690,
+                                                                lineNumber: 738,
                                                                 columnNumber: 19
                                                             }, this),
                                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
@@ -1289,13 +1377,13 @@ function Mode1Page() {
                                                                 children: loading ? "Loading..." : kpis.find((k)=>k.rowKey === "wasserstein")?.value || "N/A"
                                                             }, void 0, false, {
                                                                 fileName: "[project]/src/app/mode1/page.tsx",
-                                                                lineNumber: 693,
+                                                                lineNumber: 741,
                                                                 columnNumber: 19
                                                             }, this)
                                                         ]
                                                     }, void 0, true, {
                                                         fileName: "[project]/src/app/mode1/page.tsx",
-                                                        lineNumber: 689,
+                                                        lineNumber: 737,
                                                         columnNumber: 17
                                                     }, this),
                                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("button", {
@@ -1306,24 +1394,24 @@ function Mode1Page() {
                                                             className: "h-5 w-5"
                                                         }, void 0, false, {
                                                             fileName: "[project]/src/app/mode1/page.tsx",
-                                                            lineNumber: 702,
+                                                            lineNumber: 750,
                                                             columnNumber: 19
                                                         }, this)
                                                     }, void 0, false, {
                                                         fileName: "[project]/src/app/mode1/page.tsx",
-                                                        lineNumber: 697,
+                                                        lineNumber: 745,
                                                         columnNumber: 17
                                                     }, this)
                                                 ]
                                             }, void 0, true, {
                                                 fileName: "[project]/src/app/mode1/page.tsx",
-                                                lineNumber: 687,
+                                                lineNumber: 735,
                                                 columnNumber: 15
                                             }, this)
                                         ]
                                     }, void 0, true, {
                                         fileName: "[project]/src/app/mode1/page.tsx",
-                                        lineNumber: 670,
+                                        lineNumber: 715,
                                         columnNumber: 13
                                     }, this),
                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -1334,7 +1422,7 @@ function Mode1Page() {
                                                 children: "MSE Metrics"
                                             }, void 0, false, {
                                                 fileName: "[project]/src/app/mode1/page.tsx",
-                                                lineNumber: 709,
+                                                lineNumber: 757,
                                                 columnNumber: 15
                                             }, this),
                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -1348,7 +1436,7 @@ function Mode1Page() {
                                                                 children: "Ref MSE:"
                                                             }, void 0, false, {
                                                                 fileName: "[project]/src/app/mode1/page.tsx",
-                                                                lineNumber: 712,
+                                                                lineNumber: 760,
                                                                 columnNumber: 19
                                                             }, this),
                                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
@@ -1356,13 +1444,13 @@ function Mode1Page() {
                                                                 children: loading ? "Loading..." : kpis.find((k)=>k.rowKey === "mseRef")?.value || "N/A"
                                                             }, void 0, false, {
                                                                 fileName: "[project]/src/app/mode1/page.tsx",
-                                                                lineNumber: 713,
+                                                                lineNumber: 761,
                                                                 columnNumber: 19
                                                             }, this)
                                                         ]
                                                     }, void 0, true, {
                                                         fileName: "[project]/src/app/mode1/page.tsx",
-                                                        lineNumber: 711,
+                                                        lineNumber: 759,
                                                         columnNumber: 17
                                                     }, this),
                                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -1373,7 +1461,7 @@ function Mode1Page() {
                                                                 children: "Curr MSE:"
                                                             }, void 0, false, {
                                                                 fileName: "[project]/src/app/mode1/page.tsx",
-                                                                lineNumber: 718,
+                                                                lineNumber: 766,
                                                                 columnNumber: 19
                                                             }, this),
                                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
@@ -1381,13 +1469,13 @@ function Mode1Page() {
                                                                 children: loading ? "Loading..." : kpis.find((k)=>k.rowKey === "mseCurrent")?.value || "N/A"
                                                             }, void 0, false, {
                                                                 fileName: "[project]/src/app/mode1/page.tsx",
-                                                                lineNumber: 719,
+                                                                lineNumber: 767,
                                                                 columnNumber: 19
                                                             }, this)
                                                         ]
                                                     }, void 0, true, {
                                                         fileName: "[project]/src/app/mode1/page.tsx",
-                                                        lineNumber: 717,
+                                                        lineNumber: 765,
                                                         columnNumber: 17
                                                     }, this),
                                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -1398,7 +1486,7 @@ function Mode1Page() {
                                                                 children: "Change:"
                                                             }, void 0, false, {
                                                                 fileName: "[project]/src/app/mode1/page.tsx",
-                                                                lineNumber: 724,
+                                                                lineNumber: 772,
                                                                 columnNumber: 19
                                                             }, this),
                                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
@@ -1406,13 +1494,13 @@ function Mode1Page() {
                                                                 children: loading ? "Loading..." : calculateMseChange()
                                                             }, void 0, false, {
                                                                 fileName: "[project]/src/app/mode1/page.tsx",
-                                                                lineNumber: 725,
+                                                                lineNumber: 773,
                                                                 columnNumber: 19
                                                             }, this)
                                                         ]
                                                     }, void 0, true, {
                                                         fileName: "[project]/src/app/mode1/page.tsx",
-                                                        lineNumber: 723,
+                                                        lineNumber: 771,
                                                         columnNumber: 17
                                                     }, this),
                                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -1425,7 +1513,7 @@ function Mode1Page() {
                                                                     children: getStatusIcon(kpis.find((k)=>k.rowKey === "status")?.value)
                                                                 }, void 0, false, {
                                                                     fileName: "[project]/src/app/mode1/page.tsx",
-                                                                    lineNumber: 731,
+                                                                    lineNumber: 779,
                                                                     columnNumber: 21
                                                                 }, this),
                                                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
@@ -1433,30 +1521,30 @@ function Mode1Page() {
                                                                     children: loading ? "Loading..." : kpis.find((k)=>k.rowKey === "status")?.value || "N/A"
                                                                 }, void 0, false, {
                                                                     fileName: "[project]/src/app/mode1/page.tsx",
-                                                                    lineNumber: 734,
+                                                                    lineNumber: 782,
                                                                     columnNumber: 21
                                                                 }, this)
                                                             ]
                                                         }, void 0, true, {
                                                             fileName: "[project]/src/app/mode1/page.tsx",
-                                                            lineNumber: 730,
+                                                            lineNumber: 778,
                                                             columnNumber: 19
                                                         }, this)
                                                     }, void 0, false, {
                                                         fileName: "[project]/src/app/mode1/page.tsx",
-                                                        lineNumber: 729,
+                                                        lineNumber: 777,
                                                         columnNumber: 17
                                                     }, this)
                                                 ]
                                             }, void 0, true, {
                                                 fileName: "[project]/src/app/mode1/page.tsx",
-                                                lineNumber: 710,
+                                                lineNumber: 758,
                                                 columnNumber: 15
                                             }, this)
                                         ]
                                     }, void 0, true, {
                                         fileName: "[project]/src/app/mode1/page.tsx",
-                                        lineNumber: 708,
+                                        lineNumber: 756,
                                         columnNumber: 13
                                     }, this),
                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -1467,7 +1555,7 @@ function Mode1Page() {
                                                 children: "Additional Metrics"
                                             }, void 0, false, {
                                                 fileName: "[project]/src/app/mode1/page.tsx",
-                                                lineNumber: 746,
+                                                lineNumber: 794,
                                                 columnNumber: 15
                                             }, this),
                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -1478,8 +1566,8 @@ function Mode1Page() {
                                                         "mseRef",
                                                         "mseCurrent",
                                                         "status"
-                                                    ].includes(k.rowKey)).map((kpi, idx)=>/*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
-                                                        className: idx > 0 ? "pt-3 border-t border-sky-800/30" : "",
+                                                    ].includes(k.rowKey)).map((kpi)=>/*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                                                        className: kpi.rowKey !== kpis[0].rowKey ? "pt-3 border-t border-sky-800/30" : "",
                                                         children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
                                                             className: "flex items-center justify-between",
                                                             children: [
@@ -1491,7 +1579,7 @@ function Mode1Page() {
                                                                     ]
                                                                 }, void 0, true, {
                                                                     fileName: "[project]/src/app/mode1/page.tsx",
-                                                                    lineNumber: 753,
+                                                                    lineNumber: 804,
                                                                     columnNumber: 25
                                                                 }, this),
                                                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
@@ -1499,41 +1587,41 @@ function Mode1Page() {
                                                                     children: kpi.value
                                                                 }, void 0, false, {
                                                                     fileName: "[project]/src/app/mode1/page.tsx",
-                                                                    lineNumber: 754,
+                                                                    lineNumber: 805,
                                                                     columnNumber: 25
                                                                 }, this)
                                                             ]
                                                         }, void 0, true, {
                                                             fileName: "[project]/src/app/mode1/page.tsx",
-                                                            lineNumber: 752,
+                                                            lineNumber: 803,
                                                             columnNumber: 23
                                                         }, this)
-                                                    }, idx, false, {
+                                                    }, kpi.rowKey, false, {
                                                         fileName: "[project]/src/app/mode1/page.tsx",
-                                                        lineNumber: 751,
+                                                        lineNumber: 799,
                                                         columnNumber: 21
                                                     }, this))
                                             }, void 0, false, {
                                                 fileName: "[project]/src/app/mode1/page.tsx",
-                                                lineNumber: 747,
+                                                lineNumber: 795,
                                                 columnNumber: 15
                                             }, this)
                                         ]
                                     }, void 0, true, {
                                         fileName: "[project]/src/app/mode1/page.tsx",
-                                        lineNumber: 745,
+                                        lineNumber: 793,
                                         columnNumber: 13
                                     }, this)
                                 ]
                             }, void 0, true, {
                                 fileName: "[project]/src/app/mode1/page.tsx",
-                                lineNumber: 668,
+                                lineNumber: 713,
                                 columnNumber: 11
                             }, this)
                         ]
                     }, void 0, true, {
                         fileName: "[project]/src/app/mode1/page.tsx",
-                        lineNumber: 664,
+                        lineNumber: 709,
                         columnNumber: 9
                     }, this),
                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -1547,7 +1635,7 @@ function Mode1Page() {
                                         children: "Error Comparison"
                                     }, void 0, false, {
                                         fileName: "[project]/src/app/mode1/page.tsx",
-                                        lineNumber: 767,
+                                        lineNumber: 818,
                                         columnNumber: 13
                                     }, this),
                                     loading ? /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -1568,7 +1656,7 @@ function Mode1Page() {
                                                         strokeWidth: "4"
                                                     }, void 0, false, {
                                                         fileName: "[project]/src/app/mode1/page.tsx",
-                                                        lineNumber: 778,
+                                                        lineNumber: 829,
                                                         columnNumber: 19
                                                     }, this),
                                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("path", {
@@ -1577,13 +1665,13 @@ function Mode1Page() {
                                                         d: "M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
                                                     }, void 0, false, {
                                                         fileName: "[project]/src/app/mode1/page.tsx",
-                                                        lineNumber: 779,
+                                                        lineNumber: 830,
                                                         columnNumber: 19
                                                     }, this)
                                                 ]
                                             }, void 0, true, {
                                                 fileName: "[project]/src/app/mode1/page.tsx",
-                                                lineNumber: 772,
+                                                lineNumber: 823,
                                                 columnNumber: 17
                                             }, this),
                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
@@ -1591,13 +1679,13 @@ function Mode1Page() {
                                                 children: "Loading error data..."
                                             }, void 0, false, {
                                                 fileName: "[project]/src/app/mode1/page.tsx",
-                                                lineNumber: 785,
+                                                lineNumber: 836,
                                                 columnNumber: 17
                                             }, this)
                                         ]
                                     }, void 0, true, {
                                         fileName: "[project]/src/app/mode1/page.tsx",
-                                        lineNumber: 771,
+                                        lineNumber: 822,
                                         columnNumber: 15
                                     }, this) : /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
                                         className: "max-h-96 overflow-y-auto rounded-lg border border-gray-700/50",
@@ -1613,7 +1701,7 @@ function Mode1Page() {
                                                                 children: "NO."
                                                             }, void 0, false, {
                                                                 fileName: "[project]/src/app/mode1/page.tsx",
-                                                                lineNumber: 792,
+                                                                lineNumber: 843,
                                                                 columnNumber: 23
                                                             }, this),
                                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("th", {
@@ -1621,7 +1709,7 @@ function Mode1Page() {
                                                                 children: "ID"
                                                             }, void 0, false, {
                                                                 fileName: "[project]/src/app/mode1/page.tsx",
-                                                                lineNumber: 795,
+                                                                lineNumber: 846,
                                                                 columnNumber: 23
                                                             }, this),
                                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("th", {
@@ -1629,18 +1717,18 @@ function Mode1Page() {
                                                                 children: "Error"
                                                             }, void 0, false, {
                                                                 fileName: "[project]/src/app/mode1/page.tsx",
-                                                                lineNumber: 798,
+                                                                lineNumber: 849,
                                                                 columnNumber: 23
                                                             }, this)
                                                         ]
                                                     }, void 0, true, {
                                                         fileName: "[project]/src/app/mode1/page.tsx",
-                                                        lineNumber: 791,
+                                                        lineNumber: 842,
                                                         columnNumber: 21
                                                     }, this)
                                                 }, void 0, false, {
                                                     fileName: "[project]/src/app/mode1/page.tsx",
-                                                    lineNumber: 790,
+                                                    lineNumber: 841,
                                                     columnNumber: 19
                                                 }, this),
                                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("tbody", {
@@ -1653,7 +1741,7 @@ function Mode1Page() {
                                                                     children: i + 1
                                                                 }, void 0, false, {
                                                                     fileName: "[project]/src/app/mode1/page.tsx",
-                                                                    lineNumber: 809,
+                                                                    lineNumber: 860,
                                                                     columnNumber: 27
                                                                 }, this),
                                                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("td", {
@@ -1661,7 +1749,7 @@ function Mode1Page() {
                                                                     children: row.id
                                                                 }, void 0, false, {
                                                                     fileName: "[project]/src/app/mode1/page.tsx",
-                                                                    lineNumber: 810,
+                                                                    lineNumber: 861,
                                                                     columnNumber: 27
                                                                 }, this),
                                                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("td", {
@@ -1669,35 +1757,35 @@ function Mode1Page() {
                                                                     children: (row.error ?? 0).toFixed(2)
                                                                 }, void 0, false, {
                                                                     fileName: "[project]/src/app/mode1/page.tsx",
-                                                                    lineNumber: 811,
+                                                                    lineNumber: 862,
                                                                     columnNumber: 27
                                                                 }, this)
                                                             ]
                                                         }, row.id, true, {
                                                             fileName: "[project]/src/app/mode1/page.tsx",
-                                                            lineNumber: 808,
+                                                            lineNumber: 859,
                                                             columnNumber: 25
                                                         }, this))
                                                 }, void 0, false, {
                                                     fileName: "[project]/src/app/mode1/page.tsx",
-                                                    lineNumber: 803,
+                                                    lineNumber: 854,
                                                     columnNumber: 19
                                                 }, this)
                                             ]
                                         }, void 0, true, {
                                             fileName: "[project]/src/app/mode1/page.tsx",
-                                            lineNumber: 789,
+                                            lineNumber: 840,
                                             columnNumber: 17
                                         }, this)
                                     }, void 0, false, {
                                         fileName: "[project]/src/app/mode1/page.tsx",
-                                        lineNumber: 788,
+                                        lineNumber: 839,
                                         columnNumber: 15
                                     }, this)
                                 ]
                             }, void 0, true, {
                                 fileName: "[project]/src/app/mode1/page.tsx",
-                                lineNumber: 766,
+                                lineNumber: 817,
                                 columnNumber: 11
                             }, this),
                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -1717,13 +1805,13 @@ function Mode1Page() {
                                                 ]
                                             }, void 0, true, {
                                                 fileName: "[project]/src/app/mode1/page.tsx",
-                                                lineNumber: 826,
+                                                lineNumber: 877,
                                                 columnNumber: 15
                                             }, this)
                                         ]
                                     }, void 0, true, {
                                         fileName: "[project]/src/app/mode1/page.tsx",
-                                        lineNumber: 824,
+                                        lineNumber: 875,
                                         columnNumber: 13
                                     }, this),
                                     loading ? /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -1744,7 +1832,7 @@ function Mode1Page() {
                                                         strokeWidth: "4"
                                                     }, void 0, false, {
                                                         fileName: "[project]/src/app/mode1/page.tsx",
-                                                        lineNumber: 836,
+                                                        lineNumber: 887,
                                                         columnNumber: 19
                                                     }, this),
                                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("path", {
@@ -1753,13 +1841,13 @@ function Mode1Page() {
                                                         d: "M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
                                                     }, void 0, false, {
                                                         fileName: "[project]/src/app/mode1/page.tsx",
-                                                        lineNumber: 837,
+                                                        lineNumber: 888,
                                                         columnNumber: 19
                                                     }, this)
                                                 ]
                                             }, void 0, true, {
                                                 fileName: "[project]/src/app/mode1/page.tsx",
-                                                lineNumber: 830,
+                                                lineNumber: 881,
                                                 columnNumber: 17
                                             }, this),
                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
@@ -1767,13 +1855,13 @@ function Mode1Page() {
                                                 children: "Loading threshold data..."
                                             }, void 0, false, {
                                                 fileName: "[project]/src/app/mode1/page.tsx",
-                                                lineNumber: 843,
+                                                lineNumber: 894,
                                                 columnNumber: 17
                                             }, this)
                                         ]
                                     }, void 0, true, {
                                         fileName: "[project]/src/app/mode1/page.tsx",
-                                        lineNumber: 829,
+                                        lineNumber: 880,
                                         columnNumber: 15
                                     }, this) : /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
                                         className: "max-h-96 overflow-y-auto rounded-lg border border-rose-800/30",
@@ -1789,7 +1877,7 @@ function Mode1Page() {
                                                                 children: "ID"
                                                             }, void 0, false, {
                                                                 fileName: "[project]/src/app/mode1/page.tsx",
-                                                                lineNumber: 850,
+                                                                lineNumber: 901,
                                                                 columnNumber: 23
                                                             }, this),
                                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("th", {
@@ -1797,7 +1885,7 @@ function Mode1Page() {
                                                                 children: "True Value"
                                                             }, void 0, false, {
                                                                 fileName: "[project]/src/app/mode1/page.tsx",
-                                                                lineNumber: 853,
+                                                                lineNumber: 904,
                                                                 columnNumber: 23
                                                             }, this),
                                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("th", {
@@ -1805,7 +1893,7 @@ function Mode1Page() {
                                                                 children: "Predicted Value"
                                                             }, void 0, false, {
                                                                 fileName: "[project]/src/app/mode1/page.tsx",
-                                                                lineNumber: 856,
+                                                                lineNumber: 907,
                                                                 columnNumber: 23
                                                             }, this),
                                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("th", {
@@ -1813,18 +1901,18 @@ function Mode1Page() {
                                                                 children: "% Error"
                                                             }, void 0, false, {
                                                                 fileName: "[project]/src/app/mode1/page.tsx",
-                                                                lineNumber: 859,
+                                                                lineNumber: 910,
                                                                 columnNumber: 23
                                                             }, this)
                                                         ]
                                                     }, void 0, true, {
                                                         fileName: "[project]/src/app/mode1/page.tsx",
-                                                        lineNumber: 849,
+                                                        lineNumber: 900,
                                                         columnNumber: 21
                                                     }, this)
                                                 }, void 0, false, {
                                                     fileName: "[project]/src/app/mode1/page.tsx",
-                                                    lineNumber: 848,
+                                                    lineNumber: 899,
                                                     columnNumber: 19
                                                 }, this),
                                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("tbody", {
@@ -1837,7 +1925,7 @@ function Mode1Page() {
                                                                     children: outlet.id
                                                                 }, void 0, false, {
                                                                     fileName: "[project]/src/app/mode1/page.tsx",
-                                                                    lineNumber: 870,
+                                                                    lineNumber: 921,
                                                                     columnNumber: 27
                                                                 }, this),
                                                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("td", {
@@ -1845,7 +1933,7 @@ function Mode1Page() {
                                                                     children: outlet.y_true.toFixed(2)
                                                                 }, void 0, false, {
                                                                     fileName: "[project]/src/app/mode1/page.tsx",
-                                                                    lineNumber: 871,
+                                                                    lineNumber: 922,
                                                                     columnNumber: 27
                                                                 }, this),
                                                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("td", {
@@ -1853,7 +1941,7 @@ function Mode1Page() {
                                                                     children: outlet.y_pred.toFixed(2)
                                                                 }, void 0, false, {
                                                                     fileName: "[project]/src/app/mode1/page.tsx",
-                                                                    lineNumber: 874,
+                                                                    lineNumber: 925,
                                                                     columnNumber: 27
                                                                 }, this),
                                                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("td", {
@@ -1864,41 +1952,41 @@ function Mode1Page() {
                                                                     ]
                                                                 }, void 0, true, {
                                                                     fileName: "[project]/src/app/mode1/page.tsx",
-                                                                    lineNumber: 877,
+                                                                    lineNumber: 928,
                                                                     columnNumber: 27
                                                                 }, this)
                                                             ]
                                                         }, outlet.id, true, {
                                                             fileName: "[project]/src/app/mode1/page.tsx",
-                                                            lineNumber: 869,
+                                                            lineNumber: 920,
                                                             columnNumber: 25
                                                         }, this))
                                                 }, void 0, false, {
                                                     fileName: "[project]/src/app/mode1/page.tsx",
-                                                    lineNumber: 864,
+                                                    lineNumber: 915,
                                                     columnNumber: 19
                                                 }, this)
                                             ]
                                         }, void 0, true, {
                                             fileName: "[project]/src/app/mode1/page.tsx",
-                                            lineNumber: 847,
+                                            lineNumber: 898,
                                             columnNumber: 17
                                         }, this)
                                     }, void 0, false, {
                                         fileName: "[project]/src/app/mode1/page.tsx",
-                                        lineNumber: 846,
+                                        lineNumber: 897,
                                         columnNumber: 15
                                     }, this)
                                 ]
                             }, void 0, true, {
                                 fileName: "[project]/src/app/mode1/page.tsx",
-                                lineNumber: 823,
+                                lineNumber: 874,
                                 columnNumber: 11
                             }, this)
                         ]
                     }, void 0, true, {
                         fileName: "[project]/src/app/mode1/page.tsx",
-                        lineNumber: 764,
+                        lineNumber: 815,
                         columnNumber: 9
                     }, this),
                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -1909,7 +1997,7 @@ function Mode1Page() {
                                 children: "ID Distribution by Error Percentage Range"
                             }, void 0, false, {
                                 fileName: "[project]/src/app/mode1/page.tsx",
-                                lineNumber: 891,
+                                lineNumber: 942,
                                 columnNumber: 11
                             }, this),
                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -1932,7 +2020,7 @@ function Mode1Page() {
                                                     strokeWidth: "4"
                                                 }, void 0, false, {
                                                     fileName: "[project]/src/app/mode1/page.tsx",
-                                                    lineNumber: 903,
+                                                    lineNumber: 954,
                                                     columnNumber: 19
                                                 }, this),
                                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("path", {
@@ -1941,13 +2029,13 @@ function Mode1Page() {
                                                     d: "M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
                                                 }, void 0, false, {
                                                     fileName: "[project]/src/app/mode1/page.tsx",
-                                                    lineNumber: 904,
+                                                    lineNumber: 955,
                                                     columnNumber: 19
                                                 }, this)
                                             ]
                                         }, void 0, true, {
                                             fileName: "[project]/src/app/mode1/page.tsx",
-                                            lineNumber: 897,
+                                            lineNumber: 948,
                                             columnNumber: 17
                                         }, this),
                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
@@ -1955,13 +2043,13 @@ function Mode1Page() {
                                             children: "Loading chart data..."
                                         }, void 0, false, {
                                             fileName: "[project]/src/app/mode1/page.tsx",
-                                            lineNumber: 910,
+                                            lineNumber: 961,
                                             columnNumber: 17
                                         }, this)
                                     ]
                                 }, void 0, true, {
                                     fileName: "[project]/src/app/mode1/page.tsx",
-                                    lineNumber: 896,
+                                    lineNumber: 947,
                                     columnNumber: 15
                                 }, this) : /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("canvas", {
                                     id: "errorRangeChart",
@@ -1969,12 +2057,12 @@ function Mode1Page() {
                                     height: 320
                                 }, void 0, false, {
                                     fileName: "[project]/src/app/mode1/page.tsx",
-                                    lineNumber: 913,
+                                    lineNumber: 964,
                                     columnNumber: 15
                                 }, this)
                             }, void 0, false, {
                                 fileName: "[project]/src/app/mode1/page.tsx",
-                                lineNumber: 894,
+                                lineNumber: 945,
                                 columnNumber: 11
                             }, this),
                             selectedRange && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -1994,18 +2082,18 @@ function Mode1Page() {
                                                     className: "h-4 w-4 inline"
                                                 }, void 0, false, {
                                                     fileName: "[project]/src/app/mode1/page.tsx",
-                                                    lineNumber: 927,
+                                                    lineNumber: 978,
                                                     columnNumber: 19
                                                 }, this)
                                             }, void 0, false, {
                                                 fileName: "[project]/src/app/mode1/page.tsx",
-                                                lineNumber: 922,
+                                                lineNumber: 973,
                                                 columnNumber: 17
                                             }, this)
                                         ]
                                     }, void 0, true, {
                                         fileName: "[project]/src/app/mode1/page.tsx",
-                                        lineNumber: 920,
+                                        lineNumber: 971,
                                         columnNumber: 15
                                     }, this),
                                     selectedRangeOutlets.length === 0 ? /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
@@ -2013,7 +2101,7 @@ function Mode1Page() {
                                         children: "No outlets in this range"
                                     }, void 0, false, {
                                         fileName: "[project]/src/app/mode1/page.tsx",
-                                        lineNumber: 931,
+                                        lineNumber: 982,
                                         columnNumber: 17
                                     }, this) : /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
                                         className: "max-h-96 overflow-y-auto rounded-lg border border-sky-800/30",
@@ -2029,7 +2117,7 @@ function Mode1Page() {
                                                                 children: "ID"
                                                             }, void 0, false, {
                                                                 fileName: "[project]/src/app/mode1/page.tsx",
-                                                                lineNumber: 937,
+                                                                lineNumber: 988,
                                                                 columnNumber: 25
                                                             }, this),
                                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("th", {
@@ -2037,7 +2125,7 @@ function Mode1Page() {
                                                                 children: "True Value"
                                                             }, void 0, false, {
                                                                 fileName: "[project]/src/app/mode1/page.tsx",
-                                                                lineNumber: 940,
+                                                                lineNumber: 991,
                                                                 columnNumber: 25
                                                             }, this),
                                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("th", {
@@ -2045,7 +2133,7 @@ function Mode1Page() {
                                                                 children: "Predicted Value"
                                                             }, void 0, false, {
                                                                 fileName: "[project]/src/app/mode1/page.tsx",
-                                                                lineNumber: 943,
+                                                                lineNumber: 994,
                                                                 columnNumber: 25
                                                             }, this),
                                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("th", {
@@ -2053,18 +2141,18 @@ function Mode1Page() {
                                                                 children: "% Error"
                                                             }, void 0, false, {
                                                                 fileName: "[project]/src/app/mode1/page.tsx",
-                                                                lineNumber: 946,
+                                                                lineNumber: 997,
                                                                 columnNumber: 25
                                                             }, this)
                                                         ]
                                                     }, void 0, true, {
                                                         fileName: "[project]/src/app/mode1/page.tsx",
-                                                        lineNumber: 936,
+                                                        lineNumber: 987,
                                                         columnNumber: 23
                                                     }, this)
                                                 }, void 0, false, {
                                                     fileName: "[project]/src/app/mode1/page.tsx",
-                                                    lineNumber: 935,
+                                                    lineNumber: 986,
                                                     columnNumber: 21
                                                 }, this),
                                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("tbody", {
@@ -2077,7 +2165,7 @@ function Mode1Page() {
                                                                     children: outlet.id
                                                                 }, void 0, false, {
                                                                     fileName: "[project]/src/app/mode1/page.tsx",
-                                                                    lineNumber: 954,
+                                                                    lineNumber: 1005,
                                                                     columnNumber: 27
                                                                 }, this),
                                                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("td", {
@@ -2085,7 +2173,7 @@ function Mode1Page() {
                                                                     children: outlet.y_true.toFixed(2)
                                                                 }, void 0, false, {
                                                                     fileName: "[project]/src/app/mode1/page.tsx",
-                                                                    lineNumber: 955,
+                                                                    lineNumber: 1006,
                                                                     columnNumber: 27
                                                                 }, this),
                                                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("td", {
@@ -2093,7 +2181,7 @@ function Mode1Page() {
                                                                     children: outlet.y_pred.toFixed(2)
                                                                 }, void 0, false, {
                                                                     fileName: "[project]/src/app/mode1/page.tsx",
-                                                                    lineNumber: 958,
+                                                                    lineNumber: 1009,
                                                                     columnNumber: 27
                                                                 }, this),
                                                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("td", {
@@ -2104,41 +2192,41 @@ function Mode1Page() {
                                                                     ]
                                                                 }, void 0, true, {
                                                                     fileName: "[project]/src/app/mode1/page.tsx",
-                                                                    lineNumber: 961,
+                                                                    lineNumber: 1012,
                                                                     columnNumber: 27
                                                                 }, this)
                                                             ]
                                                         }, outlet.id, true, {
                                                             fileName: "[project]/src/app/mode1/page.tsx",
-                                                            lineNumber: 953,
+                                                            lineNumber: 1004,
                                                             columnNumber: 25
                                                         }, this))
                                                 }, void 0, false, {
                                                     fileName: "[project]/src/app/mode1/page.tsx",
-                                                    lineNumber: 951,
+                                                    lineNumber: 1002,
                                                     columnNumber: 21
                                                 }, this)
                                             ]
                                         }, void 0, true, {
                                             fileName: "[project]/src/app/mode1/page.tsx",
-                                            lineNumber: 934,
+                                            lineNumber: 985,
                                             columnNumber: 19
                                         }, this)
                                     }, void 0, false, {
                                         fileName: "[project]/src/app/mode1/page.tsx",
-                                        lineNumber: 933,
+                                        lineNumber: 984,
                                         columnNumber: 17
                                     }, this)
                                 ]
                             }, void 0, true, {
                                 fileName: "[project]/src/app/mode1/page.tsx",
-                                lineNumber: 919,
+                                lineNumber: 970,
                                 columnNumber: 13
                             }, this)
                         ]
                     }, void 0, true, {
                         fileName: "[project]/src/app/mode1/page.tsx",
-                        lineNumber: 890,
+                        lineNumber: 941,
                         columnNumber: 9
                     }, this),
                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -2149,7 +2237,7 @@ function Mode1Page() {
                                 children: "XAI Result"
                             }, void 0, false, {
                                 fileName: "[project]/src/app/mode1/page.tsx",
-                                lineNumber: 976,
+                                lineNumber: 1027,
                                 columnNumber: 11
                             }, this),
                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -2174,7 +2262,7 @@ function Mode1Page() {
                                                         strokeWidth: "4"
                                                     }, void 0, false, {
                                                         fileName: "[project]/src/app/mode1/page.tsx",
-                                                        lineNumber: 989,
+                                                        lineNumber: 1040,
                                                         columnNumber: 21
                                                     }, this),
                                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("path", {
@@ -2183,13 +2271,13 @@ function Mode1Page() {
                                                         d: "M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
                                                     }, void 0, false, {
                                                         fileName: "[project]/src/app/mode1/page.tsx",
-                                                        lineNumber: 990,
+                                                        lineNumber: 1041,
                                                         columnNumber: 21
                                                     }, this)
                                                 ]
                                             }, void 0, true, {
                                                 fileName: "[project]/src/app/mode1/page.tsx",
-                                                lineNumber: 983,
+                                                lineNumber: 1034,
                                                 columnNumber: 19
                                             }, this),
                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
@@ -2197,18 +2285,18 @@ function Mode1Page() {
                                                 children: "Loading XAI explanation..."
                                             }, void 0, false, {
                                                 fileName: "[project]/src/app/mode1/page.tsx",
-                                                lineNumber: 996,
+                                                lineNumber: 1047,
                                                 columnNumber: 19
                                             }, this)
                                         ]
                                     }, void 0, true, {
                                         fileName: "[project]/src/app/mode1/page.tsx",
-                                        lineNumber: 982,
+                                        lineNumber: 1033,
                                         columnNumber: 17
                                     }, this)
                                 }, void 0, false, {
                                     fileName: "[project]/src/app/mode1/page.tsx",
-                                    lineNumber: 981,
+                                    lineNumber: 1032,
                                     columnNumber: 15
                                 }, this) : /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
                                     className: "prose prose-invert prose-sky max-w-none",
@@ -2216,7 +2304,7 @@ function Mode1Page() {
                                         children: xaiExplanation
                                     }, void 0, false, {
                                         fileName: "[project]/src/app/mode1/page.tsx",
-                                        lineNumber: 1002,
+                                        lineNumber: 1053,
                                         columnNumber: 19
                                     }, this) : /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
                                         className: "flex items-center text-rose-400 gap-2",
@@ -2225,55 +2313,64 @@ function Mode1Page() {
                                                 className: "h-5 w-5"
                                             }, void 0, false, {
                                                 fileName: "[project]/src/app/mode1/page.tsx",
-                                                lineNumber: 1005,
+                                                lineNumber: 1056,
                                                 columnNumber: 21
                                             }, this),
                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
                                                 children: "No explanation available"
                                             }, void 0, false, {
                                                 fileName: "[project]/src/app/mode1/page.tsx",
-                                                lineNumber: 1006,
+                                                lineNumber: 1057,
                                                 columnNumber: 21
                                             }, this)
                                         ]
                                     }, void 0, true, {
                                         fileName: "[project]/src/app/mode1/page.tsx",
-                                        lineNumber: 1004,
+                                        lineNumber: 1055,
                                         columnNumber: 19
                                     }, this)
                                 }, void 0, false, {
                                     fileName: "[project]/src/app/mode1/page.tsx",
-                                    lineNumber: 1000,
+                                    lineNumber: 1051,
                                     columnNumber: 15
                                 }, this)
                             }, void 0, false, {
                                 fileName: "[project]/src/app/mode1/page.tsx",
-                                lineNumber: 979,
+                                lineNumber: 1030,
                                 columnNumber: 11
                             }, this)
                         ]
                     }, void 0, true, {
                         fileName: "[project]/src/app/mode1/page.tsx",
-                        lineNumber: 975,
+                        lineNumber: 1026,
                         columnNumber: 9
                     }, this)
                 ]
             }, void 0, true, {
                 fileName: "[project]/src/app/mode1/page.tsx",
-                lineNumber: 436,
+                lineNumber: 479,
                 columnNumber: 7
+            }, this),
+            activeTooltip && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(TooltipPopup, {
+                type: activeTooltip,
+                onClose: ()=>setActiveTooltip(null)
+            }, void 0, false, {
+                fileName: "[project]/src/app/mode1/page.tsx",
+                lineNumber: 1066,
+                columnNumber: 25
             }, this)
         ]
     }, void 0, true, {
         fileName: "[project]/src/app/mode1/page.tsx",
-        lineNumber: 432,
+        lineNumber: 477,
         columnNumber: 5
     }, this);
 }
 _s(Mode1Page, "e5K+0XYhicvb7SqzuFuQHpEorVo=");
-_c = Mode1Page;
-var _c;
-__turbopack_context__.k.register(_c, "Mode1Page");
+_c1 = Mode1Page;
+var _c, _c1;
+__turbopack_context__.k.register(_c, "TooltipPopup");
+__turbopack_context__.k.register(_c1, "Mode1Page");
 if (typeof globalThis.$RefreshHelpers$ === 'object' && globalThis.$RefreshHelpers !== null) {
     __turbopack_context__.k.registerExports(module, globalThis.$RefreshHelpers$);
 }

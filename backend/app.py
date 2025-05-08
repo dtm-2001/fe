@@ -104,3 +104,11 @@ async def mode_selection_data():
     if data is None:
         raise HTTPException(status_code=404, detail="modeSelectionData.json not found or invalid")
     return data
+ENT_SELECTION_JSON = os.path.join(BASE_DIR, "entries_table.json")
+
+@app.get("/entries-table")
+async def mode_selection_data():
+    data = load_json(ENT_SELECTION_JSON)
+    if data is None:
+        raise HTTPException(status_code=404, detail="entries_table.json not found or invalid")
+    return data

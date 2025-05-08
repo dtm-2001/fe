@@ -1,10 +1,11 @@
 "use client"
 import { useEffect, useState, useRef } from "react"
-import Head from "next/head"
 import ReactMarkdown from "react-markdown"
-import { Chart, registerables, type Scale } from "chart.js"
+import { Chart, registerables, type Scale, type ChartEvent } from "chart.js"
 import { fetchData } from "../../services/backendService"
+import { fetchEntriesTable } from "../../services/dashboardService"
 import { AlertCircle, AlertTriangle, CheckCircle, RefreshCw, Info, HelpCircle, X } from "lucide-react"
+import { useSearchParams } from "next/navigation"
 
 Chart.register(...registerables)
 
@@ -50,6 +51,15 @@ interface ErrorDataState {
   tableData: TableDataPoint[]
 }
 
+// Define the entry table interface
+interface EntryTableItem {
+  BusinessUnit: string
+  useCase: string
+  ShortCode: string
+  Runtime: string
+  alertKeeper: string
+}
+
 // Tooltip content for KS test and Wasserstein
 const tooltipContent = {
   kstest: {
@@ -84,7 +94,49 @@ const ERROR_RANGES = [
   { min: 100, max: Number.POSITIVE_INFINITY, label: ">100%" },
 ]
 
+// Add this tooltip component after the ERROR_RANGES constant and before the Mode1Page function
+const TooltipPopup = ({ type, onClose }: { type: string; onClose: () => void }) => {
+  const content = tooltipContent[type as keyof typeof tooltipContent]
+  if (!content) return null
+
+  return (
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" onClick={onClose}>
+      <div
+        className="bg-gray-800 border border-sky-700 rounded-lg shadow-xl max-w-2xl w-full p-6"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex justify-between items-start mb-4">
+          <h3 className="text-xl font-bold text-sky-400">{content.title}</h3>
+          <button
+            onClick={onClose}
+            className="text-gray-400 hover:text-white transition-colors"
+            aria-label="Close tooltip"
+          >
+            <X className="h-5 w-5" />
+          </button>
+        </div>
+        <div className="prose prose-invert prose-sky max-w-none mb-4">
+          <p className="text-gray-300 whitespace-pre-line">{content.content}</p>
+        </div>
+        {content.image && (
+          <div className="mt-4 flex justify-center">
+            <img
+              src={content.image || "/placeholder.svg"}
+              alt={`${content.title} visualization`}
+              className="max-w-full h-auto rounded-md border border-gray-700"
+            />
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
+
 export default function Mode1Page() {
+  const searchParams = useSearchParams()
+  const businessUnitParam = searchParams.get("businessUnit") || ""
+  const useCaseParam = searchParams.get("useCase") || ""
+
   const chartRef = useRef<Chart | null>(null)
   const pieChartRef = useRef<Chart | null>(null)
   const errorRangeChartRef = useRef<Chart | null>(null)
@@ -93,20 +145,20 @@ export default function Mode1Page() {
   const [kpis, setKpis] = useState<KPI[]>([])
   const [errors, setErrors] = useState<ErrorDataState>({ plotData: [], tableData: [] })
   const [outletsExceedingThreshold, setOutletsExceedingThreshold] = useState<OutletsExceedingThreshold[]>([])
-  // Add the allOutlets state after the outletsExceedingThreshold state
   const [allOutlets, setAllOutlets] = useState<AllOutlets[]>([])
   const [xaiExplanation, setXaiExplanation] = useState<string>("No explanation available")
   const [currentPeriod, setCurrentPeriod] = useState<string>("N/A")
   const [errorPercentageThreshold, setErrorPercentageThreshold] = useState<number>(0)
 
-  // Static values from backend
+  // Static values from entries_table.json filtered by businessUnit and useCase
   const [businessUnit, setBusinessUnit] = useState<string>("")
   const [useCase, setUseCase] = useState<string>("")
   const [shortCode, setShortCode] = useState<string>("")
   const [alertKeeperValue, setAlertKeeperValue] = useState<string>("")
 
   // Runtime & UI
-  const [runtimeValue, setRuntimeValue] = useState<number>(1)
+  const [runtimeValue, setRuntimeValue] = useState<string>("")
+  const [runtimeOptions, setRuntimeOptions] = useState<string[]>([])
   const [loading, setLoading] = useState<boolean>(false)
   const [backendError, setBackendError] = useState<string | null>(null)
   const [statusDistribution, setStatusDistribution] = useState({ good: 65, warning: 25, error: 10 })
@@ -117,27 +169,73 @@ export default function Mode1Page() {
   const [selectedRange, setSelectedRange] = useState<string | null>(null)
   const [selectedRangeOutlets, setSelectedRangeOutlets] = useState<AllOutlets[]>([])
 
-  // Fetch all data, including static values
+  // Entries state (fetched via dashboardService)
+  const [entries, setEntries] = useState<EntryTableItem[]>([])
+
+  // 1) Fetch entries when businessUnitParam or useCaseParam change
+  useEffect(() => {
+    if (!businessUnitParam || !useCaseParam) return
+
+    const loadEntries = async () => {
+      try {
+        const fetched = await fetchEntriesTable({
+          BusinessUnit: businessUnitParam,
+          useCase: useCaseParam,
+        })
+        // Filter out any placeholder rows
+        const filtered = fetched.filter(
+          (entry) =>
+            entry.BusinessUnit !== "Not Selected" &&
+            entry.useCase !== "Not Selected" &&
+            entry.ShortCode !== "Not Available",
+        )
+        setEntries(filtered)
+
+        if (filtered.length === 0) {
+          setBusinessUnit("Not Selected")
+          setUseCase("Not Selected")
+          setShortCode("Not Available")
+          setRuntimeOptions([])
+          setAlertKeeperValue("Not Selected")
+          setRuntimeValue("")
+        } else {
+          // Initialize with first entry
+          setBusinessUnit(filtered[0].BusinessUnit)
+          setUseCase(filtered[0].useCase)
+          setShortCode(filtered[0].ShortCode)
+
+          const uniqueRuntimes = Array.from(new Set(filtered.map((e) => e.Runtime)))
+          setRuntimeOptions(uniqueRuntimes)
+          setRuntimeValue(uniqueRuntimes[0])
+
+          const initialKeeper = filtered.find((e) => e.Runtime === uniqueRuntimes[0])?.alertKeeper || ""
+          setAlertKeeperValue(initialKeeper)
+        }
+      } catch (err) {
+        console.error(err)
+        setBackendError(err instanceof Error ? err.message : "Failed to load entries")
+      }
+    }
+
+    loadEntries()
+  }, [businessUnitParam, useCaseParam])
+
+  // 2) Update alertKeeper when runtimeValue or entries change
+  useEffect(() => {
+    if (!runtimeValue) return
+
+    const matched = entries.find((e) => e.Runtime === runtimeValue)
+    setAlertKeeperValue(matched?.alertKeeper || "Not Selected")
+  }, [runtimeValue, entries])
+
+  // 3) Fetch dynamic data (kpis, errors, etc.) whenever runtimeValue changes
   const fetchAllData = async (): Promise<void> => {
     setLoading(true)
     setBackendError(null)
     try {
-      const result = await fetchData({
-        runtime: runtimeValue,
-      })
+      const data = await fetchData({ runtime: runtimeValue })
 
-      // Use full result for dynamic data
-      const data = result
-
-      // static values from dashboardData
-      const dashboardData = result.dashboardData || {}
-
-      setBusinessUnit(dashboardData.businessUnit || "")
-      setUseCase(dashboardData.useCase || "")
-      setShortCode(dashboardData.ShortCode || "")
-      setAlertKeeperValue(dashboardData.alertKeeper || "")
-
-      // dynamic data
+      // Dynamic data
       setKpis(data.kpis || [])
       setErrors(data.errors || { plotData: [], tableData: [] })
       setOutletsExceedingThreshold(data.outletsExceedingThreshold || [])
@@ -146,7 +244,7 @@ export default function Mode1Page() {
       setCurrentPeriod(data.currentPeriod || "N/A")
       setErrorPercentageThreshold(data.error_percentage_threshold ?? 0)
 
-      // compute status distribution
+      // Compute status distribution...
       const goodCount =
         data.errors?.tableData.filter((r) => (r.error ?? 0) < (data.error_percentage_threshold || 5) * 0.5).length || 0
       const warningCount =
@@ -165,33 +263,27 @@ export default function Mode1Page() {
         error: Math.round((errorCount / total) * 100),
       })
 
-      // Calculate error range data for the bar chart using all_outlets
-      if (data.all_outlets && data.all_outlets.length > 0) {
+      // Build error ranges
+      if (data.all_outlets?.length) {
         const rangeData = ERROR_RANGES.map((range) => {
           const outletsInRange = data.all_outlets.filter((outlet: AllOutlets) => {
-            const percentError = outlet.percentage_error
-            return percentError >= range.min && percentError < range.max
+            const pe = outlet.percentage_error
+            return pe >= range.min && pe < range.max
           })
-          return {
-            range: range.label,
-            count: outletsInRange.length,
-            outlets: outletsInRange,
-          }
+          return { range: range.label, count: outletsInRange.length, outlets: outletsInRange }
         })
         setErrorRangeData(rangeData)
       }
     } catch (err) {
       console.error(err)
-      const message = err instanceof Error ? err.message : "Unknown error"
-      setBackendError(message)
+      setBackendError(err instanceof Error ? err.message : "Unknown error")
     } finally {
       setLoading(false)
     }
   }
 
-  // Initial load & whenever runtime changes
   useEffect(() => {
-    fetchAllData()
+    if (runtimeValue) fetchAllData()
   }, [runtimeValue])
 
   // Re-render pie chart when data updates
@@ -204,16 +296,22 @@ export default function Mode1Page() {
 
   // Handle bar chart click
   const handleBarClick = (rangeIndex: number) => {
-    const range = errorRangeData[rangeIndex]
-    setSelectedRange(range.range)
-    setSelectedRangeOutlets(range.outlets)
+    if (rangeIndex >= 0 && rangeIndex < errorRangeData.length) {
+      const range = errorRangeData[rangeIndex]
+      setSelectedRange(range.range)
+      setSelectedRangeOutlets(range.outlets)
+    }
   }
 
   // Pie chart renderer
   const renderPieChart = () => {
-    const ctx = document.getElementById("statusPieChart") as HTMLCanvasElement
+    const ctx = document.getElementById("statusPieChart") as HTMLCanvasElement | null
     if (!ctx) return
-    pieChartRef.current?.destroy()
+
+    if (pieChartRef.current) {
+      pieChartRef.current.destroy()
+    }
+
     pieChartRef.current = new Chart(ctx, {
       type: "pie",
       data: {
@@ -259,12 +357,14 @@ export default function Mode1Page() {
 
   // Update the renderErrorRangeChart function to ensure it's using the correct data
   const renderErrorRangeChart = () => {
-    const ctx = document.getElementById("errorRangeChart") as HTMLCanvasElement
+    const ctx = document.getElementById("errorRangeChart") as HTMLCanvasElement | null
     if (!ctx) return
 
     console.log("Rendering error range chart with data:", errorRangeData)
 
-    errorRangeChartRef.current?.destroy()
+    if (errorRangeChartRef.current) {
+      errorRangeChartRef.current.destroy()
+    }
 
     // Color gradient for the bars - adjusted for the requested ranges
     const gradientColors = [
@@ -380,12 +480,12 @@ export default function Mode1Page() {
             },
           },
         },
-        onClick: (_, elements) => {
+        onClick: (_event: ChartEvent, elements: any[]) => {
           if (elements && elements.length > 0) {
             const index = elements[0].index
-            // Use dataToUse for handling clicks
-            const rangeKey = dataToUse[index].range
-            handleBarClick(index)
+            if (index !== undefined && index >= 0 && index < dataToUse.length) {
+              handleBarClick(index)
+            }
           }
         },
       },
@@ -430,9 +530,7 @@ export default function Mode1Page() {
 
   return (
     <div className="bg-gradient-to-b from-gray-950 to-gray-900 min-h-screen flex flex-col">
-      <Head>
-        <title>Mode 1 | Business Dashboard</title>
-      </Head>
+      <title>Mode 1 | Business Dashboard</title>
       <main className="flex-grow container mx-auto px-4 py-8">
         {/* Backend Error */}
         {backendError && (
@@ -496,12 +594,18 @@ export default function Mode1Page() {
             <select
               className="w-full bg-gray-800/80 border border-sky-700/50 rounded-md p-2 text-white focus:ring-2 focus:ring-sky-500"
               value={runtimeValue}
-              onChange={(e) => setRuntimeValue(Number(e.target.value))}
+              onChange={(e) => setRuntimeValue(e.target.value)}
+              disabled={runtimeOptions.length === 0}
             >
-              <option value={1}>1</option>
-              <option value={2}>2</option>
-              <option value={3}>3</option>
-              <option value={4}>4</option>
+              {runtimeOptions.length === 0 ? (
+                <option value="">No runtimes available</option>
+              ) : (
+                runtimeOptions.map((runtime) => (
+                  <option key={runtime} value={runtime}>
+                    {runtime}
+                  </option>
+                ))
+              )}
             </select>
           </div>
         </div>
@@ -539,7 +643,9 @@ export default function Mode1Page() {
                     if (!loading && el) {
                       const ctx = el.getContext("2d")
                       if (ctx) {
-                        chartRef.current?.destroy()
+                        if (chartRef.current) {
+                          chartRef.current.destroy()
+                        }
                         chartRef.current = new Chart(ctx, {
                           type: "line",
                           data: {
@@ -550,6 +656,12 @@ export default function Mode1Page() {
                                 data: errors.plotData.map((d) => d.y),
                                 borderColor: "rgb(56, 189, 248)",
                                 backgroundColor: errors.plotData.map((d) =>
+                                  d.exceedsThreshold ? "rgba(244, 63, 94, 0.5)" : "rgba(56, 189, 248, 0.2)",
+                                ),
+                                borderWidth: 2,
+                                tension: 0.3,
+                                fill: true,
+                                pointBackgroundColor: errors.plotData.map((d) =>
                                   d.exceedsThreshold ? "rgba(244, 63, 94, 0.5)" : "rgba(56, 189, 248, 0.2)",
                                 ),
                                 borderWidth: 2,
@@ -667,7 +779,10 @@ export default function Mode1Page() {
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {/* KS-test & Wasserstein */}
-            <div className="bg-gradient-to-br from-sky-950/40 to-sky-900/20 p-4 rounded-lg border border-sky-800/30 shadow-md hover:shadow-sky-900/20 hover:border-sky-700/50 transition-all relative">
+            <div
+              className="bg-gradient-to-br from-sky-950/40 to-sky-900/20 p-4 rounded-lg border border-sky-800/30 shadow-md
+ hover:shadow-sky-900/20 hover:border-sky-700/50 transition-all relative"
+            >
               <button
                 onClick={() => setActiveTooltip("kstest")}
                 className="absolute top-2 right-2 text-sky-400 hover:text-sky-300 transition-colors"
@@ -747,8 +862,11 @@ export default function Mode1Page() {
               <div className="space-y-4">
                 {kpis
                   .filter((k) => !["kstest", "wasserstein", "mseRef", "mseCurrent", "status"].includes(k.rowKey))
-                  .map((kpi, idx) => (
-                    <div key={idx} className={idx > 0 ? "pt-3 border-t border-sky-800/30" : ""}>
+                  .map((kpi) => (
+                    <div
+                      key={kpi.rowKey}
+                      className={kpi.rowKey !== kpis[0].rowKey ? "pt-3 border-t border-sky-800/30" : ""}
+                    >
                       <div className="flex items-center justify-between">
                         <span className="text-sm text-gray-400">{kpi.rowKey}:</span>
                         <span className={`text-sm font-medium ${getStatusColor(kpi.status)}`}>{kpi.value}</span>
@@ -1011,6 +1129,8 @@ export default function Mode1Page() {
           </div>
         </div>
       </main>
+      {/* Tooltip Popup */}
+      {activeTooltip && <TooltipPopup type={activeTooltip} onClose={() => setActiveTooltip(null)} />}
     </div>
   )
 }

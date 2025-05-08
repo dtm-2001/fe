@@ -3,17 +3,19 @@
     "user": "Susara",
     "Runtime": "2024-01-01T10:00:00Z-1",
     "BusinessUnit": "JMSL",
-    "useCase": "Churn",
-    "ShortCode": "SC001",
-    "JSONLink": "/entries/entry1.json"
+    "useCase": "JMSL-Churn",
+    "ShortCode": "SC002",
+    "JSONLink": "/entries/entry1.json",
+    "alertKeeper": "Kalpa"
   },
   {
     "user": "Susara",
     "Runtime": "2024-01-01T10:00:00Z-2",
     "BusinessUnit": "JMSL",
-    "useCase": "Churn",
+    "useCase": "JMSL-Churn",
     "ShortCode": "SC001",
-    "JSONLink": "/entries/entry1.json"
+    "JSONLink": "/entries/entry1.json",
+    "alertKeeper": "Kalpa,Shada"
   },
   {
     "user": "Susara",
@@ -21,7 +23,8 @@
     "BusinessUnit": "CCS",
     "useCase": "MT Promo",
     "ShortCode": "SC002",
-    "JSONLink": "/entries/entry2.json"
+    "JSONLink": "/entries/entry2.json",
+    "alertKeeper": "Kalpa,Senum"
   },
   {
     "user": "Susara",
@@ -29,7 +32,8 @@
     "BusinessUnit": "CCS",
     "useCase": "MT Promo",
     "ShortCode": "SC002",
-    "JSONLink": "/entries/entry2.json"
+    "JSONLink": "/entries/entry2.json",
+    "alertKeeper": "Kalpa,Senum"
   },
   {
     "user": "Susara",
@@ -37,7 +41,8 @@
     "BusinessUnit": "CCS",
     "useCase": "Distribution Efficiency",
     "ShortCode": "SC003",
-    "JSONLink": "/entries/entry3.json"
+    "JSONLink": "/entries/entry3.json",
+    "alertKeeper": "Kalpa,Senum,Shada"
   },
   {
     "user": "Susara",
@@ -45,23 +50,26 @@
     "BusinessUnit": "CCS",
     "useCase": "Distribution Efficiency",
     "ShortCode": "SC003",
-    "JSONLink": "/entries/entry3.json"
+    "JSONLink": "/entries/entry3.json",
+    "alertKeeper": "Senum,Shada"
   },
   {
     "user": "Senum",
     "Runtime": "2024-01-01T11:00:00Z-1",
     "BusinessUnit": "JMSL",
-    "useCase": "Churn",
+    "useCase": "JMSL-Churn",
     "ShortCode": "SC004",
-    "JSONLink": "/entries/entry4.json"
+    "JSONLink": "/entries/entry4.json",
+    "alertKeeper": "Kalpa,Senum"
   },
   {
     "user": "Senum",
     "Runtime": "2024-01-01T11:00:00Z-2",
     "BusinessUnit": "JMSL",
-    "useCase": "Churn",
+    "useCase": "JMSL-Churn",
     "ShortCode": "SC004",
-    "JSONLink": "/entries/entry4.json"
+    "JSONLink": "/entries/entry4.json",
+    "alertKeeper": "Kalpa,Senum,Shada"
   },
   {
     "user": "Senum",
@@ -69,7 +77,8 @@
     "BusinessUnit": "CCS",
     "useCase": "MT Promo",
     "ShortCode": "SC005",
-    "JSONLink": "/entries/entry5.json"
+    "JSONLink": "/entries/entry5.json",
+    "alertKeeper": "Senum"
   },
   {
     "user": "Senum",
@@ -77,6 +86,7 @@
     "BusinessUnit": "CCS",
     "useCase": "MT Promo",
     "ShortCode": "SC005",
-    "JSONLink": "/entries/entry6.json"
+    "JSONLink": "/entries/entry6.json",
+    "alertKeeper": "Kalpa,Senum"
   }
 ]

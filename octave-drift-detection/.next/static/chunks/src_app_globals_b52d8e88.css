@@ -80,6 +80,7 @@
     --color-black: #000;
     --color-white: #fff;
     --spacing: .25rem;
+    --container-sm: 24rem;
     --container-md: 28rem;
     --container-2xl: 42rem;
     --container-6xl: 72rem;
@@ -720,8 +721,16 @@
     width: calc(var(--spacing) * 60);
   }
 
+  .w-64 {
+    width: calc(var(--spacing) * 64);
+  }
+
   .w-70 {
     width: calc(var(--spacing) * 70);
+  }
+
+  .w-\[220px\] {
+    width: 220px;
   }
 
   .w-full {
@@ -752,8 +761,16 @@
     max-width: none;
   }
 
+  .max-w-sm {
+    max-width: var(--container-sm);
+  }
+
   .min-w-full {
     min-width: 100%;
+  }
+
+  .flex-1 {
+    flex: 1;
   }
 
   .flex-shrink {
@@ -860,6 +877,12 @@
     --tw-space-y-reverse: 0;
     margin-block-start: calc(calc(var(--spacing) * 6) * var(--tw-space-y-reverse));
     margin-block-end: calc(calc(var(--spacing) * 6) * calc(1 - var(--tw-space-y-reverse)));
+  }
+
+  :where(.space-x-2 > :not(:last-child)) {
+    --tw-space-x-reverse: 0;
+    margin-inline-start: calc(calc(var(--spacing) * 2) * var(--tw-space-x-reverse));
+    margin-inline-end: calc(calc(var(--spacing) * 2) * calc(1 - var(--tw-space-x-reverse)));
   }
 
   :where(.space-x-4 > :not(:last-child)) {
@@ -2183,6 +2206,14 @@
   @media (width >= 64rem) {
     .lg\:grid-cols-3 {
       grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+  }
+
+  @media (width >= 64rem) {
+    :where(.lg\:space-x-4 > :not(:last-child)) {
+      --tw-space-x-reverse: 0;
+      margin-inline-start: calc(calc(var(--spacing) * 4) * var(--tw-space-x-reverse));
+      margin-inline-end: calc(calc(var(--spacing) * 4) * calc(1 - var(--tw-space-x-reverse)));
     }
   }
 }

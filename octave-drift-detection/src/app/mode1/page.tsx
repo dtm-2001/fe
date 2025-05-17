@@ -29,6 +29,9 @@ interface TableDataPoint {
   error?: number
   percentageError?: number
   status: string
+  abs_curr_per?: number
+  abs_ref_per?: number
+  difference?: number
 }
 
 interface OutletsExceedingThreshold {
@@ -44,6 +47,11 @@ interface AllOutlets {
   percentage_error: number
   y_pred: number
   y_true: number
+}
+
+interface MSETrend {
+  MSE: number
+  time_period: string
 }
 
 interface ErrorDataState {
@@ -148,7 +156,13 @@ export default function Mode1Page() {
   const [allOutlets, setAllOutlets] = useState<AllOutlets[]>([])
   const [xaiExplanation, setXaiExplanation] = useState<string>("No explanation available")
   const [currentPeriod, setCurrentPeriod] = useState<string>("N/A")
+  const [referencePeriod, setReferencePeriod] = useState<string>("N/A")
   const [errorPercentageThreshold, setErrorPercentageThreshold] = useState<number>(0)
+  const [mseTrend, setMseTrend] = useState<MSETrend[]>([])
+
+  // Add these new state variables after the existing state declarations (around line 125)
+  const [sortedPeriods, setSortedPeriods] = useState<string[]>([])
+  const [driftDetected, setDriftDetected] = useState<boolean | null>(null)
 
   // Static values from entries_table.json filtered by businessUnit and useCase
   const [businessUnit, setBusinessUnit] = useState<string>("")
@@ -242,7 +256,19 @@ export default function Mode1Page() {
       setAllOutlets(data.all_outlets || [])
       setXaiExplanation(data.xaiExplanation || "No explanation available")
       setCurrentPeriod(data.currentPeriod || "N/A")
+      setReferencePeriod(data.referencePeriod || "N/A") // Add this line to extract reference period
       setErrorPercentageThreshold(data.error_percentage_threshold ?? 0)
+      setMseTrend(data.mse_trend || [])
+
+      // Update the fetchAllData function to extract the sorted periods and drift detection status
+      // Find the fetchAllData function and modify it to include these new lines after the existing data extraction
+      // Around line 200 in the fetchAllData function, after setting other state variables:
+      setSortedPeriods(data.sorted_periods || [])
+      setDriftDetected(data.driftDetected || null)
+      // If the sorted periods array has at least one element, use it as the reference period
+      if (data.sorted_periods && data.sorted_periods.length > 0) {
+        setReferencePeriod(data.sorted_periods[0])
+      }
 
       // Compute status distribution...
       const goodCount =
@@ -528,6 +554,8 @@ export default function Mode1Page() {
     }
   }
 
+  // Update the header section to include the drift detection status
+  // Find the header section (around line 300) and replace it with:
   return (
     <div className="bg-gradient-to-b from-gray-950 to-gray-900 min-h-screen flex flex-col">
       <title>Mode 1 | Business Dashboard</title>
@@ -554,10 +582,26 @@ export default function Mode1Page() {
           <h2 className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-sky-600 mb-2">
             OCTAVE – RG Dashboard
           </h2>
-          <p className="text-sky-300 flex items-center gap-2">
-            <span className="inline-block h-2 w-2 rounded-full bg-sky-400 animate-pulse" />
-            Current Period: {loading ? "Loading..." : currentPeriod}
-          </p>
+          <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+            <div className="text-sky-300 flex flex-col sm:flex-row sm:items-center gap-2">
+              <p className="flex items-center gap-2">
+                <span className="inline-block h-2 w-2 rounded-full bg-sky-400 animate-pulse" />
+                Current Period: {loading ? "Loading..." : currentPeriod}
+              </p>
+              <p className="flex items-center gap-2 sm:ml-6">
+                <span className="inline-block h-2 w-2 rounded-full bg-gray-400" />
+                Reference Period: {loading ? "Loading..." : referencePeriod}
+              </p>
+            </div>
+            {driftDetected !== null && (
+              <div className="flex items-center gap-2 sm:ml-6 px-3 py-1 rounded-md border">
+                <span className="font-medium text-gray-300">Drift Detected:</span>
+                <span className={`font-bold ${driftDetected ? "text-rose-500" : "text-emerald-500"}`}>
+                  {driftDetected ? "Yes" : "No"}
+                </span>
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Static Filters Box and Runtime in 2:1 ratio */}
@@ -615,7 +659,7 @@ export default function Mode1Page() {
           {/* MAPE/MSE Plot */}
           <div className="lg:col-span-2 bg-gray-900/80 rounded-xl shadow-xl overflow-hidden p-6 border border-gray-700/50 backdrop-blur-sm">
             <h2 className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-sky-600 mb-4">
-              MAPE/MSE Plot
+              MSE Trend Analysis
             </h2>
             <div className="h-80 bg-gray-800/60 rounded-lg p-4 border border-gray-700/50">
               {loading ? (
@@ -649,27 +693,17 @@ export default function Mode1Page() {
                         chartRef.current = new Chart(ctx, {
                           type: "line",
                           data: {
-                            labels: errors.plotData.map((d) => d.x),
+                            labels: mseTrend.map((d) => d.time_period),
                             datasets: [
                               {
-                                label: "Error Values",
-                                data: errors.plotData.map((d) => d.y),
+                                label: "MSE Values",
+                                data: mseTrend.map((d) => d.MSE),
                                 borderColor: "rgb(56, 189, 248)",
-                                backgroundColor: errors.plotData.map((d) =>
-                                  d.exceedsThreshold ? "rgba(244, 63, 94, 0.5)" : "rgba(56, 189, 248, 0.2)",
-                                ),
+                                backgroundColor: "rgba(56, 189, 248, 0.2)",
                                 borderWidth: 2,
                                 tension: 0.3,
                                 fill: true,
-                                pointBackgroundColor: errors.plotData.map((d) =>
-                                  d.exceedsThreshold ? "rgba(244, 63, 94, 0.5)" : "rgba(56, 189, 248, 0.2)",
-                                ),
-                                borderWidth: 2,
-                                tension: 0.3,
-                                fill: true,
-                                pointBackgroundColor: errors.plotData.map((d) =>
-                                  d.exceedsThreshold ? "rgba(244, 63, 94, 1)" : "rgba(56, 189, 248, 1)",
-                                ),
+                                pointBackgroundColor: "rgba(56, 189, 248, 1)",
                                 pointBorderColor: "#fff",
                                 pointRadius: 4,
                                 pointHoverRadius: 6,
@@ -684,7 +718,7 @@ export default function Mode1Page() {
                                 labels: { color: "#e5e7eb", font: { weight: "bold" } },
                                 title: {
                                   display: true,
-                                  text: "Error Trend Analysis",
+                                  text: "MSE Trend Analysis",
                                   color: "#38bdf8",
                                   font: { size: 16, weight: "bold" },
                                 },
@@ -699,7 +733,7 @@ export default function Mode1Page() {
                                 borderWidth: 1,
                                 padding: 10,
                                 callbacks: {
-                                  label: (ctx) => `Error: ${ctx.parsed.y.toFixed(2)}`,
+                                  label: (ctx) => `MSE: ${ctx.parsed.y.toFixed(4)}`,
                                 },
                               },
                             },
@@ -718,14 +752,12 @@ export default function Mode1Page() {
                                 ticks: {
                                   color: "#e5e7eb",
                                   font: { size: 12 },
-                                  maxRotation: 45,
-                                  minRotation: 45,
                                 },
                               },
                               y: {
                                 title: {
                                   display: true,
-                                  text: "Error Value",
+                                  text: "MSE Value",
                                   color: "#38bdf8",
                                   font: { weight: "bold" },
                                 },
@@ -742,7 +774,7 @@ export default function Mode1Page() {
                                     tickValue: string | number,
                                   ): string | number {
                                     if (typeof tickValue === "number") {
-                                      return tickValue.toFixed(2)
+                                      return tickValue.toFixed(4)
                                     }
                                     return tickValue
                                   },
@@ -883,7 +915,7 @@ export default function Mode1Page() {
           {/* Error Comparison */}
           <div className="bg-gray-900/80 rounded-xl shadow-xl overflow-hidden p-6 border border-gray-700/50 backdrop-blur-sm">
             <h2 className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-sky-600 mb-4">
-              Error Comparison
+              Error Comparison (Current Period)
             </h2>
             {loading ? (
               <div className="flex items-center justify-center py-12">
@@ -913,21 +945,36 @@ export default function Mode1Page() {
                       <th className="px-6 py-3 text-left text-xs font-medium text-sky-300 uppercase tracking-wider">
                         ID
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-rose-400 uppercase tracking-wider">
-                        Error
+                      <th className="px-6 py-3 text-left text-xs font-medium text-sky-300 uppercase tracking-wider">
+                        Current Error
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-sky-300 uppercase tracking-wider">
+                        Reference Error
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-sky-300 uppercase tracking-wider">
+                        Difference
                       </th>
                     </tr>
                   </thead>
+
                   <tbody className="bg-gray-800/30 divide-y divide-gray-700/50">
                     {errors.tableData
                       .slice()
-                      .sort((a, b) => (a.error ?? 0) - (b.error ?? 0))
+                      // Filter out duplicate IDs, keeping only the first occurrence
+                      .filter((row, index, self) => index === self.findIndex((r) => r.id === row.id))
+                      .sort((a, b) => (b.difference ?? 0) - (a.difference ?? 0))
                       .map((row: TableDataPoint, i: number) => (
                         <tr key={row.id} className="hover:bg-gray-700/30 transition-colors duration-150">
                           <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-white">{i + 1}</td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-white">{row.id}</td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-rose-400 font-medium">
-                            {(row.error ?? 0).toFixed(2)}
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-sky-400 font-medium">
+                            {(row.abs_curr_per ?? 0).toFixed(2)}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-sky-400 font-medium">
+                            {(row.abs_ref_per ?? 0).toFixed(2)}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-sky-400 font-medium">
+                            {(row.difference ?? 0).toFixed(2)}
                           </td>
                         </tr>
                       ))}

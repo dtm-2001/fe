@@ -594,9 +594,11 @@ export default function Mode1Page() {
               </p>
             </div>
             {driftDetected !== null && (
-              <div className="flex items-center gap-2 sm:ml-6 px-3 py-1 rounded-md border">
-                <span className="font-medium text-gray-300">Drift Detected:</span>
-                <span className={`font-bold ${driftDetected ? "text-rose-500" : "text-emerald-500"}`}>
+              <div
+                className={`flex items-center gap-2 sm:ml-6 px-3 py-1.5 rounded-md ${driftDetected ? "bg-rose-900/40 border border-rose-700" : "bg-emerald-900/40 border border-emerald-700"}`}
+              >
+                <span className="font-medium text-gray-200">Drift Detected:</span>
+                <span className={`font-bold ${driftDetected ? "text-rose-400" : "text-emerald-400"}`}>
                   {driftDetected ? "Yes" : "No"}
                 </span>
               </div>
@@ -869,7 +871,9 @@ export default function Mode1Page() {
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="text-sm text-gray-400">Change:</span>
-                  <span className="text-sm font-medium text-white">
+                  <span
+                    className={`text-sm font-medium ${calculateMseChange().startsWith("+") ? "text-rose-400" : "text-emerald-400"}`}
+                  >
                     {loading ? "Loading..." : calculateMseChange()}
                   </span>
                 </div>
@@ -890,15 +894,49 @@ export default function Mode1Page() {
 
             {/* Additional Metrics */}
             <div className="bg-gradient-to-br from-sky-950/40 to-sky-900/20 p-4 rounded-lg border border-sky-800/30 shadow-md hover:shadow-sky-900/20 hover:border-sky-700/50 transition-all">
-              <h3 className="text-lg font-medium text-sky-300 mb-2">Additional Metrics</h3>
+              <h3 className="text-lg font-medium text-sky-300 mb-2">Error Metrics</h3>
               <div className="space-y-4">
                 {kpis
-                  .filter((k) => !["kstest", "wasserstein", "mseRef", "mseCurrent", "status"].includes(k.rowKey))
+                  .filter((k) =>
+                    [
+                      "Error Percentage Threshold",
+                      "Average Percentage Error (All)",
+                      "Average Percentage Error (Exceeding)",
+                      "Drift Detected",
+                    ].includes(k.rowKey),
+                  )
                   .map((kpi) => (
                     <div
                       key={kpi.rowKey}
                       className={kpi.rowKey !== kpis[0].rowKey ? "pt-3 border-t border-sky-800/30" : ""}
                     >
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm text-gray-400">{kpi.rowKey}:</span>
+                        <span
+                          className={`text-sm font-medium ${kpi.rowKey === "Drift Detected" ? (kpi.value === "Yes" ? "text-rose-400" : "text-emerald-400") : getStatusColor(kpi.status)}`}
+                        >
+                          {kpi.value}
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                {kpis
+                  .filter(
+                    (k) =>
+                      ![
+                        "kstest",
+                        "wasserstein",
+                        "mseRef",
+                        "mseCurrent",
+                        "status",
+                        "Error Percentage Threshold",
+                        "Average Percentage Error (All)",
+                        "Average Percentage Error (Exceeding)",
+                        "Drift Detected",
+                      ].includes(k.rowKey),
+                  )
+                  .map((kpi) => (
+                    <div key={kpi.rowKey} className="pt-3 border-t border-sky-800/30">
                       <div className="flex items-center justify-between">
                         <span className="text-sm text-gray-400">{kpi.rowKey}:</span>
                         <span className={`text-sm font-medium ${getStatusColor(kpi.status)}`}>{kpi.value}</span>
@@ -973,7 +1011,10 @@ export default function Mode1Page() {
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-sky-400 font-medium">
                             {(row.abs_ref_per ?? 0).toFixed(2)}
                           </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-sky-400 font-medium">
+                          <td
+                            className={`px-6 py-4 whitespace-nowrap text-sm font-medium ${(row.difference ?? 0) > 0 ? "text-rose-400" : "text-emerald-400"}`}
+                          >
+                            {(row.difference ?? 0) > 0 ? "+" : ""}
                             {(row.difference ?? 0).toFixed(2)}
                           </td>
                         </tr>
@@ -1083,7 +1124,7 @@ export default function Mode1Page() {
           {selectedRange && (
             <div className="mt-4">
               <h3 className="text-xl font-medium text-sky-300 mb-3">
-                Outlets in {selectedRange} Error Range
+                IDs in {selectedRange} Error Range
                 <button
                   onClick={() => setSelectedRange(null)}
                   className="ml-2 text-sky-400 hover:text-sky-300"
@@ -1093,7 +1134,7 @@ export default function Mode1Page() {
                 </button>
               </h3>
               {selectedRangeOutlets.length === 0 ? (
-                <p className="text-gray-400">No outlets in this range</p>
+                <p className="text-gray-400">No IDs in this range</p>
               ) : (
                 <div className="max-h-96 overflow-y-auto rounded-lg border border-sky-800/30">
                   <table className="min-w-full divide-y divide-sky-800/30">

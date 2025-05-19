@@ -20,10 +20,13 @@ export interface TableDataPoint {
   error?: number
   percentageError?: number
   status: string
+  abs_curr_per?: number
+  abs_ref_per?: number
+  difference?: number
 }
 
 export interface OutletsExceedingThreshold {
-  id: string
+  id: number
   y_true: number
   y_pred: number
   percentage_error: number
@@ -35,6 +38,13 @@ export interface Indices {
   drift: number[]
 }
 
+export interface AllOutlets {
+  id: number
+  y_true: number
+  y_pred: number
+  percentage_error: number
+}
+
 // **NEW**: the top-10 misclassified IDs
 export interface Top10Id {
   id: string
@@ -42,7 +52,9 @@ export interface Top10Id {
   Mean_Prediction_Error: number
 }
 
-export async function fetchData(): Promise<{
+export async function fetchData(
+  { runtime }: { runtime: string } = { runtime: "" }
+): Promise<{
   kpis: KPI[]
   errors: { plotData: PlotDataPoint[]; tableData: TableDataPoint[] }
   top10Ids: Top10Id[]
@@ -53,164 +65,192 @@ export async function fetchData(): Promise<{
   clusters: any
   backwardAnalysis: any
   currentPeriod: string
+  referencePeriod: string
   totalOutlets: number
   outletsExceedingThresholdCount: number
   xaiExplanation: string
   error_percentage_threshold: number
   dashboardData: any
-  all_outlets: any[]
+  all_outlets: AllOutlets[]
+  sorted_periods: string[]
+  driftDetected: boolean
 }> {
-  const res = await fetch('/api/mode2/data', { credentials: 'include' })
+  // 1) Fetch the main data
+  const res = await fetch(
+    `/api/mode2/data${runtime ? `?runtime=${runtime}` : ""}`,
+    { credentials: "include" }
+  )
   if (!res.ok) throw new Error(`HTTP error! Status: ${res.status}`)
-  const raw = await res.json()
+  const raw: any = await res.json()
 
-  // Fetch dashboard.json separately
-  const dashResponse = await fetch(`/dashboard.json`)
-  if (!dashResponse.ok) {
-    throw new Error(`HTTP error fetching dashboard.json! Status: ${dashResponse.status}`)
+  // 2) Fetch the dashboard metadata
+  const dashRes = await fetch(`/dashboard.json`)
+  if (!dashRes.ok) {
+    throw new Error(`HTTP error fetching dashboard.json! Status: ${dashRes.status}`)
   }
-  const dashboardData = await dashResponse.json()
+  const dashboardData = await dashRes.json()
 
-  // 1) KPIs (as before)…
-  const driftMetrics = raw.drift_state?.metrics || {}
+  // 3) Drift detected flag comes from raw.state
+  const driftDetected = raw.state?.toLowerCase() === "drift"
+
+  // 4) Period sorting & reference period
+  const sorted_periods: string[] = raw.sorted_periods || []
+  const referencePeriod =
+    sorted_periods.length > 0
+      ? sorted_periods[0]
+      : raw.current_period || "N/A"
+
+  // 5) Build KPIs directly from your JSON
   const kpis: KPI[] = [
     {
-      rowKey: 'Drift Detected',
-      value: raw.drift_state?.drift_detected ? 'Yes' : 'No',
-      status: raw.drift_state?.drift_detected ? 'Alert' : 'Normal',
+      rowKey: "Drift Detected",
+      value: driftDetected ? "Yes" : "No",
+      status: driftDetected ? "Alert" : "Normal",
     },
     {
-      rowKey: 'Error Percentage Threshold',
-      value: raw.error_percentage_threshold?.toString() || 'N/A',
-      status: 'Normal',
+      rowKey: "Error Percentage Threshold",
+      value: raw.error_percentage_threshold?.toString() || "N/A",
+      status: "Normal",
     },
     {
-      rowKey: 'Average Percentage Error (All)',
-      value: raw.average_percentage_error_all?.toFixed(2) || 'N/A',
-      status: 'Normal',
+      rowKey: "Average Percentage Error (All)",
+      value:
+        raw.average_percentage_error_all != null
+          ? raw.average_percentage_error_all.toFixed(2)
+          : "N/A",
+      status: "Normal",
     },
     {
-      rowKey: 'Average Percentage Error (Exceeding)',
-      value: raw.average_percentage_error_exceeding?.toFixed(2) || 'N/A',
-      status: 'Alert',
+      rowKey: "Average Percentage Error (Exceeding)",
+      value:
+        raw.average_percentage_error_exceeding != null
+          ? raw.average_percentage_error_exceeding.toFixed(2)
+          : "N/A",
+      status: "Alert",
     },
     {
-      rowKey: 'kstest',
-      value: driftMetrics.ks_statistic?.toFixed(3) || 'N/A',
-      status: 'Normal',
+      rowKey: "Current Period",
+      value: raw.current_period || "N/A",
+      status: "Normal",
     },
     {
-      rowKey: 'wasserstein',
-      value: driftMetrics.wasserstein_distance?.toFixed(3) || 'N/A',
-      status: 'Normal',
+      rowKey: "Total Outlets",
+      value:
+        raw.total_outlets != null ? raw.total_outlets.toString() : "N/A",
+      status: "Normal",
     },
     {
-      rowKey: 'mseRef',
-      value: driftMetrics.mean_mse_reference?.toFixed(3) || 'N/A',
-      status: 'Normal',
+      rowKey: "Outlets Exceeding Threshold",
+      value:
+        raw.outlets_exceeding_threshold_count != null
+          ? raw.outlets_exceeding_threshold_count.toString()
+          : "N/A",
+      status:
+        raw.outlets_exceeding_threshold_count > 0 ? "Alert" : "Normal",
     },
     {
-      rowKey: 'mseCurrent',
-      value: driftMetrics.mean_mse_current?.toFixed(3) || 'N/A',
-      status: 'Normal',
-    },
-    {
-      rowKey: 'status',
-      value: raw.drift_state?.drift_detected ? 'Warning' : 'Normal',
-      status: raw.drift_state?.drift_detected ? 'Warning' : 'Normal',
+      rowKey: "State",
+      value: raw.state || "N/A",
+      status: driftDetected ? "Alert" : "Normal",
     },
   ]
 
-  // 2) errors.plotData & tableData
+  // 6) Map all outlets
+  const all_outlets: AllOutlets[] = (raw.all_outlets || []).map(
+    (item: any) => ({
+      id: item.id,
+      y_true: item.y_true,
+      y_pred: item.y_pred,
+      percentage_error: item.percentage_error,
+    })
+  )
+
+  // 7) Map outlets exceeding the threshold
+  const outletsExceedingThreshold: OutletsExceedingThreshold[] = (
+    raw.outlets_exceeding_threshold || []
+  ).map((item: any) => ({
+    id: item.id,
+    y_true: item.y_true,
+    y_pred: item.y_pred,
+    percentage_error: item.percentage_error,
+  }))
+
+  // 8) Errors – plotData & tableData from id_error
   const idError = raw.id_error || []
   const errors = {
-    plotData: idError.map((item: any, idx: number) => ({
-      x: idx,
-      y: item.Mean_Prediction_Error || 0,
-      value: item.Mean_Prediction_Error || 0,
-      exceedsThreshold:
-        Math.abs(item.Mean_Prediction_Error) >
-        (raw.error_percentage_threshold || 0),
-    })),
-    tableData: idError.map((item: any) => ({
-      id: item.id?.toString() || '',
-      timePeriod: item.time_period || '',
-      meanPrediction: item.Mean_Prediction_Error || 0,
-      error: item.Mean_Prediction_Error || 0,
-      percentageError: Math.abs(item.Mean_Prediction_Error) || 0,
-      status:
-        Math.abs(item.Mean_Prediction_Error) >
-        (raw.error_percentage_threshold || 0)
-          ? 'Alert'
-          : 'Normal',
-    })),
+    plotData: idError.map(
+      (item: any, idx: number): PlotDataPoint => ({
+        x: idx,
+        y: item.Mean_Prediction_Error,
+        value: item.Mean_Prediction_Error,
+        exceedsThreshold:
+          Math.abs(item.Mean_Prediction_Error) >
+          (raw.error_percentage_threshold || 0),
+      })
+    ),
+    tableData: idError.map((item: any): TableDataPoint => {
+      const absCurr = item.abs_curr_per || 0
+      const absRef = item.abs_ref_per || 0
+      const diff = absCurr - absRef
+      return {
+        id: item.id.toString(),
+        timePeriod: item.time_period,
+        meanPrediction: item.Mean_Prediction_Error,
+        error: item.Mean_Prediction_Error,
+        percentageError: Math.abs(item.Mean_Prediction_Error),
+        abs_curr_per: absCurr,
+        abs_ref_per: absRef,
+        difference: diff,
+        status:
+          Math.abs(item.Mean_Prediction_Error) >
+          (raw.error_percentage_threshold || 0)
+            ? "Alert"
+            : "Normal",
+      }
+    }),
   }
 
-  // 3) Top-10 by absolute error
-  const top10Ids: Top10Id[] = [...idError]
-    .sort(
-      (a: any, b: any) =>
-        Math.abs(b.Mean_Prediction_Error) - Math.abs(a.Mean_Prediction_Error)
-    )
-    .slice(0, 10)
-    .map((item: any) => ({
-      id: item.id?.toString() || '',
-      time_period: item.time_period || '',
-      Mean_Prediction_Error: item.Mean_Prediction_Error || 0,
-    }))
+  // 9) Top-10 IDs from the payload
+  const top10Ids: Top10Id[] = (raw.top_10_ids || []).map((item: any) => ({
+    id: item.id.toString(),
+    time_period: item.time_period,
+    Mean_Prediction_Error: item.Mean_Prediction_Error,
+  }))
 
-  // 4) Outlets
-  const outletsExceedingThreshold: OutletsExceedingThreshold[] =
-    (raw.outlets_exceeding_threshold || []).map((item: any) => ({
-      id: item.id?.toString() || '',
-      y_true: item.y_true || 0,
-      y_pred: item.y_pred || 0,
-      percentage_error: item.percentage_error || 0,
-    }))
-
-  // 5) Build indices from raw.indices or clusters fallback
-  let indices: Indices = raw.indices ?? { normal: [], warning: [], drift: [] }
-  if (!raw.indices) {
-    const w = new Set(raw.clusters?.warning || [])
-    const d = new Set(raw.clusters?.drift || [])
-    const n: number[] = []
-    const widx: number[] = []
-    const didx: number[] = []
-    idError.forEach((item: any, idx: number) => {
-      const idStr = item.id?.toString()
-      if (w.has(idStr)) widx.push(idx)
-      else if (d.has(idStr)) didx.push(idx)
-      else n.push(idx)
-    })
-    indices = { normal: n, warning: widx, drift: didx }
+  // 10) Indices
+  const indices: Indices = {
+    normal: raw.indices?.normal || [],
+    warning: raw.indices?.warning || [],
+    drift: raw.indices?.drift || [],
   }
 
-  // 6) Other fields
-  const state = raw.state || 'Unknown'
-  const coverage = raw.coverage || {}
+  // 11) Clusters, coverage and backward analysis
   const clusters = raw.clusters || {}
+  const coverage = raw.coverage || {}
   const backwardAnalysis = raw.backward_analysis || {}
-  const currentPeriod = raw.current_period || 'N/A'
-  const totalOutlets = raw.total_outlets || 0
-  const outletsExceedingThresholdCount = raw.outlets_exceeding_threshold_count || 0
-  const xaiExplanation = raw.xai?.explanation || 'No explanation available'
 
+  // 12) Final return
   return {
     kpis,
     errors,
     top10Ids,
     outletsExceedingThreshold,
     indices,
-    state,
+    state: raw.state || "Unknown",
     coverage,
     clusters,
     backwardAnalysis,
-    currentPeriod,
-    totalOutlets,
-    outletsExceedingThresholdCount,
-    xaiExplanation,
-    error_percentage_threshold: raw.error_percentage_threshold || 0,
+    currentPeriod: raw.current_period || "N/A",
+    referencePeriod,
+    totalOutlets: raw.total_outlets || 0,
+    outletsExceedingThresholdCount:
+      raw.outlets_exceeding_threshold_count || 0,
+    xaiExplanation: raw.xai?.explanation || "",
+    error_percentage_threshold:
+      raw.error_percentage_threshold || 0,
     dashboardData,
-    all_outlets: raw.all_outlets || [],
+    all_outlets,
+    sorted_periods,
+    driftDetected,
   }
 }

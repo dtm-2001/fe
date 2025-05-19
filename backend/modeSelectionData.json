@@ -15,7 +15,7 @@
     "user": "Susara",
     "businessUnit": "CCS",
     "useCase": "Distribution Efficiency",
-    "mode": "mode4"
+    "mode": "mode1"
   },
   {
     "user": "Senum",
@@ -26,8 +26,8 @@
   {
     "user": "Senum",
     "businessUnit": "CCS",
-    "useCase": "MT Promo",
-    "mode": "mode2"
+    "useCase": "Distribution Efficiency",
+    "mode": "mode1"
   },
   {
     "user": "Senum",

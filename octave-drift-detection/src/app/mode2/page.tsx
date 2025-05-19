@@ -14,6 +14,7 @@ import {
   type OutletsExceedingThreshold,
   type Indices,
   type AllOutlets,
+  type Top10Id,
 } from "../../services/backendService1"
 import { fetchEntriesTable } from "../../services/dashboardService"
 
@@ -62,6 +63,10 @@ export default function Mode2Page(): React.ReactElement {
   const [loading, setLoading] = useState<boolean>(true)
   const [backendError, setBackendError] = useState<string | null>(null)
   const [errorPercentageThreshold, setErrorPercentageThreshold] = useState<number>(0)
+  const [sortedPeriods, setSortedPeriods] = useState<string[]>([])
+  const [driftDetected, setDriftDetected] = useState<boolean | null>(null)
+  const [top10Ids, setTop10Ids] = useState<Top10Id[]>([])
+  const [totalOutlets, setTotalOutlets] = useState<number>(0)
 
   // --- FILTER STATES for Dashboard ---
   const [businessUnit, setBusinessUnit] = useState<string>("")
@@ -117,7 +122,7 @@ export default function Mode2Page(): React.ReactElement {
     if (!s) return <Info className="h-5 w-5 text-gray-400" />
     return s.toLowerCase() === "warning" ? (
       <AlertTriangle className="h-5 w-5 text-amber-400" />
-    ) : s.toLowerCase() === "error" ? (
+    ) : s.toLowerCase() === "error" || s.toLowerCase() === "alert" ? (
       <AlertCircle className="h-5 w-5 text-rose-500" />
     ) : (
       <CheckCircle className="h-5 w-5 text-emerald-400" />
@@ -128,7 +133,7 @@ export default function Mode2Page(): React.ReactElement {
     if (!s) return "text-gray-400"
     return s.toLowerCase() === "warning"
       ? "text-amber-400"
-      : s.toLowerCase() === "error"
+      : s.toLowerCase() === "error" || s.toLowerCase() === "alert"
         ? "text-rose-500"
         : "text-emerald-400"
   }, [])
@@ -229,6 +234,10 @@ export default function Mode2Page(): React.ReactElement {
       setXaiExplanation(data.xaiExplanation)
       setErrorPercentageThreshold(data.error_percentage_threshold ?? 0)
       setAllOutlets(data.all_outlets || [])
+      setSortedPeriods(data.sorted_periods || [])
+      setDriftDetected(data.driftDetected || null)
+      setTop10Ids(data.top10Ids || [])
+      setTotalOutlets(data.totalOutlets || 0)
 
       // Status distribution
       const normalCount = data.indices.normal.length
@@ -424,7 +433,13 @@ export default function Mode2Page(): React.ReactElement {
 
   // Memoize sorted table data
   const sortedErrorTableData = useMemo(() => {
-    return errorData.tableData.slice().sort((a, b) => (a.error ?? 0) - (b.error ?? 0))
+    return (
+      errorData.tableData
+        .slice()
+        // Filter out duplicate IDs, keeping only the first occurrence
+        .filter((row, index, self) => index === self.findIndex((r) => r.id === row.id))
+        .sort((a, b) => (b.difference ?? 0) - (a.difference ?? 0))
+    )
   }, [errorData.tableData])
 
   // Memoize sorted threshold exceedance data
@@ -434,16 +449,21 @@ export default function Mode2Page(): React.ReactElement {
 
   // Memoize status KPI
   const statusKpi = useMemo(() => {
-    return kpis.find((k) => k.rowKey === "status")?.value
+    return kpis.find((k) => k.rowKey === "State")?.value || kpis.find((k) => k.rowKey === "status")?.value
   }, [kpis])
 
   // Memoize additional metrics
   const additionalMetrics = useMemo(() => {
     return {
-      avgPercentageError: kpis.find((k) => k.rowKey === "avgPercentageError")?.value || "N/A",
-      avgPercentageErrorExceeding: kpis.find((k) => k.rowKey === "avgPercentageErrorExceeding")?.value || "N/A",
+      avgPercentageError: kpis.find((k) => k.rowKey === "Average Percentage Error (All)")?.value || "N/A",
+      avgPercentageErrorExceeding:
+        kpis.find((k) => k.rowKey === "Average Percentage Error (Exceeding)")?.value || "N/A",
+      totalOutlets: kpis.find((k) => k.rowKey === "Total Outlets")?.value || totalOutlets.toString(),
+      outletsExceedingThreshold:
+        kpis.find((k) => k.rowKey === "Outlets Exceeding Threshold")?.value ||
+        outletsExceedingThresholdCount.toString(),
     }
-  }, [kpis])
+  }, [kpis, totalOutlets, outletsExceedingThresholdCount])
 
   return (
     <div className="bg-gradient-to-b from-gray-950 to-gray-900 min-h-screen flex flex-col">
@@ -471,10 +491,22 @@ export default function Mode2Page(): React.ReactElement {
           <h2 className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-sky-600 mb-2">
             OCTAVE – RG Dashboard
           </h2>
-          <p className="text-sky-300 flex items-center gap-2">
-            <span className="inline-block h-2 w-2 rounded-full bg-sky-400 animate-pulse" />
-            Current Period: {loading ? "Loading…" : currentPeriod}
-          </p>
+          <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+            <p className="text-sky-300 flex items-center gap-2">
+              <span className="inline-block h-2 w-2 rounded-full bg-sky-400 animate-pulse" />
+              Current Period: {loading ? "Loading…" : currentPeriod}
+            </p>
+            {driftDetected !== null && (
+              <div
+                className={`flex items-center gap-2 sm:ml-6 px-3 py-1.5 rounded-md ${driftDetected ? "bg-rose-900/40 border border-rose-700" : "bg-emerald-900/40 border border-emerald-700"}`}
+              >
+                <span className="font-medium text-gray-200">Drift Detected:</span>
+                <span className={`font-bold ${driftDetected ? "text-rose-400" : "text-emerald-400"}`}>
+                  {driftDetected ? "Yes" : "No"}
+                </span>
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Static Filters & Runtime */}
@@ -575,20 +607,22 @@ export default function Mode2Page(): React.ReactElement {
                   {loading ? "Loading..." : statusKpi || "N/A"}
                 </p>
               </div>
+              <div className="mt-4 grid grid-cols-2 gap-4">
+                <div>
+                  <p className="text-sm text-gray-400">Total Outlets</p>
+                  <p className="text-lg font-medium text-white">{additionalMetrics.totalOutlets}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-gray-400">Outlets Exceeding</p>
+                  <p className="text-lg font-medium text-white">{additionalMetrics.outletsExceedingThreshold}</p>
+                </div>
+              </div>
             </div>
             {/* Additional Metrics */}
             <div className="bg-gradient-to-br from-sky-950/40 to-sky-900/20 p-4 rounded-lg border border-sky-800/30 shadow-md hover:shadow-sky-900/20 hover:border-sky-700/50 transition-all">
-              <h3 className="text-lg font-medium text-sky-300 mb-2">Additional Metrics</h3>
+              <h3 className="text-lg font-medium text-sky-300 mb-2">Error Metrics</h3>
               <div className="space-y-4">
                 <div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm text-gray-400">Drift Detected:</span>
-                    <span className="text-sm font-medium text-white">
-                      {loading ? "Loading..." : outletsExceedingThresholdCount === 0 ? "No" : "Yes"}
-                    </span>
-                  </div>
-                </div>
-                <div className="pt-3 border-t border-sky-800/30">
                   <div className="flex items-center justify-between">
                     <span className="text-sm text-gray-400">Error % Threshold:</span>
                     <span className="text-sm font-medium text-white">
@@ -612,6 +646,14 @@ export default function Mode2Page(): React.ReactElement {
                     </span>
                   </div>
                 </div>
+                <div className="pt-3 border-t border-sky-800/30">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-gray-400">Drift Detected:</span>
+                    <span className={`text-sm font-medium ${driftDetected ? "text-rose-400" : "text-emerald-400"}`}>
+                      {loading ? "Loading..." : driftDetected ? "Yes" : "No"}
+                    </span>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -622,7 +664,7 @@ export default function Mode2Page(): React.ReactElement {
           {/* Error Comparison */}
           <div className="bg-gray-900/80 rounded-xl shadow-xl overflow-hidden p-6 border border-gray-700/50 backdrop-blur-sm">
             <h2 className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-sky-600 mb-4">
-              Error Comparison
+              Error Comparison (Current Period)
             </h2>
             {loading ? (
               <div className="flex items-center justify-center py-12">
@@ -652,8 +694,14 @@ export default function Mode2Page(): React.ReactElement {
                       <th className="px-6 py-3 text-left text-xs font-medium text-sky-300 uppercase tracking-wider">
                         ID
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-rose-400 uppercase tracking-wider">
-                        Error
+                      <th className="px-6 py-3 text-left text-xs font-medium text-sky-300 uppercase tracking-wider">
+                        Current Error
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-sky-300 uppercase tracking-wider">
+                        Reference Error
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-sky-300 uppercase tracking-wider">
+                        Difference
                       </th>
                     </tr>
                   </thead>
@@ -662,8 +710,17 @@ export default function Mode2Page(): React.ReactElement {
                       <tr key={row.id} className="hover:bg-gray-700/30 transition-colors duration-150">
                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-white">{i + 1}</td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-white">{row.id}</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-rose-400 font-medium">
-                          {(row.error ?? 0).toFixed(2)}
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-sky-400 font-medium">
+                          {(row.abs_curr_per ?? row.error ?? 0).toFixed(2)}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-sky-400 font-medium">
+                          {(row.abs_ref_per ?? 0).toFixed(2)}
+                        </td>
+                        <td
+                          className={`px-6 py-4 whitespace-nowrap text-sm font-medium ${(row.difference ?? 0) > 0 ? "text-rose-400" : "text-emerald-400"}`}
+                        >
+                          {(row.difference ?? 0) > 0 ? "+" : ""}
+                          {(row.difference ?? 0).toFixed(2)}
                         </td>
                       </tr>
                     ))}

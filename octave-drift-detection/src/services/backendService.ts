@@ -1,3 +1,5 @@
+// services/backendService.ts
+
 export interface KPI {
   rowKey: string
   value: string
@@ -36,6 +38,11 @@ export interface AllOutlets {
   y_true: number
 }
 
+export interface MSETrend {
+  MSE: number
+  time_period: string
+}
+
 export interface DashboardData {
   mode: string
   businessUnit: string
@@ -45,10 +52,10 @@ export interface DashboardData {
   runtime: number
 }
 
-// **New** interface for the MSE time-series
-export interface MSETrend {
-  MSE: number
-  time_period: string
+export interface StatusDistribution {
+  good: number
+  warning: number
+  error: number
 }
 
 export interface FetchDataResult {
@@ -60,7 +67,7 @@ export interface FetchDataResult {
   outletsExceedingThreshold: OutletsExceedingThreshold[]
   xaiExplanation: string
   currentPeriod: string
-  referencePeriod?: string
+  referencePeriod: string
   error_percentage_threshold: number
   dashboardData: DashboardData
   all_outlets: AllOutlets[]
@@ -68,41 +75,36 @@ export interface FetchDataResult {
   sorted_periods: string[]
   driftDetected: boolean
   filtered_data?: any[]
+  status_distribution: StatusDistribution
 }
 
-export async function fetchData({ runtime }: { runtime: string } = { runtime: "" }): Promise<FetchDataResult> {
+export async function fetchData(
+  { runtime }: { runtime: string } = { runtime: "" }
+): Promise<FetchDataResult> {
   try {
-    console.log("Fetching data from backend via proxy: /api/mode1/data")
-    const response = await fetch(`/api/mode1/data${runtime ? `?runtime=${runtime}` : ""}`, {
+    // 1. Fetch drift data
+    const resp = await fetch(`/api/mode1/data${runtime ? `?runtime=${runtime}` : ""}`, {
       credentials: "include",
     })
-
-    if (!response.ok) {
-      throw new Error(`HTTP error! Status: ${response.status}`)
+    if (!resp.ok) {
+      throw new Error(`HTTP error! Status: ${resp.status}`)
     }
-    const rawData = await response.json()
-    console.log("Parsed data:", rawData)
+    const rawData: any = await resp.json()
 
-    // dashboard.json from public folder
-    console.log("Fetching dashboard.json from public folder")
-    const dashResponse = await fetch(`/dashboard.json`)
-    if (!dashResponse.ok) {
-      throw new Error(`HTTP error fetching dashboard.json! Status: ${dashResponse.status}`)
+    // 2. Fetch dashboard config
+    const dashResp = await fetch(`/dashboard.json`)
+    if (!dashResp.ok) {
+      throw new Error(`HTTP error fetching dashboard.json! Status: ${dashResp.status}`)
     }
-    const dashboardData: DashboardData = await dashResponse.json()
+    const dashboardData: DashboardData = await dashResp.json()
 
-    // Metrics nested under drift_state
+    // 3. Extract drift metrics
     const driftMetrics = rawData.drift_state?.metrics || {}
-
-    // Extract drift detection status
-    const driftDetected = rawData.drift_state?.drift_detected || false
-
-    // Extract sorted periods array
-    const sorted_periods = rawData.sorted_periods || []
-
-    // Get reference period (first element in sorted_periods if available)
+    const driftDetected = rawData.drift_state?.drift_detected ?? false
+    const sorted_periods: string[] = rawData.sorted_periods ?? []
     const referencePeriod = sorted_periods.length > 0 ? sorted_periods[0] : "N/A"
 
+    // 4. Build KPI list
     const kpis: KPI[] = [
       {
         rowKey: "Drift Detected",
@@ -111,12 +113,15 @@ export async function fetchData({ runtime }: { runtime: string } = { runtime: ""
       },
       {
         rowKey: "Error Percentage Threshold",
-        value: rawData.error_percentage_threshold?.toString() || "N/A",
+        value: String(rawData.error_percentage_threshold ?? "N/A"),
         status: "Normal",
       },
       {
         rowKey: "Average Percentage Error (All)",
-        value: rawData.average_percentage_error_all != null ? rawData.average_percentage_error_all.toFixed(2) : "N/A",
+        value:
+          rawData.average_percentage_error_all != null
+            ? rawData.average_percentage_error_all.toFixed(2)
+            : "N/A",
         status: "Normal",
       },
       {
@@ -129,22 +134,22 @@ export async function fetchData({ runtime }: { runtime: string } = { runtime: ""
       },
       {
         rowKey: "kstest",
-        value: driftMetrics.ks_statistic?.toFixed(3) || "N/A",
+        value: driftMetrics.ks_statistic?.toFixed(3) ?? "N/A",
         status: "Normal",
       },
       {
         rowKey: "wasserstein",
-        value: driftMetrics.wasserstein_distance?.toFixed(3) || "N/A",
+        value: driftMetrics.wasserstein_distance?.toFixed(3) ?? "N/A",
         status: "Normal",
       },
       {
         rowKey: "mseRef",
-        value: driftMetrics.mean_mse_reference?.toFixed(3) || "N/A",
+        value: driftMetrics.mean_mse_reference?.toFixed(3) ?? "N/A",
         status: "Normal",
       },
       {
         rowKey: "mseCurrent",
-        value: driftMetrics.mean_mse_current?.toFixed(3) || "N/A",
+        value: driftMetrics.mean_mse_current?.toFixed(3) ?? "N/A",
         status: "Normal",
       },
       {
@@ -154,62 +159,104 @@ export async function fetchData({ runtime }: { runtime: string } = { runtime: ""
       },
     ]
 
-    // Extract filtered_data for the error comparison table
-    const filtered_data = rawData.filtered_data || []
-
-    // Map the filtered data to the table data format
-    const tableData = filtered_data.map((item: any) => {
-      const abs_curr_per = item.abs_curr_per || 0
-      const abs_ref_per = item.abs_ref_per || 0
-      const difference = abs_curr_per - abs_ref_per
-
+    // 5. Map filtered_data => tableData
+    const filtered_data = rawData.filtered_data ?? []
+    const tableData: TableDataPoint[] = filtered_data.map((item: any) => {
+      const abs_curr_per = item.abs_curr_per ?? 0
+      const abs_ref_per = item.abs_ref_per ?? 0
+      const diff = abs_curr_per - abs_ref_per
       return {
-        id: item.id?.toString() || "",
-        timePeriod: item.period || "",
+        id: String(item.id ?? ""),
+        timePeriod: item.period ?? "",
         abs_curr_per,
         abs_ref_per,
-        difference,
-        status: difference > 0 ? "Alert" : "Normal",
+        difference: diff,
+        status: diff > 0 ? "Alert" : "Normal",
       }
     })
 
+    // 6. Build errors object
     const errors = {
-      plotData: (rawData.id_error || []).map((item: any) => ({
-        x: item.id?.toString() || "",
-        y: item.Mean_Prediction_Error || 0,
-        exceedsThreshold: Math.abs(item.Mean_Prediction_Error) > (rawData.error_percentage_threshold || 0),
+      plotData: (rawData.id_error ?? []).map((item: any) => ({
+        x: String(item.id ?? ""),
+        y: item.Mean_Prediction_Error ?? 0,
+        exceedsThreshold:
+          Math.abs(item.Mean_Prediction_Error ?? 0) >
+          (rawData.error_percentage_threshold ?? 0),
       })),
       tableData:
         tableData.length > 0
           ? tableData
-          : (rawData.id_error || []).map((item: any) => ({
-              id: item.id?.toString() || "",
-              timePeriod: item.time_period || "",
-              meanPrediction: item.Mean_Prediction_Error || 0,
-              error: item.Mean_Prediction_Error || 0,
-              percentageError: Math.abs(item.Mean_Prediction_Error) || 0,
+          : (rawData.id_error ?? []).map((item: any) => ({
+              id: String(item.id ?? ""),
+              timePeriod: item.time_period ?? "",
+              meanPrediction: item.Mean_Prediction_Error ?? 0,
+              error: item.Mean_Prediction_Error ?? 0,
+              percentageError: Math.abs(item.Mean_Prediction_Error ?? 0),
               status:
-                Math.abs(item.Mean_Prediction_Error) > (rawData.error_percentage_threshold || 0) ? "Alert" : "Normal",
+                Math.abs(item.Mean_Prediction_Error ?? 0) >
+                (rawData.error_percentage_threshold ?? 0)
+                  ? "Alert"
+                  : "Normal",
             })),
     }
 
-    const outletsExceedingThreshold: OutletsExceedingThreshold[] = (rawData.outlets_exceeding_threshold || []).map(
-      (item: any) => ({
-        id: item.id?.toString() || "",
-        y_true: item.y_true || 0,
-        y_pred: item.y_pred || 0,
-        percentage_error: item.percentage_error || 0,
-      }),
-    )
+    // 7. Outlets exceeding threshold
+    const outletsExceedingThreshold: OutletsExceedingThreshold[] =
+      (rawData.outlets_exceeding_threshold ?? []).map((item: any) => ({
+        id: String(item.id ?? ""),
+        y_true: item.y_true ?? 0,
+        y_pred: item.y_pred ?? 0,
+        percentage_error: item.percentage_error ?? 0,
+      }))
 
-    // Map your backend's MSE time series into our frontend shape
-    const mse_trend: MSETrend[] = (rawData.mse_trend || []).map((item: any) => ({
-      MSE: typeof item.MSE === "number" ? item.MSE : (item.mse ?? 0),
-      time_period: item.time_period || item.timePeriod || "",
+    // 8. MSE trend
+    const mse_trend: MSETrend[] = (rawData.mse_trend ?? []).map((item: any) => ({
+      MSE:
+        typeof item.MSE === "number"
+          ? item.MSE
+          : typeof item.mse === "number"
+          ? item.mse
+          : 0,
+      time_period: item.time_period ?? item.timePeriod ?? "",
     }))
 
-    const xaiExplanation: string = rawData.explanation || "No explanation available"
-    const currentPeriod: string = rawData.current_period ?? rawData.currentPeriod ?? "N/A"
+    // 9. XAI explanation and periods
+    const xaiExplanation = rawData.explanation ?? "No explanation available"
+    const currentPeriod = rawData.current_period ?? rawData.currentPeriod ?? "N/A"
+    const error_percentage_threshold = rawData.error_percentage_threshold ?? 0
+
+    // 10. Compute status distribution for pie chart
+    const threshold = error_percentage_threshold
+    const warningThreshold = threshold * 0.8
+    let goodCount = 0
+    let warningCount = 0
+    let errorCount = 0
+
+    const allTableRows = errors.tableData
+    interface TableRowWithDifference {
+      difference?: number
+      percentageError?: number
+    }
+
+    (allTableRows as TableRowWithDifference[]).forEach((row: TableRowWithDifference) => {
+      const errVal =
+      Math.abs(row.difference ?? row.percentageError ?? 0)
+      if (errVal >= threshold) {
+      errorCount++
+      } else if (errVal >= warningThreshold) {
+      warningCount++
+      } else {
+      goodCount++
+      }
+    })
+
+    const total = Math.max(goodCount + warningCount + errorCount, 1)
+    const good = Math.round((goodCount / total) * 100)
+    const warning = Math.round((warningCount / total) * 100)
+    const error = 100 - good - warning
+
+    const status_distribution: StatusDistribution = { good, warning, error }
 
     return {
       kpis,
@@ -218,16 +265,17 @@ export async function fetchData({ runtime }: { runtime: string } = { runtime: ""
       xaiExplanation,
       currentPeriod,
       referencePeriod,
-      error_percentage_threshold: rawData.error_percentage_threshold || 0,
+      error_percentage_threshold,
       dashboardData,
-      all_outlets: rawData.all_outlets || [],
+      all_outlets: rawData.all_outlets ?? [],
       mse_trend,
       sorted_periods,
       driftDetected,
       filtered_data,
+      status_distribution,
     }
-  } catch (error) {
-    console.error("Error fetching data:", error)
+  } catch (err) {
+    console.error("Error fetching data:", err)
     throw new Error("Failed to fetch and process data")
   }
 }

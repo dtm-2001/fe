@@ -1,7 +1,6 @@
 "use client"
 import type React from "react"
 import { useState, useEffect, useMemo, useRef, useCallback } from "react"
-import ReactMarkdown from "react-markdown"
 import { Chart, registerables } from "chart.js"
 import DriftWarningChart from "./DriftWarningChart"
 import { AlertCircle, AlertTriangle, CheckCircle, RefreshCw, Info, X } from "lucide-react"
@@ -17,6 +16,7 @@ import {
   type Top10Id,
 } from "../../services/backendService1"
 import { fetchEntriesTable } from "../../services/dashboardService"
+import { Markdown } from "../../components/Markdown"
 
 Chart.register(...registerables)
 
@@ -897,7 +897,7 @@ export default function Mode2Page(): React.ReactElement {
             ) : (
               <div className="prose prose-invert prose-sky max-w-none">
                 {xaiExplanation ? (
-                  <ReactMarkdown>{xaiExplanation}</ReactMarkdown>
+                  <Markdown content={xaiExplanation} />
                 ) : (
                   <div className="flex items-center text-rose-400 gap-2">
                     <AlertCircle className="h-5 w-5" />

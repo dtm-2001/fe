@@ -1,11 +1,11 @@
 "use client"
 import { useEffect, useState, useRef } from "react"
-import ReactMarkdown from "react-markdown"
 import { Chart, registerables, type Scale, type ChartEvent } from "chart.js"
 import { fetchData } from "../../services/backendService"
 import { fetchEntriesTable } from "../../services/dashboardService"
 import { AlertCircle, AlertTriangle, CheckCircle, RefreshCw, Info, HelpCircle, X } from "lucide-react"
 import { useSearchParams } from "next/navigation"
+import { Markdown } from "../../components/Markdown"
 
 Chart.register(...registerables)
 
@@ -256,38 +256,74 @@ export default function Mode1Page() {
       setAllOutlets(data.all_outlets || [])
       setXaiExplanation(data.xaiExplanation || "No explanation available")
       setCurrentPeriod(data.currentPeriod || "N/A")
-      setReferencePeriod(data.referencePeriod || "N/A") // Add this line to extract reference period
-      setErrorPercentageThreshold(data.error_percentage_threshold ?? 0)
-      setMseTrend(data.mse_trend || [])
 
-      // Update the fetchAllData function to extract the sorted periods and drift detection status
-      // Find the fetchAllData function and modify it to include these new lines after the existing data extraction
-      // Around line 200 in the fetchAllData function, after setting other state variables:
-      setSortedPeriods(data.sorted_periods || [])
-      setDriftDetected(data.driftDetected || null)
-      // If the sorted periods array has at least one element, use it as the reference period
-      if (data.sorted_periods && data.sorted_periods.length > 0) {
+      // Set MSE trend data
+      const mseTrendData = data.mse_trend || []
+      setMseTrend(mseTrendData)
+
+      // IMPORTANT: Set reference period from the first time period in MSE trend data
+      if (mseTrendData.length > 0) {
+        console.log("Setting reference period from MSE trend:", mseTrendData[0].time_period)
+        setReferencePeriod(mseTrendData[0].time_period)
+      } else if (data.referencePeriod) {
+        setReferencePeriod(data.referencePeriod)
+      } else if (data.sorted_periods && data.sorted_periods.length > 0) {
         setReferencePeriod(data.sorted_periods[0])
+      } else {
+        setReferencePeriod("N/A")
       }
 
-      // Compute status distribution...
-      const goodCount =
-        data.errors?.tableData.filter((r) => (r.error ?? 0) < (data.error_percentage_threshold || 5) * 0.5).length || 0
-      const warningCount =
-        data.errors?.tableData.filter(
-          (r) =>
-            (r.error ?? 0) >= (data.error_percentage_threshold || 5) * 0.5 &&
-            (r.error ?? 0) < (data.error_percentage_threshold || 5),
-        ).length || 0
-      const errorCount =
-        data.errors?.tableData.filter((r) => (r.error ?? 0) >= (data.error_percentage_threshold || 5)).length || 0
-      const total = goodCount + warningCount + errorCount || 1
+      setErrorPercentageThreshold(data.error_percentage_threshold ?? 0)
+      setSortedPeriods(data.sorted_periods || [])
+      setDriftDetected(data.driftDetected || null)
 
-      setStatusDistribution({
-        good: Math.round((goodCount / total) * 100),
-        warning: Math.round((warningCount / total) * 100),
-        error: Math.round((errorCount / total) * 100),
-      })
+      // Calculate status distribution with proper error handling
+      try {
+        const tableData = data.errors?.tableData || []
+        const threshold = data.error_percentage_threshold || 5
+        const warningThreshold = threshold * 0.8
+
+        // Count items in each category based on the specified thresholds
+        let goodCount = 0
+        let warningCount = 0
+        let errorCount = 0
+
+        tableData.forEach((row) => {
+          const errorValue = Math.abs(row.difference ?? 0)
+          if (errorValue >= threshold) {
+            errorCount++
+          } else if (errorValue >= warningThreshold) {
+            warningCount++
+          } else {
+            goodCount++
+          }
+        })
+
+        // Calculate total and ensure it's at least 1 to avoid division by zero
+        const total = Math.max(goodCount + warningCount + errorCount, 1)
+
+        // Calculate percentages
+        const good = Math.round((goodCount / total) * 100)
+        const warning = Math.round((warningCount / total) * 100)
+        // Ensure the sum is exactly 100% by calculating error as the remainder
+        const error = 100 - good - warning
+
+        console.log("Status distribution:", {
+          good,
+          warning,
+          error,
+          total,
+          goodCount,
+          warningCount,
+          errorCount,
+          threshold,
+          warningThreshold,
+        })
+        setStatusDistribution({ good, warning, error })
+      } catch (err) {
+        console.error("Error calculating status distribution:", err)
+        setStatusDistribution({ good: 33, warning: 33, error: 34 })
+      }
 
       // Build error ranges
       if (data.all_outlets?.length) {
@@ -332,53 +368,69 @@ export default function Mode1Page() {
   // Pie chart renderer
   const renderPieChart = () => {
     const ctx = document.getElementById("statusPieChart") as HTMLCanvasElement | null
-    if (!ctx) return
-
-    if (pieChartRef.current) {
-      pieChartRef.current.destroy()
+    if (!ctx) {
+      console.error("Cannot find statusPieChart canvas element")
+      return
     }
 
-    pieChartRef.current = new Chart(ctx, {
-      type: "pie",
-      data: {
-        labels: ["Good", "Warning", "Error"],
-        datasets: [
-          {
-            data: [statusDistribution.good, statusDistribution.warning, statusDistribution.error],
-            backgroundColor: ["rgba(52, 211, 153, 0.8)", "rgba(251, 191, 36, 0.8)", "rgba(239, 68, 68, 0.8)"],
-            borderColor: ["rgba(52, 211, 153, 1)", "rgba(251, 191, 36, 1)", "rgba(239, 68, 68, 1)"],
-            borderWidth: 1,
-          },
-        ],
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-          legend: {
-            position: "right",
-            labels: {
-              color: "#e5e7eb",
-              font: { size: 14 },
-              generateLabels: (chart) =>
-                chart.data.labels!.map((l, i) => ({
-                  text: `${l}: ${chart.data.datasets![0].data[i]}%`,
-                  fillStyle: chart.data.datasets![0].backgroundColor![i] as string,
-                  strokeStyle: chart.data.datasets![0].borderColor![i] as string,
-                  lineWidth: 1,
-                  hidden: false,
-                  index: i,
-                })),
+    // Always destroy the previous chart instance to prevent memory leaks
+    if (pieChartRef.current) {
+      pieChartRef.current.destroy()
+      pieChartRef.current = null
+    }
+
+    // Get the data for the chart
+    const { good, warning, error } = statusDistribution
+
+    // Log the data to help with debugging
+    console.log("Rendering pie chart with data:", { good, warning, error })
+
+    // Only create the chart if we have the canvas element
+    try {
+      pieChartRef.current = new Chart(ctx, {
+        type: "pie",
+        data: {
+          labels: ["Good", "Warning", "Error"],
+          datasets: [
+            {
+              data: [good, warning, error],
+              backgroundColor: ["rgba(52, 211, 153, 0.8)", "rgba(251, 191, 36, 0.8)", "rgba(239, 68, 68, 0.8)"],
+              borderColor: ["rgba(52, 211, 153, 1)", "rgba(251, 191, 36, 1)", "rgba(239, 68, 68, 1)"],
+              borderWidth: 1,
             },
-          },
-          tooltip: {
-            callbacks: {
-              label: (ctx) => `${ctx.label}: ${ctx.raw}%`,
+          ],
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              position: "right",
+              labels: {
+                color: "#e5e7eb",
+                font: { size: 14 },
+                generateLabels: (chart) =>
+                  chart.data.labels!.map((l, i) => ({
+                    text: `${l}: ${chart.data.datasets![0].data[i]}%`,
+                    fillStyle: chart.data.datasets![0].backgroundColor![i] as string,
+                    strokeStyle: chart.data.datasets![0].borderColor![i] as string,
+                    lineWidth: 1,
+                    hidden: false,
+                    index: i,
+                  })),
+              },
+            },
+            tooltip: {
+              callbacks: {
+                label: (ctx) => `${ctx.label}: ${ctx.raw}%`,
+              },
             },
           },
         },
-      },
-    })
+      })
+    } catch (err) {
+      console.error("Error rendering pie chart:", err)
+    }
   }
 
   // Update the renderErrorRangeChart function to ensure it's using the correct data
@@ -1203,16 +1255,7 @@ export default function Mode1Page() {
                 </div>
               </div>
             ) : (
-              <div className="prose prose-invert prose-sky max-w-none">
-                {xaiExplanation ? (
-                  <ReactMarkdown>{xaiExplanation}</ReactMarkdown>
-                ) : (
-                  <div className="flex items-center text-rose-400 gap-2">
-                    <AlertCircle className="h-5 w-5" />
-                    <p>No explanation available</p>
-                  </div>
-                )}
-              </div>
+              <Markdown content={xaiExplanation} />
             )}
           </div>
         </div>

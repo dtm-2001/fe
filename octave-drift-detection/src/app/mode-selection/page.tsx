@@ -3,7 +3,14 @@
 import React, { useEffect, useState } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { ArrowRight, AlertCircle, User, Grid3x3, ChevronRight, Loader2 } from "lucide-react"
+import {
+  ArrowRight,
+  AlertCircle,
+  User,
+  Grid3x3,
+  ChevronRight,
+  Loader2,
+} from "lucide-react"
 import { getUseCasesForUser } from "@/services/modeSelectionService"
 
 interface UseCase {
@@ -14,27 +21,46 @@ interface UseCase {
 }
 
 // Enhanced mode configuration with colors
-const modeConfig: Record<UseCase["mode"], {
-  bgColor: string
-  badgeColor: string
-}> = {
+const modeConfig: Record<UseCase["mode"], { bgColor: string; badgeColor: string }> = {
   mode1: {
     bgColor: "bg-blue-50 border-blue-200",
-    badgeColor: "bg-blue-100 text-blue-800"
+    badgeColor: "bg-blue-100 text-blue-800",
   },
   mode2: {
     bgColor: "bg-amber-50 border-amber-200",
-    badgeColor: "bg-amber-100 text-amber-800"
+    badgeColor: "bg-amber-100 text-amber-800",
   },
   mode3: {
     bgColor: "bg-emerald-50 border-emerald-200",
-    badgeColor: "bg-emerald-100 text-emerald-800"
+    badgeColor: "bg-emerald-100 text-emerald-800",
   },
   mode4: {
-    bgColor: "bg-red-50 border-red-200", 
-    badgeColor: "bg-red-100 text-red-800"
-  }
+    bgColor: "bg-red-50 border-red-200",
+    badgeColor: "bg-red-100 text-red-800",
+  },
 }
+
+// Fallback data to use when backend is unreachable or returns no dashboards
+const fallbackUseCases: UseCase[] = [
+  {
+    name: "Sales Overview",
+    mode: "mode1",
+    type: "Summary Dashboard",
+    businessUnit: "Sales",
+  },
+  {
+    name: "Marketing Trends",
+    mode: "mode2",
+    type: "Analytics",
+    businessUnit: "Marketing",
+  },
+  {
+    name: "Support Tickets",
+    mode: "mode3",
+    type: "Live Queue",
+    businessUnit: "Customer Success",
+  },
+]
 
 export default function ModeSelection() {
   const router = useRouter()
@@ -47,46 +73,58 @@ export default function ModeSelection() {
     async function load() {
       setLoading(true)
       setError(null)
-      
+
       const u = localStorage.getItem("currentUser")
       if (!u) {
         router.push("/login")
         return
       }
-      
       setUser(u)
-      
+
+      // If offline, immediately use fallback data
+      if (!navigator.onLine) {
+        console.warn("Offline – using fallback dashboards")
+        setUseCases(fallbackUseCases)
+        setLoading(false)
+        return
+      }
+
       try {
         const data = (await getUseCasesForUser(u)) as UseCase[]
-        if (!data.length) {
-          setError("No use cases found for your account.")
-        } else {
+        if (data.length > 0) {
           setUseCases(data)
+        } else {
+          console.warn("No dashboards returned – using fallback data")
+          setUseCases(fallbackUseCases)
         }
-      } catch {
-        setError("Failed to load your use cases. Please try again.")
+      } catch (err) {
+        console.warn("Error loading dashboards – using fallback data", err)
+        setUseCases(fallbackUseCases)
       } finally {
         setLoading(false)
       }
     }
+
     load()
   }, [router])
 
-  // Loading state with skeleton
+  // Loading state
   if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
         <div className="container mx-auto px-4 py-12 max-w-6xl">
           <div className="flex flex-col items-center justify-center min-h-96">
             <Loader2 className="h-8 w-8 animate-spin text-blue-600 mb-4" />
-            <p className="text-slate-600 font-medium">Loading your dashboards...</p>
+            <p className="text-slate-600 font-medium">
+              Loading your dashboards...
+            </p>
           </div>
         </div>
       </div>
     )
   }
 
-  // Error state
+  // Error state (only for non-load-related errors, if any)
   if (error) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 flex items-center justify-center p-4">
@@ -135,14 +173,13 @@ export default function ModeSelection() {
               <p className="text-gray-600 mt-1">{user}</p>
             </div>
           </div>
-          
           {/* Stats */}
           <div className="flex items-center gap-6 text-sm text-gray-600">
             <div className="flex items-center gap-2">
               <Grid3x3 className="h-4 w-4" />
               <span>{totalUseCases} dashboards available</span>
             </div>
-            <div className="w-1 h-1 bg-gray-400 rounded-full"></div>
+            <div className="w-1 h-1 bg-gray-400 rounded-full" />
             <span>{totalBusinessUnits} business units</span>
           </div>
         </header>
@@ -153,9 +190,11 @@ export default function ModeSelection() {
             <section key={businessUnit}>
               {/* Business Unit Header */}
               <div className="flex items-center gap-3 mb-6">
-                <h2 className="text-xl font-semibold text-gray-900">{businessUnit}</h2>
+                <h2 className="text-xl font-semibold text-gray-900">
+                  {businessUnit}
+                </h2>
                 <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
-                  {cases.length} dashboard{cases.length !== 1 ? 's' : ''}
+                  {cases.length} dashboard{cases.length !== 1 ? "s" : ""}
                 </span>
               </div>
 
@@ -164,7 +203,7 @@ export default function ModeSelection() {
                 {cases.map((useCase) => {
                   const config = modeConfig[useCase.mode]
                   const modeNumber = useCase.mode.replace("mode", "")
-                  
+
                   return (
                     <Link
                       key={`${useCase.name}-${useCase.mode}`}
@@ -173,19 +212,23 @@ export default function ModeSelection() {
                       )}&useCase=${encodeURIComponent(useCase.name)}`}
                       className="group block"
                     >
-                      <article className={`
+                      <article
+                        className={`
                         relative bg-white border-2 rounded-2xl p-6 
                         transition-all duration-200 ease-out
                         hover:shadow-lg hover:shadow-slate-200 hover:-translate-y-1
                         focus-within:ring-2 focus-within:ring-blue-500 focus-within:ring-offset-2
                         ${config.bgColor}
-                      `}>
+                      `}
+                      >
                         {/* Mode Badge */}
                         <div className="flex items-center justify-between mb-4">
-                          <span className={`
+                          <span
+                            className={`
                             inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold tracking-wide uppercase
                             ${config.badgeColor}
-                          `}>
+                          `}
+                          >
                             M{modeNumber}
                           </span>
                           <ChevronRight className="h-5 w-5 text-gray-400 group-hover:text-gray-600 transition-colors" />
@@ -196,10 +239,8 @@ export default function ModeSelection() {
                           <h3 className="font-semibold text-lg text-gray-900 group-hover:text-gray-700 transition-colors">
                             {useCase.name}
                           </h3>
-                          
-                          <p className="text-sm text-gray-600">
-                            {useCase.type}
-                          </p>
+
+                          <p className="text-sm text-gray-600">{useCase.type}</p>
                         </div>
 
                         {/* Action */}

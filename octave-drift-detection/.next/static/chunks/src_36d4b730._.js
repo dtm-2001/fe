@@ -5,6 +5,7 @@
 
 var { g: global, __dirname, k: __turbopack_refresh__, m: module } = __turbopack_context__;
 {
+// services/backendService.ts
 __turbopack_context__.s({
     "fetchData": (()=>fetchData)
 });
@@ -12,30 +13,26 @@ async function fetchData({ runtime } = {
     runtime: ""
 }) {
     try {
-        console.log("Fetching data from backend via proxy: /api/mode1/data");
-        const response = await fetch(`/api/mode1/data${runtime ? `?runtime=${runtime}` : ""}`, {
+        // 1. Fetch drift data
+        const resp = await fetch(`/api/mode1/data${runtime ? `?runtime=${runtime}` : ""}`, {
             credentials: "include"
         });
-        if (!response.ok) {
-            throw new Error(`HTTP error! Status: ${response.status}`);
+        if (!resp.ok) {
+            throw new Error(`HTTP error! Status: ${resp.status}`);
         }
-        const rawData = await response.json();
-        console.log("Parsed data:", rawData);
-        // dashboard.json from public folder
-        console.log("Fetching dashboard.json from public folder");
-        const dashResponse = await fetch(`/dashboard.json`);
-        if (!dashResponse.ok) {
-            throw new Error(`HTTP error fetching dashboard.json! Status: ${dashResponse.status}`);
+        const rawData = await resp.json();
+        // 2. Fetch dashboard config
+        const dashResp = await fetch(`/dashboard.json`);
+        if (!dashResp.ok) {
+            throw new Error(`HTTP error fetching dashboard.json! Status: ${dashResp.status}`);
         }
-        const dashboardData = await dashResponse.json();
-        // Metrics nested under drift_state
+        const dashboardData = await dashResp.json();
+        // 3. Extract drift metrics
         const driftMetrics = rawData.drift_state?.metrics || {};
-        // Extract drift detection status
-        const driftDetected = rawData.drift_state?.drift_detected || false;
-        // Extract sorted periods array
-        const sorted_periods = rawData.sorted_periods || [];
-        // Get reference period (first element in sorted_periods if available)
+        const driftDetected = rawData.drift_state?.drift_detected ?? false;
+        const sorted_periods = rawData.sorted_periods ?? [];
         const referencePeriod = sorted_periods.length > 0 ? sorted_periods[0] : "N/A";
+        // 4. Build KPI list
         const kpis = [
             {
                 rowKey: "Drift Detected",
@@ -44,7 +41,7 @@ async function fetchData({ runtime } = {
             },
             {
                 rowKey: "Error Percentage Threshold",
-                value: rawData.error_percentage_threshold?.toString() || "N/A",
+                value: String(rawData.error_percentage_threshold ?? "N/A"),
                 status: "Normal"
             },
             {
@@ -59,22 +56,22 @@ async function fetchData({ runtime } = {
             },
             {
                 rowKey: "kstest",
-                value: driftMetrics.ks_statistic?.toFixed(3) || "N/A",
+                value: driftMetrics.ks_statistic?.toFixed(3) ?? "N/A",
                 status: "Normal"
             },
             {
                 rowKey: "wasserstein",
-                value: driftMetrics.wasserstein_distance?.toFixed(3) || "N/A",
+                value: driftMetrics.wasserstein_distance?.toFixed(3) ?? "N/A",
                 status: "Normal"
             },
             {
                 rowKey: "mseRef",
-                value: driftMetrics.mean_mse_reference?.toFixed(3) || "N/A",
+                value: driftMetrics.mean_mse_reference?.toFixed(3) ?? "N/A",
                 status: "Normal"
             },
             {
                 rowKey: "mseCurrent",
-                value: driftMetrics.mean_mse_current?.toFixed(3) || "N/A",
+                value: driftMetrics.mean_mse_current?.toFixed(3) ?? "N/A",
                 status: "Normal"
             },
             {
@@ -83,50 +80,79 @@ async function fetchData({ runtime } = {
                 status: driftDetected ? "Warning" : "Normal"
             }
         ];
-        // Extract filtered_data for the error comparison table
-        const filtered_data = rawData.filtered_data || [];
-        // Map the filtered data to the table data format
+        // 5. Map filtered_data => tableData
+        const filtered_data = rawData.filtered_data ?? [];
         const tableData = filtered_data.map((item)=>{
-            const abs_curr_per = item.abs_curr_per || 0;
-            const abs_ref_per = item.abs_ref_per || 0;
-            const difference = abs_curr_per - abs_ref_per;
+            const abs_curr_per = item.abs_curr_per ?? 0;
+            const abs_ref_per = item.abs_ref_per ?? 0;
+            const diff = abs_curr_per - abs_ref_per;
             return {
-                id: item.id?.toString() || "",
-                timePeriod: item.period || "",
+                id: String(item.id ?? ""),
+                timePeriod: item.period ?? "",
                 abs_curr_per,
                 abs_ref_per,
-                difference,
-                status: difference > 0 ? "Alert" : "Normal"
+                difference: diff,
+                status: diff > 0 ? "Alert" : "Normal"
             };
         });
+        // 6. Build errors object
         const errors = {
-            plotData: (rawData.id_error || []).map((item)=>({
-                    x: item.id?.toString() || "",
-                    y: item.Mean_Prediction_Error || 0,
-                    exceedsThreshold: Math.abs(item.Mean_Prediction_Error) > (rawData.error_percentage_threshold || 0)
+            plotData: (rawData.id_error ?? []).map((item)=>({
+                    x: String(item.id ?? ""),
+                    y: item.Mean_Prediction_Error ?? 0,
+                    exceedsThreshold: Math.abs(item.Mean_Prediction_Error ?? 0) > (rawData.error_percentage_threshold ?? 0)
                 })),
-            tableData: tableData.length > 0 ? tableData : (rawData.id_error || []).map((item)=>({
-                    id: item.id?.toString() || "",
-                    timePeriod: item.time_period || "",
-                    meanPrediction: item.Mean_Prediction_Error || 0,
-                    error: item.Mean_Prediction_Error || 0,
-                    percentageError: Math.abs(item.Mean_Prediction_Error) || 0,
-                    status: Math.abs(item.Mean_Prediction_Error) > (rawData.error_percentage_threshold || 0) ? "Alert" : "Normal"
+            tableData: tableData.length > 0 ? tableData : (rawData.id_error ?? []).map((item)=>({
+                    id: String(item.id ?? ""),
+                    timePeriod: item.time_period ?? "",
+                    meanPrediction: item.Mean_Prediction_Error ?? 0,
+                    error: item.Mean_Prediction_Error ?? 0,
+                    percentageError: Math.abs(item.Mean_Prediction_Error ?? 0),
+                    status: Math.abs(item.Mean_Prediction_Error ?? 0) > (rawData.error_percentage_threshold ?? 0) ? "Alert" : "Normal"
                 }))
         };
-        const outletsExceedingThreshold = (rawData.outlets_exceeding_threshold || []).map((item)=>({
-                id: item.id?.toString() || "",
-                y_true: item.y_true || 0,
-                y_pred: item.y_pred || 0,
-                percentage_error: item.percentage_error || 0
+        // 7. Outlets exceeding threshold
+        const outletsExceedingThreshold = (rawData.outlets_exceeding_threshold ?? []).map((item)=>({
+                id: String(item.id ?? ""),
+                y_true: item.y_true ?? 0,
+                y_pred: item.y_pred ?? 0,
+                percentage_error: item.percentage_error ?? 0
             }));
-        // Map your backend's MSE time series into our frontend shape
-        const mse_trend = (rawData.mse_trend || []).map((item)=>({
-                MSE: typeof item.MSE === "number" ? item.MSE : item.mse ?? 0,
-                time_period: item.time_period || item.timePeriod || ""
+        // 8. MSE trend
+        const mse_trend = (rawData.mse_trend ?? []).map((item)=>({
+                MSE: typeof item.MSE === "number" ? item.MSE : typeof item.mse === "number" ? item.mse : 0,
+                time_period: item.time_period ?? item.timePeriod ?? ""
             }));
-        const xaiExplanation = rawData.explanation || "No explanation available";
+        // 9. XAI explanation and periods
+        const xaiExplanation = rawData.explanation ?? "No explanation available";
         const currentPeriod = rawData.current_period ?? rawData.currentPeriod ?? "N/A";
+        const error_percentage_threshold = rawData.error_percentage_threshold ?? 0;
+        // 10. Compute status distribution for pie chart
+        const threshold = error_percentage_threshold;
+        const warningThreshold = threshold * 0.8;
+        let goodCount = 0;
+        let warningCount = 0;
+        let errorCount = 0;
+        const allTableRows = errors.tableData;
+        allTableRows.forEach((row)=>{
+            const errVal = Math.abs(row.difference ?? row.percentageError ?? 0);
+            if (errVal >= threshold) {
+                errorCount++;
+            } else if (errVal >= warningThreshold) {
+                warningCount++;
+            } else {
+                goodCount++;
+            }
+        });
+        const total = Math.max(goodCount + warningCount + errorCount, 1);
+        const good = Math.round(goodCount / total * 100);
+        const warning = Math.round(warningCount / total * 100);
+        const error = 100 - good - warning;
+        const status_distribution = {
+            good,
+            warning,
+            error
+        };
         return {
             kpis,
             errors,
@@ -134,16 +160,17 @@ async function fetchData({ runtime } = {
             xaiExplanation,
             currentPeriod,
             referencePeriod,
-            error_percentage_threshold: rawData.error_percentage_threshold || 0,
+            error_percentage_threshold,
             dashboardData,
-            all_outlets: rawData.all_outlets || [],
+            all_outlets: rawData.all_outlets ?? [],
             mse_trend,
             sorted_periods,
             driftDetected,
-            filtered_data
+            filtered_data,
+            status_distribution
         };
-    } catch (error) {
-        console.error("Error fetching data:", error);
+    } catch (err) {
+        console.error("Error fetching data:", err);
         throw new Error("Failed to fetch and process data");
     }
 }

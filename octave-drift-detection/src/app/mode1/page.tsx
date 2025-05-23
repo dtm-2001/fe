@@ -6,8 +6,6 @@ import { fetchEntriesTable } from "../../services/dashboardService"
 import { AlertCircle, AlertTriangle, CheckCircle, RefreshCw, Info, HelpCircle, X } from "lucide-react"
 import { useSearchParams } from "next/navigation"
 import { Markdown } from "../../components/Markdown"
-
-// First, add these imports at the top of the file
 import { jsPDF } from "jspdf"
 import html2canvas from "html2canvas"
 
@@ -45,7 +43,6 @@ interface OutletsExceedingThreshold {
   percentage_error: number
 }
 
-// Add the AllOutlets interface after the OutletsExceedingThreshold interface
 interface AllOutlets {
   id: number
   percentage_error: number
@@ -63,7 +60,6 @@ interface ErrorDataState {
   tableData: TableDataPoint[]
 }
 
-// Define the entry table interface
 interface EntryTableItem {
   BusinessUnit: string
   useCase: string
@@ -91,7 +87,7 @@ Technical explanation: It represents the minimum amount of "work" required to tr
   },
 }
 
-// Error percentage ranges for the bar chart - as requested by the user
+// Error percentage ranges for the bar chart
 const ERROR_RANGES = [
   { min: 0, max: 10, label: "0-10%" },
   { min: 10, max: 20, label: "10-20%" },
@@ -106,7 +102,6 @@ const ERROR_RANGES = [
   { min: 100, max: Number.POSITIVE_INFINITY, label: ">100%" },
 ]
 
-// Add this tooltip component after the ERROR_RANGES constant and before the Mode1Page function
 const TooltipPopup = ({ type, onClose }: { type: string; onClose: () => void }) => {
   const content = tooltipContent[type as keyof typeof tooltipContent]
   if (!content) return null
@@ -114,28 +109,28 @@ const TooltipPopup = ({ type, onClose }: { type: string; onClose: () => void }) 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" onClick={onClose}>
       <div
-        className="bg-white border border-sky-300 rounded-lg shadow-xl max-w-2xl w-full p-6"
+        className="bg-gray-800 border border-sky-700 rounded-lg shadow-xl max-w-2xl w-full p-6"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex justify-between items-start mb-4">
-          <h3 className="text-xl font-bold text-sky-700">{content.title}</h3>
+          <h3 className="text-xl font-bold text-sky-400">{content.title}</h3>
           <button
             onClick={onClose}
-            className="text-gray-500 hover:text-gray-800 transition-colors"
+            className="text-gray-400 hover:text-white transition-colors"
             aria-label="Close tooltip"
           >
             <X className="h-5 w-5" />
           </button>
         </div>
-        <div className="prose prose-sky max-w-none mb-4">
-          <p className="text-gray-700 whitespace-pre-line">{content.content}</p>
+        <div className="prose prose-invert prose-sky max-w-none mb-4">
+          <p className="text-gray-300 whitespace-pre-line">{content.content}</p>
         </div>
         {content.image && (
           <div className="mt-4 flex justify-center">
             <img
               src={content.image || "/placeholder.svg"}
               alt={`${content.title} visualization`}
-              className="max-w-full h-auto rounded-md border border-gray-300"
+              className="max-w-full h-auto rounded-md border border-gray-700"
             />
           </div>
         )}
@@ -163,14 +158,8 @@ export default function Mode1Page() {
   const [referencePeriod, setReferencePeriod] = useState<string>("N/A")
   const [errorPercentageThreshold, setErrorPercentageThreshold] = useState<number>(0)
   const [mseTrend, setMseTrend] = useState<MSETrend[]>([])
-
-  // Add these new state variables after the existing state declarations (around line 125)
   const [sortedPeriods, setSortedPeriods] = useState<string[]>([])
   const [driftDetected, setDriftDetected] = useState<boolean | null>(null)
-
-  // Error comparison table filtering
-  const [errorTableView, setErrorTableView] = useState<string>("all")
-  const [filteredErrorData, setFilteredErrorData] = useState<TableDataPoint[]>([])
 
   // Static values from entries_table.json filtered by businessUnit and useCase
   const [businessUnit, setBusinessUnit] = useState<string>("")
@@ -186,15 +175,18 @@ export default function Mode1Page() {
   const [statusDistribution, setStatusDistribution] = useState({ good: 65, warning: 25, error: 10 })
   const [activeTooltip, setActiveTooltip] = useState<string | null>(null)
 
+  // Error table view state - FIXED: Added missing state variable
+  const [errorTableView, setErrorTableView] = useState<string>("all")
+
   // Error range data for bar chart
   const [errorRangeData, setErrorRangeData] = useState<{ range: string; count: number; outlets: AllOutlets[] }[]>([])
   const [selectedRange, setSelectedRange] = useState<string | null>(null)
   const [selectedRangeOutlets, setSelectedRangeOutlets] = useState<AllOutlets[]>([])
 
-  // Entries state (fetched via dashboardService)
+  // Entries state
   const [entries, setEntries] = useState<EntryTableItem[]>([])
 
-  // 1) Fetch entries when businessUnitParam or useCaseParam change
+  // Fetch entries when businessUnitParam or useCaseParam change
   useEffect(() => {
     if (!businessUnitParam || !useCaseParam) return
 
@@ -204,7 +196,6 @@ export default function Mode1Page() {
           BusinessUnit: businessUnitParam,
           useCase: useCaseParam,
         })
-        // Filter out any placeholder rows
         const filtered = fetched.filter(
           (entry) =>
             entry.BusinessUnit !== "Not Selected" &&
@@ -221,7 +212,6 @@ export default function Mode1Page() {
           setAlertKeeperValue("Not Selected")
           setRuntimeValue("")
         } else {
-          // Initialize with first entry
           setBusinessUnit(filtered[0].BusinessUnit)
           setUseCase(filtered[0].useCase)
           setShortCode(filtered[0].ShortCode)
@@ -242,7 +232,7 @@ export default function Mode1Page() {
     loadEntries()
   }, [businessUnitParam, useCaseParam])
 
-  // 2) Update alertKeeper when runtimeValue or entries change
+  // Update alertKeeper when runtimeValue or entries change
   useEffect(() => {
     if (!runtimeValue) return
 
@@ -250,14 +240,13 @@ export default function Mode1Page() {
     setAlertKeeperValue(matched?.alertKeeper || "Not Selected")
   }, [runtimeValue, entries])
 
-  // 3) Fetch dynamic data (kpis, errors, etc.) whenever runtimeValue changes
+  // Fetch dynamic data whenever runtimeValue changes
   const fetchAllData = async (): Promise<void> => {
     setLoading(true)
     setBackendError(null)
     try {
       const data = await fetchData({ runtime: runtimeValue })
 
-      // Dynamic data
       setKpis(data.kpis || [])
       setErrors(data.errors || { plotData: [], tableData: [] })
       setOutletsExceedingThreshold(data.outletsExceedingThreshold || [])
@@ -265,13 +254,10 @@ export default function Mode1Page() {
       setXaiExplanation(data.xaiExplanation || "No explanation available")
       setCurrentPeriod(data.currentPeriod || "N/A")
 
-      // Set MSE trend data
       const mseTrendData = data.mse_trend || []
       setMseTrend(mseTrendData)
 
-      // IMPORTANT: Set reference period from the first time period in MSE trend data
       if (mseTrendData.length > 0) {
-        console.log("Setting reference period from MSE trend:", mseTrendData[0].time_period)
         setReferencePeriod(mseTrendData[0].time_period)
       } else if (data.referencePeriod) {
         setReferencePeriod(data.referencePeriod)
@@ -285,13 +271,12 @@ export default function Mode1Page() {
       setSortedPeriods(data.sorted_periods || [])
       setDriftDetected(data.driftDetected || null)
 
-      // Calculate status distribution with proper error handling
+      // Calculate status distribution
       try {
         const tableData = data.errors?.tableData || []
         const threshold = data.error_percentage_threshold || 5
         const warningThreshold = threshold * 0.8
 
-        // Count items in each category based on the specified thresholds
         let goodCount = 0
         let warningCount = 0
         let errorCount = 0
@@ -307,26 +292,11 @@ export default function Mode1Page() {
           }
         })
 
-        // Calculate total and ensure it's at least 1 to avoid division by zero
         const total = Math.max(goodCount + warningCount + errorCount, 1)
-
-        // Calculate percentages
         const good = Math.round((goodCount / total) * 100)
         const warning = Math.round((warningCount / total) * 100)
-        // Ensure the sum is exactly 100% by calculating error as the remainder
         const error = 100 - good - warning
 
-        console.log("Status distribution:", {
-          good,
-          warning,
-          error,
-          total,
-          goodCount,
-          warningCount,
-          errorCount,
-          threshold,
-          warningThreshold,
-        })
         setStatusDistribution({ good, warning, error })
       } catch (err) {
         console.error("Error calculating status distribution:", err)
@@ -356,28 +326,7 @@ export default function Mode1Page() {
     if (runtimeValue) fetchAllData()
   }, [runtimeValue])
 
-  // Filter error comparison data based on selected view
-  useEffect(() => {
-    if (!errors.tableData.length) return
-
-    const uniqueData = errors.tableData
-      .filter((row, index, self) => index === self.findIndex((r) => r.id === row.id))
-      .sort((a, b) => (b.difference ?? 0) - (a.difference ?? 0))
-
-    if (errorTableView === "all") {
-      setFilteredErrorData(uniqueData)
-    } else if (errorTableView === "top20") {
-      const top20 = uniqueData.slice(0, 20)
-      const bottom20 = [...uniqueData].sort((a, b) => (a.difference ?? 0) - (b.difference ?? 0)).slice(0, 20)
-      setFilteredErrorData([...top20, ...bottom20])
-    } else if (errorTableView === "top50") {
-      const top50 = uniqueData.slice(0, 50)
-      const bottom50 = [...uniqueData].sort((a, b) => (a.difference ?? 0) - (b.difference ?? 0)).slice(0, 50)
-      setFilteredErrorData([...top50, ...bottom50])
-    }
-  }, [errorTableView, errors.tableData])
-
-  // Re-render pie chart when data updates
+  // Re-render charts when data updates
   useEffect(() => {
     if (!loading) {
       renderPieChart()
@@ -394,18 +343,29 @@ export default function Mode1Page() {
     }
   }
 
-  // Function to download error comparison data as CSV
+  // Download error comparison data as CSV
   const downloadErrorCSV = () => {
     if (!errors.tableData.length) return
 
-    const uniqueData = errors.tableData
+    let dataToExport = errors.tableData
       .filter((row, index, self) => index === self.findIndex((r) => r.id === row.id))
       .sort((a, b) => (b.difference ?? 0) - (a.difference ?? 0))
+
+    // Apply filtering based on errorTableView
+    if (errorTableView === "top20") {
+      const top10 = dataToExport.slice(0, 10)
+      const bottom10 = dataToExport.slice(-10)
+      dataToExport = [...top10, ...bottom10]
+    } else if (errorTableView === "top50") {
+      const top25 = dataToExport.slice(0, 25)
+      const bottom25 = dataToExport.slice(-25)
+      dataToExport = [...top25, ...bottom25]
+    }
 
     const headers = ["ID", "Current Error", "Reference Error", "Difference"]
     const csvContent = [
       headers.join(","),
-      ...uniqueData.map((row) =>
+      ...dataToExport.map((row) =>
         [
           row.id,
           (row.abs_curr_per ?? 0).toFixed(2),
@@ -423,11 +383,11 @@ export default function Mode1Page() {
     document.body.appendChild(link)
     link.click()
     document.body.removeChild(link)
+    URL.revokeObjectURL(url)
   }
 
-  // Function to download XAI explanation as PDF
+  // Download XAI explanation as PDF
   const downloadXaiAsPDF = () => {
-    // Get the markdown container element
     const markdownElement = document.getElementById("xai-markdown-container")
 
     if (!markdownElement) {
@@ -435,34 +395,28 @@ export default function Mode1Page() {
       return
     }
 
-    // Use html2canvas to capture the rendered markdown as an image
     html2canvas(markdownElement, {
-      scale: 2, // Higher scale for better quality
+      scale: 2,
       logging: false,
       useCORS: true,
       backgroundColor: "#ffffff",
     }).then((canvas) => {
       const imgData = canvas.toDataURL("image/png")
-
-      // Initialize jsPDF
       const pdf = new jsPDF({
         orientation: "portrait",
         unit: "mm",
         format: "a4",
       })
 
-      // Calculate dimensions to fit the content properly
-      const imgWidth = 210 // A4 width in mm (210mm)
-      const pageHeight = 295 // A4 height in mm (297mm)
+      const imgWidth = 210
+      const pageHeight = 295
       const imgHeight = (canvas.height * imgWidth) / canvas.width
       let heightLeft = imgHeight
       let position = 0
 
-      // Add image to first page
       pdf.addImage(imgData, "PNG", 0, position, imgWidth, imgHeight)
       heightLeft -= pageHeight
 
-      // Add new pages if the content is longer than one page
       while (heightLeft > 0) {
         position = heightLeft - imgHeight
         pdf.addPage()
@@ -470,7 +424,6 @@ export default function Mode1Page() {
         heightLeft -= pageHeight
       }
 
-      // Save the PDF
       pdf.save(`xai_explanation_${currentPeriod}.pdf`)
     })
   }
@@ -478,24 +431,15 @@ export default function Mode1Page() {
   // Pie chart renderer
   const renderPieChart = () => {
     const ctx = document.getElementById("statusPieChart") as HTMLCanvasElement | null
-    if (!ctx) {
-      console.error("Cannot find statusPieChart canvas element")
-      return
-    }
+    if (!ctx) return
 
-    // Always destroy the previous chart instance to prevent memory leaks
     if (pieChartRef.current) {
       pieChartRef.current.destroy()
       pieChartRef.current = null
     }
 
-    // Get the data for the chart
     const { good, warning, error } = statusDistribution
 
-    // Log the data to help with debugging
-    console.log("Rendering pie chart with data:", { good, warning, error })
-
-    // Only create the chart if we have the canvas element
     try {
       pieChartRef.current = new Chart(ctx, {
         type: "pie",
@@ -517,7 +461,7 @@ export default function Mode1Page() {
             legend: {
               position: "right",
               labels: {
-                color: "#334155", // Changed from #e5e7eb to a dark slate color
+                color: "#e5e7eb",
                 font: { size: 14 },
                 generateLabels: (chart) =>
                   chart.data.labels!.map((l, i) => ({
@@ -546,59 +490,56 @@ export default function Mode1Page() {
     }
   }
 
-  // Update the renderErrorRangeChart function to ensure it's using the correct data
+  // Error range chart renderer
   const renderErrorRangeChart = () => {
     const ctx = document.getElementById("errorRangeChart") as HTMLCanvasElement | null
     if (!ctx) return
-
-    console.log("Rendering error range chart with data:", errorRangeData)
 
     if (errorRangeChartRef.current) {
       errorRangeChartRef.current.destroy()
     }
 
-    // Color gradient for the bars - adjusted for the requested ranges
-    const gradientColors = [
-      "rgba(52, 211, 153, 0.8)", // Green for low errors (0-10%)
-      "rgba(96, 165, 250, 0.8)", // Blue (10-20%)
-      "rgba(234, 179, 8, 0.8)", // Amber (20-30%)
-      "rgba(251, 191, 36, 0.8)", // Yellow (30-40%)
-      "rgba(251, 146, 60, 0.8)", // Light Orange (40-50%)
-      "rgba(249, 115, 22, 0.8)", // Orange (50-60%)
-      "rgba(236, 72, 153, 0.8)", // Fuchsia (60-70%)
-      "rgba(244, 114, 182, 0.8)", // Pink (70-80%)
-      "rgba(248, 113, 113, 0.8)", // Light Red (80-90%)
-      "rgba(244, 63, 94, 0.8)", // Rose (90-100%)
-      "rgba(239, 68, 68, 0.8)", // Red for high errors (>100%)
-    ]
+// Color gradient for the bars - green → yellow → red
+  const gradientColors = [
+    "rgba(0, 128, 0, 0.8)",
+    "rgba(51, 153, 0, 0.8)",
+    "rgba(102, 178, 0, 0.8)",
+    "rgba(153, 204, 0, 0.8)",
+    "rgba(204, 204, 0, 0.8)",
+    "rgba(255, 255, 0, 0.8)",
+    "rgba(255, 204, 0, 0.8)",
+    "rgba(255, 153, 0, 0.8)",
+    "rgba(255, 102, 0, 0.8)",
+    "rgba(255, 51, 0, 0.8)",
+    "rgba(255, 0, 0, 0.8)",
+  ]
 
-    const borderColors = [
-      "rgba(52, 211, 153, 1)",
-      "rgba(96, 165, 250, 1)",
-      "rgba(234, 179, 8, 1)",
-      "rgba(251, 191, 36, 1)",
-      "rgba(251, 146, 60, 1)",
-      "rgba(249, 115, 22, 1)",
-      "rgba(236, 72, 153, 1)",
-      "rgba(244, 114, 182, 1)",
-      "rgba(248, 113, 113, 1)",
-      "rgba(244, 63, 94, 1)",
-      "rgba(239, 68, 68, 1)",
-    ]
+  // Borders at full opacity
+  const borderColors = [
+    "rgba(0, 128, 0, 1)",
+    "rgba(51, 153, 0, 1)",
+    "rgba(102, 178, 0, 1)",
+    "rgba(153, 204, 0, 1)",
+    "rgba(204, 204, 0, 1)",
+    "rgba(255, 255, 0, 1)",
+    "rgba(255, 204, 0, 1)",
+    "rgba(255, 153, 0, 1)",
+    "rgba(255, 102, 0, 1)",
+    "rgba(255, 51, 0, 1)",
+    "rgba(255, 0, 0, 1)",
+  ]
 
-    // Use errorRangeData directly without sorting to maintain the natural order of ranges
-    const dataToUse = errorRangeData
 
     errorRangeChartRef.current = new Chart(ctx, {
       type: "bar",
       data: {
-        labels: dataToUse.map((d) => d.range),
+        labels: errorRangeData.map((d) => d.range),
         datasets: [
           {
             label: "Number of IDs",
-            data: dataToUse.map((d) => d.count),
-            backgroundColor: gradientColors.slice(0, dataToUse.length),
-            borderColor: borderColors.slice(0, dataToUse.length),
+            data: errorRangeData.map((d) => d.count),
+            backgroundColor: gradientColors.slice(0, errorRangeData.length),
+            borderColor: borderColors.slice(0, errorRangeData.length),
             borderWidth: 1,
             borderRadius: 4,
           },
@@ -612,24 +553,24 @@ export default function Mode1Page() {
             display: true,
             position: "top",
             labels: {
-              color: "#334155", // Changed from #e5e7eb
+              color: "#e5e7eb",
               font: { size: 14 },
             },
           },
           title: {
             display: true,
             text: "ID Distribution by Error Percentage Range",
-            color: "#0369a1", // Changed from #38bdf8
+            color: "#38bdf8",
             font: { size: 16, weight: "bold" },
           },
           tooltip: {
             callbacks: {
               label: (ctx) => `IDs: ${ctx.raw}`,
-              afterLabel: (ctx) => `Click to view details`,
+              afterLabel: () => `Click to view details`,
             },
             backgroundColor: "rgba(15, 23, 42, 0.8)",
-            titleColor: "#ffffff",
-            bodyColor: "#ffffff",
+            titleColor: "#38bdf8",
+            bodyColor: "#e5e7eb",
             borderColor: "#1e40af",
             borderWidth: 1,
             padding: 10,
@@ -640,7 +581,7 @@ export default function Mode1Page() {
             title: {
               display: true,
               text: "Error Percentage Range",
-              color: "#0369a1", // Changed from #38bdf8
+              color: "#38bdf8",
               font: { weight: "bold" },
             },
             grid: {
@@ -648,7 +589,7 @@ export default function Mode1Page() {
               borderColor: "rgba(148, 163, 184, 0.2)",
             },
             ticks: {
-              color: "#334155", // Changed from #e5e7eb
+              color: "#e5e7eb",
               font: { size: 12 },
             },
           },
@@ -656,7 +597,7 @@ export default function Mode1Page() {
             title: {
               display: true,
               text: "Number of IDs",
-              color: "#0369a1", // Changed from #38bdf8
+              color: "#38bdf8",
               font: { weight: "bold" },
             },
             beginAtZero: true,
@@ -665,16 +606,16 @@ export default function Mode1Page() {
               borderColor: "rgba(148, 163, 184, 0.2)",
             },
             ticks: {
-              color: "#334155", // Changed from #e5e7eb
+              color: "#e5e7eb",
               font: { size: 12 },
-              precision: 0, // Ensure whole numbers for ID counts
+              precision: 0,
             },
           },
         },
         onClick: (_event: ChartEvent, elements: any[]) => {
           if (elements && elements.length > 0) {
             const index = elements[0].index
-            if (index !== undefined && index >= 0 && index < dataToUse.length) {
+            if (index !== undefined && index >= 0 && index < errorRangeData.length) {
               handleBarClick(index)
             }
           }
@@ -683,7 +624,7 @@ export default function Mode1Page() {
     })
   }
 
-  // Helpers for KPIs
+  // Helper functions for KPIs
   const calculateMseChange = () => {
     const refMse = Number.parseFloat(kpis.find((k) => k.rowKey === "mseRef")?.value || "0")
     const currMse = Number.parseFloat(kpis.find((k) => k.rowKey === "mseCurrent")?.value || "0")
@@ -705,6 +646,7 @@ export default function Mode1Page() {
         return "text-sky-400"
     }
   }
+
   const getStatusIcon = (s?: string) => {
     if (!s) return <Info className="h-5 w-5 text-gray-400" />
     switch (s.toLowerCase()) {
@@ -719,11 +661,28 @@ export default function Mode1Page() {
     }
   }
 
-  // Update the header section to include the drift detection status
-  // Find the header section (around line 300) and replace it with:
+  // Filter table data based on view selection
+  const getFilteredTableData = () => {
+    const uniqueData = errors.tableData
+      .filter((row, index, self) => index === self.findIndex((r) => r.id === row.id))
+      .sort((a, b) => (b.difference ?? 0) - (a.difference ?? 0))
+
+    switch (errorTableView) {
+      case "top20":
+        const top10 = uniqueData.slice(0, 10)
+        const bottom10 = uniqueData.slice(-10)
+        return [...top10, ...bottom10]
+      case "top50":
+        const top25 = uniqueData.slice(0, 25)
+        const bottom25 = uniqueData.slice(-25)
+        return [...top25, ...bottom25]
+      default:
+        return uniqueData
+    }
+  }
+
   return (
-    <div className="bg-gradient-to-b from-gray-100 to-gray-200 min-h-screen flex flex-col">
-      <title>Mode 1 | Business Dashboard</title>
+    <div className="bg-gradient-to-b from-gray-950 to-gray-900 min-h-screen flex flex-col">
       <main className="flex-grow container mx-auto px-4 py-8">
         {/* Backend Error */}
         {backendError && (
@@ -744,7 +703,7 @@ export default function Mode1Page() {
 
         {/* Header */}
         <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-6">
-          <h2 className="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-cyan-600 to-sky-800 mb-2">
+          <h2 className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-sky-600 mb-2">
             OCTAVE – RG Dashboard
           </h2>
           <div className="flex flex-col sm:flex-row sm:items-center gap-4">
@@ -771,39 +730,37 @@ export default function Mode1Page() {
           </div>
         </div>
 
-        {/* Static Filters Box and Runtime in 2:1 ratio */}
+        {/* Static Filters Box and Runtime */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
-          {/* Static Filters Box - 2/3 */}
-          <div className="lg:col-span-2 bg-gradient-to-br from-white to-sky-100/50 p-6 rounded-lg border border-sky-300/50 shadow-md">
+          <div className="lg:col-span-2 bg-gradient-to-br from-sky-950/40 to-sky-900/20 p-6 rounded-lg border border-sky-800/30 shadow-md">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
                 <div className="mb-4">
-                  <span className="text-lg font-medium text-sky-700">Business Unit: </span>
-                  <span className="text-sky-900">{loading ? "Loading…" : businessUnit || "Not Selected"}</span>
+                  <span className="text-lg font-medium text-sky-300">Business Unit: </span>
+                  <span className="text-sky-200">{loading ? "Loading…" : businessUnit || "Not Selected"}</span>
                 </div>
                 <div>
-                  <span className="text-lg font-medium text-sky-700">Use Case: </span>
-                  <span className="text-sky-900">{loading ? "Loading…" : useCase || "Not Selected"}</span>
+                  <span className="text-lg font-medium text-sky-300">Use Case: </span>
+                  <span className="text-sky-200">{loading ? "Loading…" : useCase || "Not Selected"}</span>
                 </div>
               </div>
               <div>
                 <div className="mb-4">
-                  <span className="text-lg font-medium text-sky-700">Short Code: </span>
-                  <span className="text-sky-900">{loading ? "Loading…" : shortCode || "Not Available"}</span>
+                  <span className="text-lg font-medium text-sky-300">Short Code: </span>
+                  <span className="text-sky-200">{loading ? "Loading…" : shortCode || "Not Available"}</span>
                 </div>
                 <div>
-                  <span className="text-lg font-medium text-sky-700">Alert Keeper: </span>
-                  <span className="text-sky-900">{loading ? "Loading…" : alertKeeperValue || "Not Selected"}</span>
+                  <span className="text-lg font-medium text-sky-300">Alert Keeper: </span>
+                  <span className="text-sky-200">{loading ? "Loading…" : alertKeeperValue || "Not Selected"}</span>
                 </div>
               </div>
             </div>
           </div>
 
-          {/* Runtime - 1/3 */}
-          <div className="bg-gradient-to-br from-white to-sky-100/50 p-6 rounded-lg border border-sky-300/50 shadow-md">
-            <h3 className="text-lg font-medium text-sky-700 mb-2">Runtime</h3>
+          <div className="bg-gradient-to-br from-sky-950/40 to-sky-900/20 p-6 rounded-lg border border-sky-800/30 shadow-md">
+            <h3 className="text-lg font-medium text-sky-300 mb-2">Runtime</h3>
             <select
-              className="w-full bg-white border border-sky-400/70 rounded-md p-2 text-gray-800 focus:ring-2 focus:ring-sky-500"
+              className="w-full bg-gray-800/80 border border-sky-700/50 rounded-md p-2 text-white focus:ring-2 focus:ring-sky-500"
               value={runtimeValue}
               onChange={(e) => setRuntimeValue(e.target.value)}
               disabled={runtimeOptions.length === 0}
@@ -823,28 +780,29 @@ export default function Mode1Page() {
 
         {/* MAPE/MSE Plot and Status Distribution */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
-          {/* MAPE/MSE Plot */}
-          <div className="lg:col-span-2 bg-white/90 rounded-xl shadow-xl overflow-hidden p-6 border border-sky-200/70 backdrop-blur-sm">
-            <h2 className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-cyan-600 to-sky-800 mb-4">
-              MSE Trend Analysis
+          <div className="lg:col-span-2 bg-gray-900/80 rounded-xl shadow-xl overflow-hidden p-6 border border-gray-700/50 backdrop-blur-sm">
+            <h2 className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-sky-600 mb-4">
+              MAPE Trend Analysis
             </h2>
-            <div className="h-80 bg-gray-100/80 rounded-lg p-4 border border-sky-200/70">
+            <div className="h-80 bg-gray-800/60 rounded-lg p-4 border border-gray-700/50">
               {loading ? (
                 <div className="flex items-center justify-center h-full">
-                  <svg
-                    className="animate-spin h-8 w-8 text-sky-500 mb-2"
-                    xmlns="http://www.w3.org/2000/svg"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                  >
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                    <path
-                      className="opacity-75"
-                      fill="currentColor"
-                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                    />
-                  </svg>
-                  <span className="text-sky-300">Loading plot data...</span>
+                  <div className="flex flex-col items-center">
+                    <svg
+                      className="animate-spin h-8 w-8 text-sky-500 mb-2"
+                      xmlns="http://www.w3.org/2000/svg"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                    >
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                      <path
+                        className="opacity-75"
+                        fill="currentColor"
+                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                      />
+                    </svg>
+                    <span className="text-sky-300">Loading plot data...</span>
+                  </div>
                 </div>
               ) : (
                 <canvas
@@ -863,7 +821,7 @@ export default function Mode1Page() {
                             labels: mseTrend.map((d) => d.time_period),
                             datasets: [
                               {
-                                label: "MSE Values",
+                                label: "MAPE Values",
                                 data: mseTrend.map((d) => d.MSE),
                                 borderColor: "rgb(56, 189, 248)",
                                 backgroundColor: "rgba(56, 189, 248, 0.2)",
@@ -882,25 +840,19 @@ export default function Mode1Page() {
                             maintainAspectRatio: false,
                             plugins: {
                               legend: {
-                                labels: { color: "#334155", font: { weight: "bold" } }, // Changed from #e5e7eb
-                                title: {
-                                  display: true,
-                                  text: "MSE Trend Analysis",
-                                  color: "#0369a1", // Changed from #38bdf8 to a darker blue
-                                  font: { size: 16, weight: "bold" },
-                                },
+                                labels: { color: "#e5e7eb", font: { weight: "bold" } },
                               },
                               tooltip: {
                                 mode: "index",
                                 intersect: false,
                                 backgroundColor: "rgba(15, 23, 42, 0.8)",
-                                titleColor: "#ffffff",
-                                bodyColor: "#ffffff",
+                                titleColor: "#38bdf8",
+                                bodyColor: "#e5e7eb",
                                 borderColor: "#1e40af",
                                 borderWidth: 1,
                                 padding: 10,
                                 callbacks: {
-                                  label: (ctx) => `MSE: ${ctx.parsed.y.toFixed(4)}`,
+                                  label: (ctx) => `MAPE: ${ctx.parsed.y.toFixed(4)}`,
                                 },
                               },
                             },
@@ -909,7 +861,7 @@ export default function Mode1Page() {
                                 title: {
                                   display: true,
                                   text: "Time Period",
-                                  color: "#0369a1", // Changed from #38bdf8
+                                  color: "#38bdf8",
                                   font: { weight: "bold" },
                                 },
                                 grid: {
@@ -917,15 +869,15 @@ export default function Mode1Page() {
                                   borderColor: "rgba(148, 163, 184, 0.2)",
                                 },
                                 ticks: {
-                                  color: "#334155", // Changed from #e5e7eb
+                                  color: "#e5e7eb",
                                   font: { size: 12 },
                                 },
                               },
                               y: {
                                 title: {
                                   display: true,
-                                  text: "MSE Value",
-                                  color: "#0369a1", // Changed from #38bdf8
+                                  text: "MAPE Value",
+                                  color: "#38bdf8",
                                   font: { weight: "bold" },
                                 },
                                 beginAtZero: true,
@@ -934,9 +886,12 @@ export default function Mode1Page() {
                                   borderColor: "rgba(148, 163, 184, 0.2)",
                                 },
                                 ticks: {
-                                  color: "#334155", // Changed from #e5e7eb
+                                  color: "#e5e7eb",
                                   font: { size: 12 },
-                                  callback: function (this: Scale, tickValue: string | number): string | number {
+                                  callback: function (
+                                    this: Scale<unknown>,
+                                    tickValue: string | number,
+                                  ): string | number {
                                     if (typeof tickValue === "number") {
                                       return tickValue.toFixed(4)
                                     }
@@ -959,9 +914,8 @@ export default function Mode1Page() {
             </div>
           </div>
 
-          {/* Status Distribution */}
-          <div className="bg-gradient-to-br from-white to-sky-100/50 p-6 rounded-lg border border-sky-300/50 shadow-md">
-            <h3 className="text-lg font-medium text-sky-700 mb-2">Status Distribution</h3>
+          <div className="bg-gradient-to-br from-sky-950/40 to-sky-900/20 p-6 rounded-lg border border-sky-800/30 shadow-md">
+            <h3 className="text-lg font-medium text-sky-300 mb-2">Status Distribution</h3>
             <div className="h-64">
               <canvas id="statusPieChart"></canvas>
             </div>
@@ -969,16 +923,13 @@ export default function Mode1Page() {
         </div>
 
         {/* KPIs Section */}
-        <div className="bg-white/90 rounded-xl shadow-xl overflow-hidden p-6 mb-6 border border-sky-200/70 backdrop-blur-sm">
-          <h2 className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-cyan-600 to-sky-800 mb-4">
+        <div className="bg-gray-900/80 rounded-xl shadow-xl overflow-hidden p-6 mb-6 border border-gray-700/50 backdrop-blur-sm">
+          <h2 className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-sky-600 mb-4">
             Key Performance Indicators
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {/* KS-test & Wasserstein */}
-            <div
-              className="bg-gradient-to-br from-white to-sky-100/50 p-4 rounded-lg border border-sky-300/50 shadow-md
- hover:shadow-sky-900/20 hover:border-sky-700/50 transition-all relative"
-            >
+            <div className="bg-gradient-to-br from-sky-950/40 to-sky-900/20 p-4 rounded-lg border border-sky-800/30 shadow-md hover:shadow-sky-900/20 hover:border-sky-700/50 transition-all relative">
               <button
                 onClick={() => setActiveTooltip("kstest")}
                 className="absolute top-2 right-2 text-sky-400 hover:text-sky-300 transition-colors"
@@ -986,22 +937,22 @@ export default function Mode1Page() {
               >
                 <HelpCircle className="h-5 w-5" />
               </button>
-              <h3 className="text-lg font-medium text-sky-700 mb-2">KStest</h3>
+              <h3 className="text-lg font-medium text-sky-300 mb-2">KStest</h3>
               <div className="flex items-center">
                 <div className="w-10 h-10 rounded-full bg-sky-800/40 flex items-center justify-center mr-3">
                   <Info className="h-5 w-5 text-sky-300" />
                 </div>
-                <p className="text-xl font-semibold text-gray-800">
+                <p className="text-xl font-semibold text-white">
                   {loading ? "Loading..." : kpis.find((k) => k.rowKey === "kstest")?.value || "N/A"}
                 </p>
               </div>
               <div className="mt-4 border-t border-sky-800/30 pt-4">
-                <h3 className="text-lg font-medium text-sky-700 mb-2">Wasserstein</h3>
+                <h3 className="text-lg font-medium text-sky-300 mb-2">Wasserstein</h3>
                 <div className="flex items-center">
                   <div className="w-10 h-10 rounded-full bg-sky-800/40 flex items-center justify-center mr-3">
                     <Info className="h-5 w-5 text-sky-300" />
                   </div>
-                  <p className="text-xl font-semibold text-gray-800">
+                  <p className="text-xl font-semibold text-white">
                     {loading ? "Loading..." : kpis.find((k) => k.rowKey === "wasserstein")?.value || "N/A"}
                   </p>
                 </div>
@@ -1016,25 +967,25 @@ export default function Mode1Page() {
             </div>
 
             {/* MSE Metrics */}
-            <div className="bg-gradient-to-br from-white to-sky-100/50 p-4 rounded-lg border border-sky-300/50 shadow-md hover:shadow-sky-900/20 hover:border-sky-700/50 transition-all">
-              <h3 className="text-lg font-medium text-sky-700 mb-2">MSE Metrics</h3>
+            <div className="bg-gradient-to-br from-sky-950/40 to-sky-900/20 p-4 rounded-lg border border-sky-800/30 shadow-md hover:shadow-sky-900/20 hover:border-sky-700/50 transition-all">
+              <h3 className="text-lg font-medium text-sky-300 mb-2">MSE Metrics</h3>
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
-                  <span className="text-sm text-gray-600">Ref MSE:</span>
-                  <span className="text-sm font-medium text-gray-800">
+                  <span className="text-sm text-gray-400">Ref MSE:</span>
+                  <span className="text-sm font-medium text-white">
                     {loading ? "Loading..." : kpis.find((k) => k.rowKey === "mseRef")?.value || "N/A"}
                   </span>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-sm text-gray-600">Curr MSE:</span>
-                  <span className="text-sm font-medium text-gray-800">
+                  <span className="text-sm text-gray-400">Curr MSE:</span>
+                  <span className="text-sm font-medium text-white">
                     {loading ? "Loading..." : kpis.find((k) => k.rowKey === "mseCurrent")?.value || "N/A"}
                   </span>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-sm text-gray-600">Change:</span>
+                  <span className="text-sm text-gray-400">Change:</span>
                   <span
-                    className={`text-sm font-medium ${calculateMseChange().startsWith("+") ? "text-rose-600" : "text-emerald-600"}`}
+                    className={`text-sm font-medium ${calculateMseChange().startsWith("+") ? "text-rose-400" : "text-emerald-400"}`}
                   >
                     {loading ? "Loading..." : calculateMseChange()}
                   </span>
@@ -1055,8 +1006,8 @@ export default function Mode1Page() {
             </div>
 
             {/* Additional Metrics */}
-            <div className="bg-gradient-to-br from-white to-sky-100/50 p-4 rounded-lg border border-sky-300/50 shadow-md hover:shadow-sky-900/20 hover:border-sky-700/50 transition-all">
-              <h3 className="text-lg font-medium text-sky-700 mb-2">Error Metrics</h3>
+            <div className="bg-gradient-to-br from-sky-950/40 to-sky-900/20 p-4 rounded-lg border border-sky-800/30 shadow-md hover:shadow-sky-900/20 hover:border-sky-700/50 transition-all">
+              <h3 className="text-lg font-medium text-sky-300 mb-2">Error Metrics</h3>
               <div className="space-y-4">
                 {kpis
                   .filter((k) =>
@@ -1067,15 +1018,12 @@ export default function Mode1Page() {
                       "Drift Detected",
                     ].includes(k.rowKey),
                   )
-                  .map((kpi) => (
-                    <div
-                      key={kpi.rowKey}
-                      className={kpi.rowKey !== kpis[0].rowKey ? "pt-3 border-t border-sky-800/30" : ""}
-                    >
+                  .map((kpi, index) => (
+                    <div key={kpi.rowKey} className={index > 0 ? "pt-3 border-t border-sky-800/30" : ""}>
                       <div className="flex items-center justify-between">
-                        <span className="text-sm text-gray-600">{kpi.rowKey}:</span>
+                        <span className="text-sm text-gray-400">{kpi.rowKey}:</span>
                         <span
-                          className={`text-sm font-medium ${kpi.rowKey === "Drift Detected" ? (kpi.value === "Yes" ? "text-rose-600" : "text-emerald-600") : getStatusColor(kpi.status)}`}
+                          className={`text-sm font-medium ${kpi.rowKey === "Drift Detected" ? (kpi.value === "Yes" ? "text-rose-400" : "text-emerald-400") : getStatusColor(kpi.status)}`}
                         >
                           {kpi.value}
                         </span>
@@ -1100,7 +1048,7 @@ export default function Mode1Page() {
                   .map((kpi) => (
                     <div key={kpi.rowKey} className="pt-3 border-t border-sky-800/30">
                       <div className="flex items-center justify-between">
-                        <span className="text-sm text-gray-600">{kpi.rowKey}:</span>
+                        <span className="text-sm text-gray-400">{kpi.rowKey}:</span>
                         <span className={`text-sm font-medium ${getStatusColor(kpi.status)}`}>{kpi.value}</span>
                       </div>
                     </div>
@@ -1113,9 +1061,9 @@ export default function Mode1Page() {
         {/* Error Tables Section */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
           {/* Error Comparison */}
-          <div className="bg-white/90 rounded-xl shadow-xl overflow-hidden p-6 border border-sky-200/70 backdrop-blur-sm">
+          <div className="bg-gray-900/80 rounded-xl shadow-xl overflow-hidden p-6 border border-gray-700/50 backdrop-blur-sm">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4">
-              <h2 className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-cyan-600 to-sky-800">
+              <h2 className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-sky-600 mb-4">
                 Error Comparison (Current Period)
               </h2>
               <div className="flex items-center space-x-3 mt-2 sm:mt-0">
@@ -1152,57 +1100,58 @@ export default function Mode1Page() {
             </div>
             {loading ? (
               <div className="flex items-center justify-center py-12">
-                <svg
-                  className="animate-spin h-8 w-8 text-sky-500 mb-2"
-                  xmlns="http://www.w3.org/2000/svg"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                >
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                  <path
-                    className="opacity-75"
-                    fill="currentColor"
-                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                  />
-                </svg>
-                <span className="text-sky-300">Loading error data...</span>
+                <div className="flex flex-col items-center">
+                  <svg
+                    className="animate-spin h-8 w-8 text-sky-500 mb-2"
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                  >
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                    <path
+                      className="opacity-75"
+                      fill="currentColor"
+                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                    />
+                  </svg>
+                  <span className="text-sky-300">Loading error data...</span>
+                </div>
               </div>
             ) : (
-              <div className="max-h-96 overflow-y-auto rounded-lg border border-sky-200/70">
-                <table className="min-w-full divide-y divide-gray-300/70">
-                  <thead className="bg-sky-100/80">
+              <div className="max-h-96 overflow-y-auto rounded-lg border border-gray-700/50">
+                <table className="min-w-full divide-y divide-gray-700/50">
+                  <thead className="bg-gray-800/60">
                     <tr>
-                      <th className="px-6 py-3 text-left text-sm font-medium text-sky-700 uppercase tracking-wider">
+                      <th className="px-6 py-3 text-left text-xs font-medium text-sky-300 uppercase tracking-wider">
                         NO.
                       </th>
-                      <th className="px-6 py-3 text-left text-sm font-medium text-sky-700 uppercase tracking-wider">
+                      <th className="px-6 py-3 text-left text-xs font-medium text-sky-300 uppercase tracking-wider">
                         ID
                       </th>
-                      <th className="px-6 py-3 text-left text-sm font-medium text-sky-700 uppercase tracking-wider">
+                      <th className="px-6 py-3 text-left text-xs font-medium text-sky-300 uppercase tracking-wider">
                         Current Error
                       </th>
-                      <th className="px-6 py-3 text-left text-sm font-medium text-sky-700 uppercase tracking-wider">
+                      <th className="px-6 py-3 text-left text-xs font-medium text-sky-300 uppercase tracking-wider">
                         Reference Error
                       </th>
-                      <th className="px-6 py-3 text-left text-sm font-medium text-sky-700 uppercase tracking-wider">
+                      <th className="px-6 py-3 text-left text-xs font-medium text-sky-300 uppercase tracking-wider">
                         Difference
                       </th>
                     </tr>
                   </thead>
-
-                  <tbody className="bg-white divide-y divide-gray-200">
-                    {filteredErrorData.map((row: TableDataPoint, i: number) => (
-                      <tr key={row.id} className="hover:bg-sky-50 transition-colors duration-150">
-                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-800">{i + 1}</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-800">{row.id}</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-sky-600 font-medium">
+                  <tbody className="bg-gray-800/30 divide-y divide-gray-700/50">
+                    {getFilteredTableData().map((row: TableDataPoint, i: number) => (
+                      <tr key={row.id} className="hover:bg-gray-700/30 transition-colors duration-150">
+                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-white">{i + 1}</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-white">{row.id}</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-sky-400 font-medium">
                           {(row.abs_curr_per ?? 0).toFixed(2)}
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-sky-600 font-medium">
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-sky-400 font-medium">
                           {(row.abs_ref_per ?? 0).toFixed(2)}
                         </td>
                         <td
-                          className={`px-6 py-4 whitespace-nowrap text-sm font-medium ${(row.difference ?? 0) > 0 ? "text-rose-600" : "text-emerald-600"}`}
+                          className={`px-6 py-4 whitespace-nowrap text-sm font-medium ${(row.difference ?? 0) > 0 ? "text-rose-400" : "text-emerald-400"}`}
                         >
                           {(row.difference ?? 0) > 0 ? "+" : ""}
                           {(row.difference ?? 0).toFixed(2)}
@@ -1216,65 +1165,63 @@ export default function Mode1Page() {
           </div>
 
           {/* Threshold Exceedances */}
-          <div className="bg-gradient-to-br from-rose-100/70 to-white rounded-xl shadow-xl overflow-hidden p-6 border border-rose-300/50 backdrop-blur-sm">
-            <h2 className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-rose-500 to-rose-700 mb-4">
+          <div className="bg-gradient-to-br from-rose-950/30 to-gray-900/90 rounded-xl shadow-xl overflow-hidden p-6 border border-rose-900/30 backdrop-blur-sm">
+            <h2 className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-rose-400 to-rose-600 mb-4">
               Threshold Exceedances{" "}
-              <span className="text-sm text-rose-600">(Threshold: {errorPercentageThreshold.toFixed(2)}%)</span>
+              <span className="text-sm text-rose-200">(Threshold: {errorPercentageThreshold.toFixed(2)}%)</span>
             </h2>
             {loading ? (
               <div className="flex items-center justify-center py-12">
-                <svg
-                  className="animate-spin h-8 w-8 text-rose-500 mb-2"
-                  xmlns="http://www.w3.org/2000/svg"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                >
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                  <path
-                    className="opacity-75"
-                    fill="currentColor"
-                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                  />
-                </svg>
-                <span className="text-rose-300">Loading threshold data...</span>
+                <div className="flex flex-col items-center">
+                  <svg
+                    className="animate-spin h-8 w-8 text-rose-500 mb-2"
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                  >
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                    <path
+                      className="opacity-75"
+                      fill="currentColor"
+                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                    />
+                  </svg>
+                  <span className="text-rose-300">Loading threshold data...</span>
+                </div>
               </div>
             ) : (
-              <div className="max-h-96 overflow-y-auto rounded-lg border border-rose-300/50">
-                <table className="min-w-full divide-y divide-rose-300/70">
-                  <thead className="bg-rose-100/80">
+              <div className="max-h-96 overflow-y-auto rounded-lg border border-rose-800/30">
+                <table className="min-w-full divide-y divide-rose-800/30">
+                  <thead className="bg-rose-900/20">
                     <tr>
-                      <th className="px-6 py-3 text-left text-sm font-medium text-rose-700 uppercase tracking-wider">
-                        NO.
-                      </th>
-                      <th className="px-6 py-3 text-left text-sm font-medium text-rose-700 uppercase tracking-wider">
+                      <th className="px-6 py-3 text-left text-xs font-medium text-rose-300 uppercase tracking-wider">
                         ID
                       </th>
-                      <th className="px-6 py-3 text-left text-sm font-medium text-rose-700 uppercase tracking-wider">
+                      <th className="px-6 py-3 text-left text-xs font-medium text-rose-300 uppercase tracking-wider">
                         True Value
                       </th>
-                      <th className="px-6 py-3 text-left text-sm font-medium text-rose-700 uppercase tracking-wider">
+                      <th className="px-6 py-3 text-left text-xs font-medium text-rose-300 uppercase tracking-wider">
                         Predicted Value
                       </th>
-                      <th className="px-6 py-3 text-left text-sm font-medium text-rose-700 uppercase tracking-wider">
+                      <th className="px-6 py-3 text-left text-xs font-medium text-rose-300 uppercase tracking-wider">
                         % Error
                       </th>
                     </tr>
                   </thead>
-                  <tbody className="bg-white divide-y divide-rose-200/70">
+                  <tbody className="bg-rose-900/10 divide-y divide-rose-800/30">
                     {outletsExceedingThreshold
                       .slice()
                       .sort((a, b) => b.percentage_error - a.percentage_error)
-                      .map((outlet, i) => (
-                        <tr key={outlet.id} className="hover:bg-rose-50 transition-colors duration-150">
-                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-800">{i + 1}</td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-800">{outlet.id}</td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                      .map((outlet) => (
+                        <tr key={outlet.id} className="hover:bg-rose-900/20 transition-colors duration-150">
+                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-white">{outlet.id}</td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
                             {outlet.y_true.toFixed(2)}
                           </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
                             {outlet.y_pred.toFixed(2)}
                           </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-rose-600 font-medium">
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-rose-400 font-medium">
                             {outlet.percentage_error.toFixed(2)}%
                           </td>
                         </tr>
@@ -1287,27 +1234,29 @@ export default function Mode1Page() {
         </div>
 
         {/* Error Range Distribution Bar Chart */}
-        <div className="bg-white/90 rounded-xl shadow-xl overflow-hidden p-6 mb-6 border border-sky-200/70 backdrop-blur-sm">
-          <h2 className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-cyan-600 to-sky-800 mb-4">
+        <div className="bg-gray-900/80 rounded-xl shadow-xl overflow-hidden p-6 mb-6 border border-gray-700/50 backdrop-blur-sm">
+          <h2 className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-sky-600 mb-4">
             ID Distribution by Error Percentage Range
           </h2>
-          <div className="h-80 bg-gray-100/80 rounded-lg p-4 border border-sky-200/70 mb-4">
+          <div className="h-80 bg-gray-800/60 rounded-lg p-4 border border-gray-700/50 mb-4">
             {loading ? (
               <div className="flex items-center justify-center h-full">
-                <svg
-                  className="animate-spin h-8 w-8 text-sky-500 mb-2"
-                  xmlns="http://www.w3.org/2000/svg"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                >
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                  <path
-                    className="opacity-75"
-                    fill="currentColor"
-                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                  />
-                </svg>
-                <span className="text-sky-300">Loading chart data...</span>
+                <div className="flex flex-col items-center">
+                  <svg
+                    className="animate-spin h-8 w-8 text-sky-500 mb-2"
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                  >
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                    <path
+                      className="opacity-75"
+                      fill="currentColor"
+                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                    />
+                  </svg>
+                  <span className="text-sky-300">Loading chart data...</span>
+                </div>
               </div>
             ) : (
               <canvas id="errorRangeChart" width={800} height={320}></canvas>
@@ -1317,7 +1266,7 @@ export default function Mode1Page() {
           {/* Selected Range Data Table */}
           {selectedRange && (
             <div className="mt-4">
-              <h3 className="text-xl font-medium text-sky-700 mb-3">
+              <h3 className="text-xl font-medium text-sky-300 mb-3">
                 IDs in {selectedRange} Error Range
                 <button
                   onClick={() => setSelectedRange(null)}
@@ -1328,37 +1277,37 @@ export default function Mode1Page() {
                 </button>
               </h3>
               {selectedRangeOutlets.length === 0 ? (
-                <p className="text-gray-600">No IDs in this range</p>
+                <p className="text-gray-400">No IDs in this range</p>
               ) : (
-                <div className="max-h-96 overflow-y-auto rounded-lg border border-sky-300/50">
-                  <table className="min-w-full divide-y divide-sky-300/70">
-                    <thead className="bg-sky-100/80">
+                <div className="max-h-96 overflow-y-auto rounded-lg border border-sky-800/30">
+                  <table className="min-w-full divide-y divide-sky-800/30">
+                    <thead className="bg-sky-900/20">
                       <tr>
-                        <th className="px-6 py-3 text-left text-sm font-medium text-sky-700 uppercase tracking-wider">
+                        <th className="px-6 py-3 text-left text-xs font-medium text-sky-300 uppercase tracking-wider">
                           ID
                         </th>
-                        <th className="px-6 py-3 text-left text-sm font-medium text-sky-700 uppercase tracking-wider">
+                        <th className="px-6 py-3 text-left text-xs font-medium text-sky-300 uppercase tracking-wider">
                           True Value
                         </th>
-                        <th className="px-6 py-3 text-left text-sm font-medium text-sky-700 uppercase tracking-wider">
+                        <th className="px-6 py-3 text-left text-xs font-medium text-sky-300 uppercase tracking-wider">
                           Predicted Value
                         </th>
-                        <th className="px-6 py-3 text-left text-sm font-medium text-sky-700 uppercase tracking-wider">
+                        <th className="px-6 py-3 text-left text-xs font-medium text-sky-300 uppercase tracking-wider">
                           % Error
                         </th>
                       </tr>
                     </thead>
-                    <tbody className="bg-white divide-y divide-sky-200/70">
+                    <tbody className="bg-sky-900/10 divide-y divide-sky-800/30">
                       {selectedRangeOutlets.map((outlet: AllOutlets) => (
-                        <tr key={outlet.id} className="hover:bg-sky-50 transition-colors duration-150">
-                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-800">{outlet.id}</td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                        <tr key={outlet.id} className="hover:bg-sky-900/20 transition-colors duration-150">
+                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-white">{outlet.id}</td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
                             {outlet.y_true.toFixed(2)}
                           </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
                             {outlet.y_pred.toFixed(2)}
                           </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-sky-600 font-medium">
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-sky-400 font-medium">
                             {outlet.percentage_error.toFixed(2)}%
                           </td>
                         </tr>
@@ -1372,9 +1321,9 @@ export default function Mode1Page() {
         </div>
 
         {/* XAI Result Section */}
-        <div className="bg-white/90 rounded-xl shadow-xl overflow-hidden p-6 mb-6 border border-sky-200/70 backdrop-blur-sm">
+        <div className="bg-gray-900/80 rounded-xl shadow-xl overflow-hidden p-6 mb-6 border border-gray-700/50 backdrop-blur-sm">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4">
-            <h2 className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-cyan-600 to-sky-800">
+            <h2 className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-sky-600 mb-4">
               XAI Result
             </h2>
             <button
@@ -1424,6 +1373,7 @@ export default function Mode1Page() {
           </div>
         </div>
       </main>
+
       {/* Tooltip Popup */}
       {activeTooltip && <TooltipPopup type={activeTooltip} onClose={() => setActiveTooltip(null)} />}
     </div>

@@ -48,6 +48,8 @@ export default function Mode2Page(): React.ReactElement {
   const searchParams = useSearchParams()
   const businessUnitParam = searchParams.get("businessUnit") || ""
   const useCaseParam = searchParams.get("useCase") || ""
+  const alertKeeperParam = searchParams.get("alertKeeper") || ""
+
 
   // --- STATE HOOKS ---
   const [kpis, setKpis] = useState<KPI[]>([])
@@ -55,10 +57,13 @@ export default function Mode2Page(): React.ReactElement {
     plotData: [],
     tableData: [],
   })
+    // how many outlets went over the threshold
+  const [outletsExceedingThresholdCount, setOutletsExceedingThresholdCount] = useState<number>(0)
+
   const [outletsExceedingThreshold, setOutletsExceedingThreshold] = useState<OutletsExceedingThreshold[]>([])
   const [indices, setIndices] = useState<Indices>({ normal: [], warning: [], drift: [] })
   const [currentPeriod, setCurrentPeriod] = useState<string>("N/A")
-  const [outletsExceedingThresholdCount, setOutletsExceedingThresholdCount] = useState<number>(0)
+//  const [outletsExceedingThresholdCount, setOutletsExceedingThresholdCoufetchEntriesTablent] = useState<number>(0)
   const [xaiExplanation, setXaiExplanation] = useState<string>("")
   const [loading, setLoading] = useState<boolean>(true)
   const [backendError, setBackendError] = useState<string | null>(null)
@@ -72,7 +77,8 @@ export default function Mode2Page(): React.ReactElement {
   const [businessUnit, setBusinessUnit] = useState<string>("")
   const [useCase, setUseCase] = useState<string>("")
   const [shortCode, setShortCode] = useState<string>("")
-  const [alertKeeperValue, setAlertKeeperValue] = useState<string>("")
+  const [alertKeeperValue, setAlertKeeperValue] = useState<string>(alertKeeperParam)
+
 
   // Entries state (fetched via dashboardService)
   const [entries, setEntries] = useState<EntryTableItem[]>([])
@@ -174,7 +180,7 @@ export default function Mode2Page(): React.ReactElement {
           setUseCase("Not Selected")
           setShortCode("Not Available")
           setRuntimeOptions([])
-          setAlertKeeperValue("Not Selected")
+         
           setRuntimeValue("")
         } else {
           // Initialize with first entry
@@ -186,8 +192,6 @@ export default function Mode2Page(): React.ReactElement {
           setRuntimeOptions(uniqueRuntimes)
           setRuntimeValue(uniqueRuntimes[0])
 
-          const initialKeeper = filtered.find((e) => e.Runtime === uniqueRuntimes[0])?.alertKeeper || ""
-          setAlertKeeperValue(initialKeeper)
         }
       } catch (err) {
         console.error(err)
@@ -198,13 +202,7 @@ export default function Mode2Page(): React.ReactElement {
     loadEntries()
   }, [businessUnitParam, useCaseParam])
 
-  // 2) Update alertKeeper when runtimeValue or entries change
-  useEffect(() => {
-    if (!runtimeValue) return
 
-    const matched = entries.find((e) => e.Runtime === runtimeValue)
-    setAlertKeeperValue(matched?.alertKeeper || "Not Selected")
-  }, [runtimeValue, entries])
 
   // Fetch & prepare all data
   const fetchAllData = useCallback(async (): Promise<void> => {

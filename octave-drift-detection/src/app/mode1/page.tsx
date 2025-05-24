@@ -143,6 +143,7 @@ export default function Mode1Page() {
   const searchParams = useSearchParams()
   const businessUnitParam = searchParams.get("businessUnit") || ""
   const useCaseParam = searchParams.get("useCase") || ""
+  const alertKeeperParam = searchParams.get("alertKeeper") || ""
 
   const chartRef = useRef<Chart | null>(null)
   const pieChartRef = useRef<Chart | null>(null)
@@ -165,7 +166,7 @@ export default function Mode1Page() {
   const [businessUnit, setBusinessUnit] = useState<string>("")
   const [useCase, setUseCase] = useState<string>("")
   const [shortCode, setShortCode] = useState<string>("")
-  const [alertKeeperValue, setAlertKeeperValue] = useState<string>("")
+  const [alertKeeperValue] = useState<string>(alertKeeperParam)
 
   // Runtime & UI
   const [runtimeValue, setRuntimeValue] = useState<string>("")
@@ -209,7 +210,7 @@ export default function Mode1Page() {
           setUseCase("Not Selected")
           setShortCode("Not Available")
           setRuntimeOptions([])
-          setAlertKeeperValue("Not Selected")
+          
           setRuntimeValue("")
         } else {
           setBusinessUnit(filtered[0].BusinessUnit)
@@ -220,8 +221,6 @@ export default function Mode1Page() {
           setRuntimeOptions(uniqueRuntimes)
           setRuntimeValue(uniqueRuntimes[0])
 
-          const initialKeeper = filtered.find((e) => e.Runtime === uniqueRuntimes[0])?.alertKeeper || ""
-          setAlertKeeperValue(initialKeeper)
         }
       } catch (err) {
         console.error(err)
@@ -232,13 +231,7 @@ export default function Mode1Page() {
     loadEntries()
   }, [businessUnitParam, useCaseParam])
 
-  // Update alertKeeper when runtimeValue or entries change
-  useEffect(() => {
-    if (!runtimeValue) return
 
-    const matched = entries.find((e) => e.Runtime === runtimeValue)
-    setAlertKeeperValue(matched?.alertKeeper || "Not Selected")
-  }, [runtimeValue, entries])
 
   // Fetch dynamic data whenever runtimeValue changes
   const fetchAllData = async (): Promise<void> => {

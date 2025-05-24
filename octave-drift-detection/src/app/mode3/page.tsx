@@ -31,12 +31,14 @@ export default function Mode3Page() {
   const searchParams = useSearchParams()
   const businessUnitParam = searchParams.get("businessUnit") || ""
   const useCaseParam = searchParams.get("useCase") || ""
+  const alertKeeperParam   = searchParams.get("alertKeeper") || ""
 
   // --- FILTER STATES ---
   const [businessUnit, setBusinessUnit] = useState<string>("")
   const [useCase, setUseCase] = useState<string>("")
   const [shortCode, setShortCode] = useState<string>("")
-  const [alertKeeperValue, setAlertKeeperValue] = useState<string>("")
+  const [alertKeeperValue, setAlertKeeperValue] = useState<string>(alertKeeperParam)
+
 
   // Entries state (fetched via dashboardService)
   const [entries, setEntries] = useState<EntryTableItem[]>([])
@@ -120,7 +122,7 @@ export default function Mode3Page() {
           setUseCase("Not Selected")
           setShortCode("Not Available")
           setRuntimeOptions([])
-          setAlertKeeperValue("Not Selected")
+          
           setRuntimeValue("")
         } else {
           // Initialize with first entry
@@ -132,8 +134,7 @@ export default function Mode3Page() {
           setRuntimeOptions(uniqueRuntimes)
           setRuntimeValue(uniqueRuntimes[0])
 
-          const initialKeeper = filtered.find((e) => e.Runtime === uniqueRuntimes[0])?.alertKeeper || ""
-          setAlertKeeperValue(initialKeeper)
+        
         }
       } catch (err) {
         console.error(err)
@@ -144,13 +145,6 @@ export default function Mode3Page() {
     loadEntries()
   }, [businessUnitParam, useCaseParam])
 
-  // 2) Update alertKeeper when runtimeValue or entries change
-  useEffect(() => {
-    if (!runtimeValue) return
-
-    const matched = entries.find((e) => e.Runtime === runtimeValue)
-    setAlertKeeperValue(matched?.alertKeeper || "Not Selected")
-  }, [runtimeValue, entries])
 
   // --- FETCH DATA ---
   const fetchAllData = async () => {

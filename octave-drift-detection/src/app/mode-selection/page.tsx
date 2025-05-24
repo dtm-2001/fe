@@ -18,6 +18,7 @@ interface UseCase {
   mode: "mode1" | "mode2" | "mode3" | "mode4"
   type: string
   businessUnit: string
+  alertKeeper: string
 }
 
 // Enhanced mode configuration with colors
@@ -47,18 +48,21 @@ const fallbackUseCases: UseCase[] = [
     mode: "mode1",
     type: "Summary Dashboard",
     businessUnit: "Sales",
+    alertKeeper: "noreply@company.com",
   },
   {
     name: "Marketing Trends",
     mode: "mode2",
     type: "Analytics",
     businessUnit: "Marketing",
+    alertKeeper: "noreply@company.com",
   },
   {
     name: "Support Tickets",
     mode: "mode3",
     type: "Live Queue",
     businessUnit: "Customer Success",
+    alertKeeper: "noreply@company.com",
   },
 ]
 
@@ -207,9 +211,7 @@ export default function ModeSelection() {
                   return (
                     <Link
                       key={`${useCase.name}-${useCase.mode}`}
-                      href={`/${useCase.mode}?businessUnit=${encodeURIComponent(
-                        useCase.businessUnit
-                      )}&useCase=${encodeURIComponent(useCase.name)}`}
+                      href={`/${useCase.mode}?businessUnit=${encodeURIComponent(useCase.businessUnit)}&useCase=${encodeURIComponent(useCase.name)}&alertKeeper=${encodeURIComponent(useCase.alertKeeper)}`}
                       className="group block"
                     >
                       <article

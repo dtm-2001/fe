@@ -3,7 +3,7 @@ export interface ModeSelectionEntry {
   businessUnit: string;
   useCase: string;
   mode: string;
-  type?: string;
+  alertKeeper: string;    // ← new
 }
 
 let cachedData: ModeSelectionEntry[] | null = null;
@@ -12,7 +12,9 @@ export async function fetchModeSelectionData(): Promise<ModeSelectionEntry[]> {
   if (cachedData) {
     return cachedData;
   }
-  const response = await fetch('/api/mode-selection-data', { credentials: 'include' });
+  const response = await fetch('/api/mode-selection-data', {
+    credentials: 'include'
+  });
   if (!response.ok) {
     throw new Error('Failed to fetch mode selection data');
   }
@@ -21,13 +23,17 @@ export async function fetchModeSelectionData(): Promise<ModeSelectionEntry[]> {
   return data;
 }
 
-/**
- * Get use cases for a given user.
- * Returns array of objects with name, mode, and type.
- * The name is constructed as "businessUnit-useCase".
- * The type is assigned as "Default" since original JSON does not have it.
- */
-export async function getUseCasesForUser(user: string): Promise<Array<{ businessUnit: string; name: string; mode: string; type: string }>> {
+export interface UserUseCase {
+  businessUnit: string;
+  name: string;        // `${businessUnit}-${useCase}`
+  mode: string;
+  type: string;        // mapped from mode
+  alertKeeper: string; // carried through
+}
+
+export async function getUseCasesForUser(
+  user: string
+): Promise<UserUseCase[]> {
   const data = await fetchModeSelectionData();
   const userEntries = data.filter(entry => entry.user === user);
 
@@ -42,6 +48,7 @@ export async function getUseCasesForUser(user: string): Promise<Array<{ business
     businessUnit: entry.businessUnit,
     name: `${entry.businessUnit}-${entry.useCase}`,
     mode: entry.mode,
-    type: modeTypeMap[entry.mode] || "Default"
+    type: modeTypeMap[entry.mode] || "Default",
+    alertKeeper: entry.alertKeeper
   }));
 }

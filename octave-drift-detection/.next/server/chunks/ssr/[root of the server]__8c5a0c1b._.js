@@ -1625,7 +1625,7 @@ function Mode1Page() {
                                                                             },
                                                                             callback: function(tickValue) {
                                                                                 if (typeof tickValue === "number") {
-                                                                                    return tickValue.toFixed(4);
+                                                                                    return tickValue.toFixed(0);
                                                                                 }
                                                                                 return tickValue;
                                                                             }

@@ -775,7 +775,7 @@ export default function Mode1Page() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
           <div className="lg:col-span-2 bg-gray-900/80 rounded-xl shadow-xl overflow-hidden p-6 border border-gray-700/50 backdrop-blur-sm">
             <h2 className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-sky-600 mb-4">
-              MAPE Trend Analysis
+              MSE Trend Analysis
             </h2>
             <div className="h-80 bg-gray-800/60 rounded-lg p-4 border border-gray-700/50">
               {loading ? (
@@ -814,7 +814,7 @@ export default function Mode1Page() {
                             labels: mseTrend.map((d) => d.time_period),
                             datasets: [
                               {
-                                label: "MAPE Values",
+                                label: "MSE Values",
                                 data: mseTrend.map((d) => d.MSE),
                                 borderColor: "rgb(56, 189, 248)",
                                 backgroundColor: "rgba(56, 189, 248, 0.2)",
@@ -845,7 +845,7 @@ export default function Mode1Page() {
                                 borderWidth: 1,
                                 padding: 10,
                                 callbacks: {
-                                  label: (ctx) => `MAPE: ${ctx.parsed.y.toFixed(4)}`,
+                                  label: (ctx) => `MSE: ${ctx.parsed.y.toFixed(4)}`,
                                 },
                               },
                             },
@@ -869,7 +869,7 @@ export default function Mode1Page() {
                               y: {
                                 title: {
                                   display: true,
-                                  text: "MAPE Value",
+                                  text: "MSE Value",
                                   color: "#38bdf8",
                                   font: { weight: "bold" },
                                 },
@@ -886,7 +886,7 @@ export default function Mode1Page() {
                                     tickValue: string | number,
                                   ): string | number {
                                     if (typeof tickValue === "number") {
-                                      return tickValue.toFixed(4)
+                                      return tickValue.toFixed(0)
                                     }
                                     return tickValue
                                   },

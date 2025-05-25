@@ -3084,6 +3084,24 @@
   }
 
   @media (prefers-color-scheme: dark) {
+    .dark\:border-amber-800 {
+      border-color: var(--color-amber-800);
+    }
+  }
+
+  @media (prefers-color-scheme: dark) {
+    .dark\:border-blue-800 {
+      border-color: var(--color-blue-800);
+    }
+  }
+
+  @media (prefers-color-scheme: dark) {
+    .dark\:border-emerald-800 {
+      border-color: var(--color-emerald-800);
+    }
+  }
+
+  @media (prefers-color-scheme: dark) {
     .dark\:border-gray-300\/50 {
       border-color: #d1d5dc80;
     }
@@ -3098,6 +3116,72 @@
   @media (prefers-color-scheme: dark) {
     .dark\:border-gray-600 {
       border-color: var(--color-gray-600);
+    }
+  }
+
+  @media (prefers-color-scheme: dark) {
+    .dark\:border-gray-700 {
+      border-color: var(--color-gray-700);
+    }
+  }
+
+  @media (prefers-color-scheme: dark) {
+    .dark\:border-red-700 {
+      border-color: var(--color-red-700);
+    }
+  }
+
+  @media (prefers-color-scheme: dark) {
+    .dark\:border-red-800 {
+      border-color: var(--color-red-800);
+    }
+  }
+
+  @media (prefers-color-scheme: dark) {
+    .dark\:bg-amber-800 {
+      background-color: var(--color-amber-800);
+    }
+  }
+
+  @media (prefers-color-scheme: dark) {
+    .dark\:bg-amber-900 {
+      background-color: var(--color-amber-900);
+    }
+  }
+
+  @media (prefers-color-scheme: dark) {
+    .dark\:bg-blue-800 {
+      background-color: var(--color-blue-800);
+    }
+  }
+
+  @media (prefers-color-scheme: dark) {
+    .dark\:bg-blue-900 {
+      background-color: var(--color-blue-900);
+    }
+  }
+
+  @media (prefers-color-scheme: dark) {
+    .dark\:bg-emerald-800 {
+      background-color: var(--color-emerald-800);
+    }
+  }
+
+  @media (prefers-color-scheme: dark) {
+    .dark\:bg-emerald-900 {
+      background-color: var(--color-emerald-900);
+    }
+  }
+
+  @media (prefers-color-scheme: dark) {
+    .dark\:bg-gray-600 {
+      background-color: var(--color-gray-600);
+    }
+  }
+
+  @media (prefers-color-scheme: dark) {
+    .dark\:bg-gray-700 {
+      background-color: var(--color-gray-700);
     }
   }
 
@@ -3144,6 +3228,18 @@
   }
 
   @media (prefers-color-scheme: dark) {
+    .dark\:bg-red-800 {
+      background-color: var(--color-red-800);
+    }
+  }
+
+  @media (prefers-color-scheme: dark) {
+    .dark\:bg-red-900 {
+      background-color: var(--color-red-900);
+    }
+  }
+
+  @media (prefers-color-scheme: dark) {
     .dark\:bg-sky-200\/40 {
       background-color: #b8e6fe66;
     }
@@ -3170,8 +3266,22 @@
   }
 
   @media (prefers-color-scheme: dark) {
+    .dark\:from-gray-900 {
+      --tw-gradient-from: var(--color-gray-900);
+      --tw-gradient-stops: var(--tw-gradient-via-stops, var(--tw-gradient-position), var(--tw-gradient-from) var(--tw-gradient-from-position), var(--tw-gradient-to) var(--tw-gradient-to-position));
+    }
+  }
+
+  @media (prefers-color-scheme: dark) {
     .dark\:to-gray-100 {
       --tw-gradient-to: var(--color-gray-100);
+      --tw-gradient-stops: var(--tw-gradient-via-stops, var(--tw-gradient-position), var(--tw-gradient-from) var(--tw-gradient-from-position), var(--tw-gradient-to) var(--tw-gradient-to-position));
+    }
+  }
+
+  @media (prefers-color-scheme: dark) {
+    .dark\:to-gray-800 {
+      --tw-gradient-to: var(--color-gray-800);
       --tw-gradient-stops: var(--tw-gradient-via-stops, var(--tw-gradient-position), var(--tw-gradient-from) var(--tw-gradient-from-position), var(--tw-gradient-to) var(--tw-gradient-to-position));
     }
   }
@@ -3184,8 +3294,38 @@
   }
 
   @media (prefers-color-scheme: dark) {
+    .dark\:text-amber-200 {
+      color: var(--color-amber-200);
+    }
+  }
+
+  @media (prefers-color-scheme: dark) {
     .dark\:text-amber-400 {
       color: var(--color-amber-400);
+    }
+  }
+
+  @media (prefers-color-scheme: dark) {
+    .dark\:text-blue-200 {
+      color: var(--color-blue-200);
+    }
+  }
+
+  @media (prefers-color-scheme: dark) {
+    .dark\:text-blue-300 {
+      color: var(--color-blue-300);
+    }
+  }
+
+  @media (prefers-color-scheme: dark) {
+    .dark\:text-blue-400 {
+      color: var(--color-blue-400);
+    }
+  }
+
+  @media (prefers-color-scheme: dark) {
+    .dark\:text-emerald-200 {
+      color: var(--color-emerald-200);
     }
   }
 
@@ -3214,8 +3354,26 @@
   }
 
   @media (prefers-color-scheme: dark) {
+    .dark\:text-gray-500 {
+      color: var(--color-gray-500);
+    }
+  }
+
+  @media (prefers-color-scheme: dark) {
     .dark\:text-gray-900 {
       color: var(--color-gray-900);
+    }
+  }
+
+  @media (prefers-color-scheme: dark) {
+    .dark\:text-red-200 {
+      color: var(--color-red-200);
+    }
+  }
+
+  @media (prefers-color-scheme: dark) {
+    .dark\:text-red-400 {
+      color: var(--color-red-400);
     }
   }
 
@@ -3234,6 +3392,28 @@
   @media (prefers-color-scheme: dark) {
     .dark\:text-sky-400 {
       color: var(--color-sky-400);
+    }
+  }
+
+  @media (prefers-color-scheme: dark) {
+    .dark\:text-white {
+      color: var(--color-white);
+    }
+  }
+
+  @media (prefers-color-scheme: dark) {
+    @media (hover: hover) {
+      .dark\:group-hover\:text-blue-400:is(:where(.group):hover *) {
+        color: var(--color-blue-400);
+      }
+    }
+  }
+
+  @media (prefers-color-scheme: dark) {
+    @media (hover: hover) {
+      .dark\:group-hover\:text-gray-300:is(:where(.group):hover *) {
+        color: var(--color-gray-300);
+      }
     }
   }
 
@@ -3271,6 +3451,20 @@
     @media (hover: hover) {
       .dark\:hover\:bg-sky-200:hover {
         background-color: var(--color-sky-200);
+      }
+    }
+  }
+
+  @media (prefers-color-scheme: dark) {
+    @media (hover: hover) {
+      .dark\:hover\:shadow-gray-700:hover {
+        --tw-shadow-color: oklch(37.3% .034 259.733);
+      }
+
+      @supports (color: color-mix(in lab, red, red)) {
+        .dark\:hover\:shadow-gray-700:hover {
+          --tw-shadow-color: color-mix(in oklab, var(--color-gray-700) var(--tw-shadow-alpha), transparent);
+        }
       }
     }
   }

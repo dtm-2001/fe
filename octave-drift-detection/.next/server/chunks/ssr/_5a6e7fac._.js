@@ -71,20 +71,20 @@ var __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$services$2f$modeSelec
 // Enhanced mode configuration with colors
 const modeConfig = {
     mode1: {
-        bgColor: "bg-blue-50 border-blue-200",
-        badgeColor: "bg-blue-100 text-blue-800"
+        bgColor: "bg-blue-50 border-blue-200 dark:bg-blue-900 dark:border-blue-800",
+        badgeColor: "bg-blue-100 text-blue-800 dark:bg-blue-800 dark:text-blue-200"
     },
     mode2: {
-        bgColor: "bg-amber-50 border-amber-200",
-        badgeColor: "bg-amber-100 text-amber-800"
+        bgColor: "bg-amber-50 border-amber-200 dark:bg-amber-900 dark:border-amber-800",
+        badgeColor: "bg-amber-100 text-amber-800 dark:bg-amber-800 dark:text-amber-200"
     },
     mode3: {
-        bgColor: "bg-emerald-50 border-emerald-200",
-        badgeColor: "bg-emerald-100 text-emerald-800"
+        bgColor: "bg-emerald-50 border-emerald-200 dark:bg-emerald-900 dark:border-emerald-800",
+        badgeColor: "bg-emerald-100 text-emerald-800 dark:bg-emerald-800 dark:text-emerald-200"
     },
     mode4: {
-        bgColor: "bg-red-50 border-red-200",
-        badgeColor: "bg-red-100 text-red-800"
+        bgColor: "bg-red-50 border-red-200 dark:bg-red-900 dark:border-red-800",
+        badgeColor: "bg-red-100 text-red-800 dark:bg-red-800 dark:text-red-200"
     }
 };
 // Fallback data to use when backend is unreachable or returns no dashboards
@@ -156,21 +156,21 @@ function ModeSelection() {
     // Loading state
     if (loading) {
         return /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
-            className: "min-h-screen bg-gradient-to-br from-slate-50 to-slate-100",
+            className: "min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-gray-900 dark:to-gray-800",
             children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
                 className: "container mx-auto px-4 py-12 max-w-6xl",
                 children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
                     className: "flex flex-col items-center justify-center min-h-96",
                     children: [
                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$loader$2d$circle$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__$3c$export__default__as__Loader2$3e$__["Loader2"], {
-                            className: "h-8 w-8 animate-spin text-blue-600 mb-4"
+                            className: "h-8 w-8 animate-spin text-blue-600 dark:text-blue-400 mb-4"
                         }, void 0, false, {
                             fileName: "[project]/src/app/mode-selection/page.tsx",
                             lineNumber: 121,
                             columnNumber: 13
                         }, this),
                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
-                            className: "text-slate-600 font-medium",
+                            className: "text-slate-600 dark:text-gray-400 font-medium",
                             children: "Loading your dashboards..."
                         }, void 0, false, {
                             fileName: "[project]/src/app/mode-selection/page.tsx",
@@ -197,14 +197,14 @@ function ModeSelection() {
     // Error state (only for non-load-related errors, if any)
     if (error) {
         return /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
-            className: "min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 flex items-center justify-center p-4",
+            className: "min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-gray-900 dark:to-gray-800 flex items-center justify-center p-4",
             children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
-                className: "bg-white border border-red-200 rounded-2xl p-8 shadow-lg max-w-md w-full",
+                className: "bg-white dark:bg-gray-800 border border-red-200 dark:border-red-700 rounded-2xl p-8 shadow-lg max-w-md w-full",
                 children: [
                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
-                        className: "flex items-center justify-center w-12 h-12 bg-red-100 rounded-full mx-auto mb-4",
+                        className: "flex items-center justify-center w-12 h-12 bg-red-100 dark:bg-red-900 rounded-full mx-auto mb-4",
                         children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$circle$2d$alert$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__$3c$export__default__as__AlertCircle$3e$__["AlertCircle"], {
-                            className: "h-6 w-6 text-red-600"
+                            className: "h-6 w-6 text-red-600 dark:text-red-400"
                         }, void 0, false, {
                             fileName: "[project]/src/app/mode-selection/page.tsx",
                             lineNumber: 137,
@@ -216,7 +216,7 @@ function ModeSelection() {
                         columnNumber: 11
                     }, this),
                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("h3", {
-                        className: "text-lg font-semibold text-gray-900 text-center mb-2",
+                        className: "text-lg font-semibold dark:text-white text-gray-900 text-center mb-2",
                         children: "Something went wrong"
                     }, void 0, false, {
                         fileName: "[project]/src/app/mode-selection/page.tsx",
@@ -224,7 +224,7 @@ function ModeSelection() {
                         columnNumber: 11
                     }, this),
                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
-                        className: "text-gray-600 text-center mb-6",
+                        className: "text-gray-600 dark:text-gray-400 text-center mb-6",
                         children: error
                     }, void 0, false, {
                         fileName: "[project]/src/app/mode-selection/page.tsx",
@@ -261,7 +261,7 @@ function ModeSelection() {
     const totalUseCases = useCases.length;
     const totalBusinessUnits = Object.keys(grouped).length;
     return /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
-        className: "min-h-screen bg-gradient-to-br from-slate-50 to-slate-100",
+        className: "min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-gray-900 dark:to-gray-800",
         children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
             className: "container mx-auto px-4 py-12 max-w-6xl",
             children: [
@@ -272,9 +272,9 @@ function ModeSelection() {
                             className: "flex items-center gap-3 mb-4",
                             children: [
                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
-                                    className: "flex items-center justify-center w-10 h-10 bg-blue-100 rounded-full",
+                                    className: "flex items-center justify-center w-10 h-10 bg-blue-100 dark:bg-blue-800 rounded-full",
                                     children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$user$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__$3c$export__default__as__User$3e$__["User"], {
-                                        className: "h-5 w-5 text-blue-600"
+                                        className: "h-5 w-5 text-blue-600 dark:text-blue-300"
                                     }, void 0, false, {
                                         fileName: "[project]/src/app/mode-selection/page.tsx",
                                         lineNumber: 171,
@@ -288,7 +288,7 @@ function ModeSelection() {
                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
                                     children: [
                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("h1", {
-                                            className: "text-3xl font-bold text-gray-900",
+                                            className: "text-3xl font-bold text-gray-900 dark:text-white",
                                             children: "Welcome back"
                                         }, void 0, false, {
                                             fileName: "[project]/src/app/mode-selection/page.tsx",
@@ -296,7 +296,7 @@ function ModeSelection() {
                                             columnNumber: 15
                                         }, this),
                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
-                                            className: "text-gray-600 mt-1",
+                                            className: "text-gray-600 dark:text-gray-400 mt-1",
                                             children: user
                                         }, void 0, false, {
                                             fileName: "[project]/src/app/mode-selection/page.tsx",
@@ -316,7 +316,7 @@ function ModeSelection() {
                             columnNumber: 11
                         }, this),
                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
-                            className: "flex items-center gap-6 text-sm text-gray-600",
+                            className: "flex items-center gap-6 text-sm text-gray-600 dark:text-gray-400",
                             children: [
                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
                                     className: "flex items-center gap-2",
@@ -345,7 +345,7 @@ function ModeSelection() {
                                     columnNumber: 13
                                 }, this),
                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
-                                    className: "w-1 h-1 bg-gray-400 rounded-full"
+                                    className: "w-1 h-1 bg-gray-400 dark:bg-gray-600 rounded-full"
                                 }, void 0, false, {
                                     fileName: "[project]/src/app/mode-selection/page.tsx",
                                     lineNumber: 186,
@@ -381,7 +381,7 @@ function ModeSelection() {
                                     className: "flex items-center gap-3 mb-6",
                                     children: [
                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("h2", {
-                                            className: "text-xl font-semibold text-gray-900",
+                                            className: "text-xl font-semibold text-gray-900 dark:text-white",
                                             children: businessUnit
                                         }, void 0, false, {
                                             fileName: "[project]/src/app/mode-selection/page.tsx",
@@ -389,7 +389,7 @@ function ModeSelection() {
                                             columnNumber: 17
                                         }, this),
                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
-                                            className: "inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800",
+                                            className: "inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200",
                                             children: [
                                                 cases.length,
                                                 " dashboard",
@@ -416,21 +416,21 @@ function ModeSelection() {
                                             className: "group block",
                                             children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("article", {
                                                 className: `
-                        relative bg-white border-2 rounded-2xl p-6 
-                        transition-all duration-200 ease-out
-                        hover:shadow-lg hover:shadow-slate-200 hover:-translate-y-1
-                        focus-within:ring-2 focus-within:ring-blue-500 focus-within:ring-offset-2
-                        ${config.bgColor}
-                      `,
+                          relative bg-white dark:bg-gray-800 border-2 rounded-2xl p-6 
+                          transition-all duration-200 ease-out
+                          hover:shadow-lg hover:shadow-slate-200 dark:hover:shadow-gray-700 hover:-translate-y-1
+                          focus-within:ring-2 focus-within:ring-blue-500 focus-within:ring-offset-2
+                          ${config.bgColor}
+                        `,
                                                 children: [
                                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
                                                         className: "flex items-center justify-between mb-4",
                                                         children: [
                                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
                                                                 className: `
-                            inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold tracking-wide uppercase
-                            ${config.badgeColor}
-                          `,
+                              inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold tracking-wide uppercase
+                              ${config.badgeColor}
+                            `,
                                                                 children: [
                                                                     "M",
                                                                     modeNumber
@@ -441,7 +441,7 @@ function ModeSelection() {
                                                                 columnNumber: 27
                                                             }, this),
                                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$chevron$2d$right$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__$3c$export__default__as__ChevronRight$3e$__["ChevronRight"], {
-                                                                className: "h-5 w-5 text-gray-400 group-hover:text-gray-600 transition-colors"
+                                                                className: "h-5 w-5 text-gray-400 dark:text-gray-500 group-hover:text-gray-600 transition-colors"
                                                             }, void 0, false, {
                                                                 fileName: "[project]/src/app/mode-selection/page.tsx",
                                                                 lineNumber: 236,
@@ -457,7 +457,7 @@ function ModeSelection() {
                                                         className: "space-y-3",
                                                         children: [
                                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("h3", {
-                                                                className: "font-semibold text-lg text-gray-900 group-hover:text-gray-700 transition-colors",
+                                                                className: "font-semibold text-lg text-gray-900 dark:text-white group-hover:text-gray-700 dark:group-hover:text-gray-300 transition-colors",
                                                                 children: useCase.name
                                                             }, void 0, false, {
                                                                 fileName: "[project]/src/app/mode-selection/page.tsx",
@@ -465,7 +465,7 @@ function ModeSelection() {
                                                                 columnNumber: 27
                                                             }, this),
                                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
-                                                                className: "text-sm text-gray-600",
+                                                                className: "text-sm text-gray-600 dark:text-gray-400",
                                                                 children: useCase.type
                                                             }, void 0, false, {
                                                                 fileName: "[project]/src/app/mode-selection/page.tsx",
@@ -479,9 +479,9 @@ function ModeSelection() {
                                                         columnNumber: 25
                                                     }, this),
                                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
-                                                        className: "mt-6 pt-4 border-t border-white border-opacity-50",
+                                                        className: "mt-6 pt-4 border-t border-white border-opacity-50 dark:border-gray-700",
                                                         children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
-                                                            className: "flex items-center text-sm font-medium text-gray-700 group-hover:text-blue-600 transition-colors",
+                                                            className: "flex items-center text-sm font-medium text-gray-700 dark:text-gray-300 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors",
                                                             children: [
                                                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
                                                                     children: "Open Dashboard"
@@ -537,9 +537,9 @@ function ModeSelection() {
                     columnNumber: 9
                 }, this),
                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("footer", {
-                    className: "mt-16 pt-8 border-t border-gray-200",
+                    className: "mt-16 pt-8 border-t border-gray-200 dark:border-gray-700",
                     children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
-                        className: "text-center text-sm text-gray-500",
+                        className: "text-center text-sm text-gray-500 dark:text-gray-400",
                         children: "Need help? Contact your system administrator or visit our documentation."
                     }, void 0, false, {
                         fileName: "[project]/src/app/mode-selection/page.tsx",

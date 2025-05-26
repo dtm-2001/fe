@@ -21,27 +21,29 @@ interface UseCase {
   alertKeeper: string
 }
 
-// Enhanced mode configuration with colors
+// Dark‐mode only config
 const modeConfig: Record<UseCase["mode"], { bgColor: string; badgeColor: string }> = {
   mode1: {
-    bgColor: "bg-blue-50 border-blue-200 dark:bg-blue-900 dark:border-blue-800",
-    badgeColor: "bg-blue-100 text-blue-800 dark:bg-blue-800 dark:text-blue-200",
+    // Darker than 900, closer to blue-black
+    bgColor: "bg-blue-950 border-blue-900",
+    badgeColor: "bg-blue-900 text-blue-200",
   },
   mode2: {
-    bgColor: "bg-amber-50 border-amber-200 dark:bg-amber-900 dark:border-amber-800",
-    badgeColor: "bg-amber-100 text-amber-800 dark:bg-amber-800 dark:text-amber-200",
+    bgColor: "bg-amber-950 border-amber-900",
+    badgeColor: "bg-amber-900 text-amber-200",
   },
   mode3: {
-    bgColor: "bg-emerald-50 border-emerald-200 dark:bg-emerald-900 dark:border-emerald-800",
-    badgeColor: "bg-emerald-100 text-emerald-800 dark:bg-emerald-800 dark:text-emerald-200",
+    bgColor: "bg-emerald-950 border-emerald-900",
+    badgeColor: "bg-emerald-900 text-emerald-200",
   },
   mode4: {
-    bgColor: "bg-red-50 border-red-200 dark:bg-red-900 dark:border-red-800",
-    badgeColor: "bg-red-100 text-red-800 dark:bg-red-800 dark:text-red-200",
+    bgColor: "bg-emerald-950 border-red-900",
+    badgeColor: "bg-red-900 text-red-200",
   },
 }
 
-// Fallback data to use when backend is unreachable or returns no dashboards
+
+// Fallback data when backend fails
 const fallbackUseCases: UseCase[] = [
   {
     name: "Sales Overview",
@@ -85,7 +87,6 @@ export default function ModeSelection() {
       }
       setUser(u)
 
-      // If offline, immediately use fallback data
       if (!navigator.onLine) {
         console.warn("Offline – using fallback dashboards")
         setUseCases(fallbackUseCases)
@@ -112,14 +113,13 @@ export default function ModeSelection() {
     load()
   }, [router])
 
-  // Loading state
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-gray-900 dark:to-gray-800">
+      <div className="min-h-screen bg-gradient-to-br from-gray-900 to-gray-800">
         <div className="container mx-auto px-4 py-12 max-w-6xl">
           <div className="flex flex-col items-center justify-center min-h-96">
-            <Loader2 className="h-8 w-8 animate-spin text-blue-600 dark:text-blue-400 mb-4" />
-            <p className="text-slate-600 dark:text-gray-400 font-medium">
+            <Loader2 className="h-8 w-8 animate-spin text-blue-400 mb-4" />
+            <p className="text-gray-400 font-medium">
               Loading your dashboards...
             </p>
           </div>
@@ -128,18 +128,17 @@ export default function ModeSelection() {
     )
   }
 
-  // Error state (only for non-load-related errors, if any)
   if (error) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-gray-900 dark:to-gray-800 flex items-center justify-center p-4">
-        <div className="bg-white dark:bg-gray-800 border border-red-200 dark:border-red-700 rounded-2xl p-8 shadow-lg max-w-md w-full">
-          <div className="flex items-center justify-center w-12 h-12 bg-red-100 dark:bg-red-900 rounded-full mx-auto mb-4">
-            <AlertCircle className="h-6 w-6 text-red-600 dark:text-red-400" />
+      <div className="min-h-screen bg-gradient-to-br from-gray-900 to-gray-800 flex items-center justify-center p-4">
+        <div className="bg-gray-800 border border-red-700 rounded-2xl p-8 shadow-lg max-w-md w-full">
+          <div className="flex items-center justify-center w-12 h-12 bg-red-900 rounded-full mx-auto mb-4">
+            <AlertCircle className="h-6 w-6 text-red-400" />
           </div>
-          <h3 className="text-lg font-semibold dark:text-white text-gray-900 text-center mb-2">
+          <h3 className="text-lg font-semibold text-white text-center mb-2">
             Something went wrong
           </h3>
-          <p className="text-gray-600 dark:text-gray-400 text-center mb-6">{error}</p>
+          <p className="text-gray-400 text-center mb-6">{error}</p>
           <button
             onClick={() => router.push("/login")}
             className="w-full px-4 py-3 bg-red-600 hover:bg-red-700 text-white font-medium rounded-lg transition-colors duration-200"
@@ -151,7 +150,6 @@ export default function ModeSelection() {
     )
   }
 
-  // Group by business unit
   const grouped = useCases.reduce<Record<string, UseCase[]>>((acc, uc) => {
     const bu = uc.businessUnit || "Other"
     ;(acc[bu] ??= []).push(uc)
@@ -162,28 +160,25 @@ export default function ModeSelection() {
   const totalBusinessUnits = Object.keys(grouped).length
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-gray-900 dark:to-gray-800">
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 to-gray-800">
       <div className="container mx-auto px-4 py-12 max-w-6xl">
-        {/* Header Section */}
+        {/* Header */}
         <header className="mb-12">
           <div className="flex items-center gap-3 mb-4">
-            <div className="flex items-center justify-center w-10 h-10 bg-blue-100 dark:bg-blue-800 rounded-full">
-              <User className="h-5 w-5 text-blue-600 dark:text-blue-300" />
+            <div className="flex items-center justify-center w-10 h-10 bg-blue-800 rounded-full">
+              <User className="h-5 w-5 text-blue-300" />
             </div>
             <div>
-              <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
-                Welcome back
-              </h1>
-              <p className="text-gray-600 dark:text-gray-400 mt-1">{user}</p>
+              <h1 className="text-3xl font-bold text-white">Welcome back</h1>
+              <p className="text-gray-400 mt-1">{user}</p>
             </div>
           </div>
-          {/* Stats */}
-          <div className="flex items-center gap-6 text-sm text-gray-600 dark:text-gray-400">
+          <div className="flex items-center gap-6 text-sm text-gray-400">
             <div className="flex items-center gap-2">
               <Grid3x3 className="h-4 w-4" />
               <span>{totalUseCases} dashboards available</span>
             </div>
-            <div className="w-1 h-1 bg-gray-400 dark:bg-gray-600 rounded-full" />
+            <div className="w-1 h-1 bg-gray-600 rounded-full" />
             <span>{totalBusinessUnits} business units</span>
           </div>
         </header>
@@ -192,38 +187,39 @@ export default function ModeSelection() {
         <div className="space-y-12">
           {Object.entries(grouped).map(([businessUnit, cases]) => (
             <section key={businessUnit}>
-              {/* Business Unit Header */}
               <div className="flex items-center gap-3 mb-6">
-                <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
+                <h2 className="text-xl font-semibold text-white">
                   {businessUnit}
                 </h2>
-                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200">
+                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-700 text-gray-200">
                   {cases.length} dashboard{cases.length !== 1 ? "s" : ""}
                 </span>
               </div>
 
-              {/* Cards Grid */}
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {cases.map((useCase) => {
-                  const config = modeConfig[useCase.mode]
-                  const modeNumber = useCase.mode.replace("mode", "")
+                {cases.map((uc) => {
+                  const config = modeConfig[uc.mode]
+                  const modeNumber = uc.mode.replace("mode", "")
 
                   return (
                     <Link
-                      key={`${useCase.name}-${useCase.mode}`}
-                      href={`/${useCase.mode}?businessUnit=${encodeURIComponent(useCase.businessUnit)}&useCase=${encodeURIComponent(useCase.name)}&alertKeeper=${encodeURIComponent(useCase.alertKeeper)}`}
+                      key={`${uc.name}-${uc.mode}`}
+                      href={`/${uc.mode}?businessUnit=${encodeURIComponent(
+                        uc.businessUnit
+                      )}&useCase=${encodeURIComponent(
+                        uc.name
+                      )}&alertKeeper=${encodeURIComponent(uc.alertKeeper)}`}
                       className="group block"
                     >
                       <article
                         className={`
-                          relative bg-white dark:bg-gray-800 border-2 rounded-2xl p-6 
+                          relative bg-gray-800 border-2 rounded-2xl p-6
                           transition-all duration-200 ease-out
-                          hover:shadow-lg hover:shadow-slate-200 dark:hover:shadow-gray-700 hover:-translate-y-1
+                          hover:shadow-gray-700 hover:-translate-y-1
                           focus-within:ring-2 focus-within:ring-blue-500 focus-within:ring-offset-2
                           ${config.bgColor}
                         `}
                       >
-                        {/* Mode Badge */}
                         <div className="flex items-center justify-between mb-4">
                           <span
                             className={`
@@ -233,21 +229,18 @@ export default function ModeSelection() {
                           >
                             M{modeNumber}
                           </span>
-                          <ChevronRight className="h-5 w-5 text-gray-400 dark:text-gray-500 group-hover:text-gray-600 transition-colors" />
+                          <ChevronRight className="h-5 w-5 text-gray-500 group-hover:text-gray-400 transition-colors" />
                         </div>
 
-                        {/* Content */}
                         <div className="space-y-3">
-                          <h3 className="font-semibold text-lg text-gray-900 dark:text-white group-hover:text-gray-700 dark:group-hover:text-gray-300 transition-colors">
-                            {useCase.name}
+                          <h3 className="font-semibold text-lg text-white group-hover:text-gray-300 transition-colors">
+                            {uc.name}
                           </h3>
-
-                          <p className="text-sm text-gray-600 dark:text-gray-400">{useCase.type}</p>
+                          <p className="text-sm text-gray-400">{uc.type}</p>
                         </div>
 
-                        {/* Action */}
-                        <div className="mt-6 pt-4 border-t border-white border-opacity-50 dark:border-gray-700">
-                          <div className="flex items-center text-sm font-medium text-gray-700 dark:text-gray-300 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
+                        <div className="mt-6 pt-4 border-t border-gray-700">
+                          <div className="flex items-center text-sm font-medium text-gray-300 group-hover:text-blue-400 transition-colors">
                             <span>Open Dashboard</span>
                             <ArrowRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform" />
                           </div>
@@ -262,8 +255,8 @@ export default function ModeSelection() {
         </div>
 
         {/* Footer */}
-        <footer className="mt-16 pt-8 border-t border-gray-200 dark:border-gray-700">
-          <p className="text-center text-sm text-gray-500 dark:text-gray-400">
+        <footer className="mt-16 pt-8 border-t border-gray-700">
+          <p className="text-center text-sm text-gray-400">
             Need help? Contact your system administrator or visit our documentation.
           </p>
         </footer>

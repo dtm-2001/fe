@@ -3,7 +3,7 @@
     "user": "Susara",
     "businessUnit": "JMSL",
     "useCase": "Churn",
-    "mode": "mode1",
+    "mode": "mode3",
     "alertKeeper": "Senum.jkh@keells.com"
   },
   {
@@ -44,8 +44,30 @@
   {
     "user": "Senum",
     "businessUnit": "CHML",
-    "useCase": "VUbljkljoih",
-    "mode": "mode4",
+    "useCase": "Churn",
+    "mode": "mode3",
     "alertKeeper": "Susara.jkh@keells.com"
+  },
+  {
+    "user": "Senum",
+    "businessUnit": "CHML",
+    "useCase": "Discount",
+    "mode": "mode2",
+    "alertKeeper": "Susara.jkh@keells.com"
+  },
+  {
+    "user": "Senum",
+    "businessUnit": "LMS",
+    "useCase": "Price",
+    "mode": "mode2",
+    "alertKeeper": "Senum.jkh@keells.com"
+  },
+  {
+    "user": "Senum",
+    "businessUnit": "LMS",
+    "useCase": "Price",
+    "mode": "mode1",
+    "alertKeeper": "Senum.jkh@keells.com"
   }
 ]
+

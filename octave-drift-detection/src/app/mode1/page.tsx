@@ -3,7 +3,7 @@ import { useEffect, useState, useRef } from "react"
 import { Chart, registerables, type Scale, type ChartEvent } from "chart.js"
 import { fetchData } from "../../services/backendService"
 import { fetchEntriesTable } from "../../services/dashboardService"
-import { AlertCircle, AlertTriangle, CheckCircle, RefreshCw, Info, HelpCircle, X } from "lucide-react"
+import { AlertCircle, AlertTriangle, CheckCircle, RefreshCw, Info, X } from "lucide-react"
 import { useSearchParams } from "next/navigation"
 import { Markdown } from "../../components/Markdown"
 import { jsPDF } from "jspdf"
@@ -50,8 +50,8 @@ interface AllOutlets {
   y_true: number
 }
 
-interface MSETrend {
-  MSE: number
+interface MAPETrend {
+  MAPE: number
   time_period: string
 }
 
@@ -158,7 +158,7 @@ export default function Mode1Page() {
   const [currentPeriod, setCurrentPeriod] = useState<string>("N/A")
   const [referencePeriod, setReferencePeriod] = useState<string>("N/A")
   const [errorPercentageThreshold, setErrorPercentageThreshold] = useState<number>(0)
-  const [mseTrend, setMseTrend] = useState<MSETrend[]>([])
+  const [mapeTrend, setMapeTrend] = useState<MAPETrend[]>([])
   const [sortedPeriods, setSortedPeriods] = useState<string[]>([])
   const [driftDetected, setDriftDetected] = useState<boolean | null>(null)
 
@@ -166,7 +166,7 @@ export default function Mode1Page() {
   const [businessUnit, setBusinessUnit] = useState<string>("")
   const [useCase, setUseCase] = useState<string>("")
   const [shortCode, setShortCode] = useState<string>("")
-  const [alertKeeperValue] = useState<string>(alertKeeperParam)
+  const alertKeeperValue = alertKeeperParam
 
   // Runtime & UI
   const [runtimeValue, setRuntimeValue] = useState<string>("")
@@ -176,7 +176,7 @@ export default function Mode1Page() {
   const [statusDistribution, setStatusDistribution] = useState({ good: 65, warning: 25, error: 10 })
   const [activeTooltip, setActiveTooltip] = useState<string | null>(null)
 
-  // Error table view state - FIXED: Added missing state variable
+  // Error table view state
   const [errorTableView, setErrorTableView] = useState<string>("all")
 
   // Error range data for bar chart
@@ -210,7 +210,6 @@ export default function Mode1Page() {
           setUseCase("Not Selected")
           setShortCode("Not Available")
           setRuntimeOptions([])
-          
           setRuntimeValue("")
         } else {
           setBusinessUnit(filtered[0].BusinessUnit)
@@ -220,7 +219,6 @@ export default function Mode1Page() {
           const uniqueRuntimes = Array.from(new Set(filtered.map((e) => e.Runtime)))
           setRuntimeOptions(uniqueRuntimes)
           setRuntimeValue(uniqueRuntimes[0])
-
         }
       } catch (err) {
         console.error(err)
@@ -230,8 +228,6 @@ export default function Mode1Page() {
 
     loadEntries()
   }, [businessUnitParam, useCaseParam])
-
-
 
   // Fetch dynamic data whenever runtimeValue changes
   const fetchAllData = async (): Promise<void> => {
@@ -247,11 +243,11 @@ export default function Mode1Page() {
       setXaiExplanation(data.xaiExplanation || "No explanation available")
       setCurrentPeriod(data.currentPeriod || "N/A")
 
-      const mseTrendData = data.mse_trend || []
-      setMseTrend(mseTrendData)
+      const mapeTrendData = data.mse_trend || []
+      setMapeTrend(mapeTrendData)
 
-      if (mseTrendData.length > 0) {
-        setReferencePeriod(mseTrendData[0].time_period)
+      if (mapeTrendData.length > 0) {
+        setReferencePeriod(mapeTrendData[0].time_period)
       } else if (data.referencePeriod) {
         setReferencePeriod(data.referencePeriod)
       } else if (data.sorted_periods && data.sorted_periods.length > 0) {
@@ -492,36 +488,35 @@ export default function Mode1Page() {
       errorRangeChartRef.current.destroy()
     }
 
-// Color gradient for the bars - green → yellow → red
-  const gradientColors = [
-    "rgba(0, 128, 0, 0.8)",
-    "rgba(51, 153, 0, 0.8)",
-    "rgba(102, 178, 0, 0.8)",
-    "rgba(153, 204, 0, 0.8)",
-    "rgba(204, 204, 0, 0.8)",
-    "rgba(255, 255, 0, 0.8)",
-    "rgba(255, 204, 0, 0.8)",
-    "rgba(255, 153, 0, 0.8)",
-    "rgba(255, 102, 0, 0.8)",
-    "rgba(255, 51, 0, 0.8)",
-    "rgba(255, 0, 0, 0.8)",
-  ]
+    // Color gradient for the bars - green → yellow → red
+    const gradientColors = [
+      "rgba(0, 128, 0, 0.8)",
+      "rgba(51, 153, 0, 0.8)",
+      "rgba(102, 178, 0, 0.8)",
+      "rgba(153, 204, 0, 0.8)",
+      "rgba(204, 204, 0, 0.8)",
+      "rgba(255, 255, 0, 0.8)",
+      "rgba(255, 204, 0, 0.8)",
+      "rgba(255, 153, 0, 0.8)",
+      "rgba(255, 102, 0, 0.8)",
+      "rgba(255, 51, 0, 0.8)",
+      "rgba(255, 0, 0, 0.8)",
+    ]
 
-  // Borders at full opacity
-  const borderColors = [
-    "rgba(0, 128, 0, 1)",
-    "rgba(51, 153, 0, 1)",
-    "rgba(102, 178, 0, 1)",
-    "rgba(153, 204, 0, 1)",
-    "rgba(204, 204, 0, 1)",
-    "rgba(255, 255, 0, 1)",
-    "rgba(255, 204, 0, 1)",
-    "rgba(255, 153, 0, 1)",
-    "rgba(255, 102, 0, 1)",
-    "rgba(255, 51, 0, 1)",
-    "rgba(255, 0, 0, 1)",
-  ]
-
+    // Borders at full opacity
+    const borderColors = [
+      "rgba(0, 128, 0, 1)",
+      "rgba(51, 153, 0, 1)",
+      "rgba(102, 178, 0, 1)",
+      "rgba(153, 204, 0, 1)",
+      "rgba(204, 204, 0, 1)",
+      "rgba(255, 255, 0, 1)",
+      "rgba(255, 204, 0, 1)",
+      "rgba(255, 153, 0, 1)",
+      "rgba(255, 102, 0, 1)",
+      "rgba(255, 51, 0, 1)",
+      "rgba(255, 0, 0, 1)",
+    ]
 
     errorRangeChartRef.current = new Chart(ctx, {
       type: "bar",
@@ -619,8 +614,8 @@ export default function Mode1Page() {
 
   // Helper functions for KPIs
   const calculateMseChange = () => {
-    const refMse = Number.parseFloat(kpis.find((k) => k.rowKey === "mseRef")?.value || "0")
-    const currMse = Number.parseFloat(kpis.find((k) => k.rowKey === "mseCurrent")?.value || "0")
+    const refMse = Number.parseFloat(kpis.find((k) => k.rowKey === "Ref MSE")?.value || "0")
+    const currMse = Number.parseFloat(kpis.find((k) => k.rowKey === "Curr MSE")?.value || "0")
     if (refMse === 0) return "N/A"
     const change = ((currMse - refMse) / refMse) * 100
     return `${change >= 0 ? "+" : ""}${change.toFixed(2)}%`
@@ -775,7 +770,7 @@ export default function Mode1Page() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
           <div className="lg:col-span-2 bg-gray-900/80 rounded-xl shadow-xl overflow-hidden p-6 border border-gray-700/50 backdrop-blur-sm">
             <h2 className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-sky-600 mb-4">
-              MSE Trend Analysis
+              MAPE Trend Analysis
             </h2>
             <div className="h-80 bg-gray-800/60 rounded-lg p-4 border border-gray-700/50">
               {loading ? (
@@ -811,11 +806,11 @@ export default function Mode1Page() {
                         chartRef.current = new Chart(ctx, {
                           type: "line",
                           data: {
-                            labels: mseTrend.map((d) => d.time_period),
+                            labels: mapeTrend.map((d) => d.time_period),
                             datasets: [
                               {
-                                label: "MSE Values",
-                                data: mseTrend.map((d) => d.MSE),
+                                label: "MAPE Values",
+                                data: mapeTrend.map((d) => d.MAPE),
                                 borderColor: "rgb(56, 189, 248)",
                                 backgroundColor: "rgba(56, 189, 248, 0.2)",
                                 borderWidth: 2,
@@ -845,7 +840,7 @@ export default function Mode1Page() {
                                 borderWidth: 1,
                                 padding: 10,
                                 callbacks: {
-                                  label: (ctx) => `MSE: ${ctx.parsed.y.toFixed(4)}`,
+                                  label: (ctx) => `MAPE: ${ctx.parsed.y.toFixed(4)}%`,
                                 },
                               },
                             },
@@ -869,7 +864,7 @@ export default function Mode1Page() {
                               y: {
                                 title: {
                                   display: true,
-                                  text: "MSE Value",
+                                  text: "MAPE Value (%)",
                                   color: "#38bdf8",
                                   font: { weight: "bold" },
                                 },
@@ -920,132 +915,89 @@ export default function Mode1Page() {
           <h2 className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-sky-600 mb-4">
             Key Performance Indicators
           </h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {/* KS-test & Wasserstein */}
-            <div className="bg-gradient-to-br from-sky-950/40 to-sky-900/20 p-4 rounded-lg border border-sky-800/30 shadow-md hover:shadow-sky-900/20 hover:border-sky-700/50 transition-all relative">
-              <button
-                onClick={() => setActiveTooltip("kstest")}
-                className="absolute top-2 right-2 text-sky-400 hover:text-sky-300 transition-colors"
-                aria-label="KS Test Information"
-              >
-                <HelpCircle className="h-5 w-5" />
-              </button>
-              <h3 className="text-lg font-medium text-sky-300 mb-2">KStest</h3>
-              <div className="flex items-center">
-                <div className="w-10 h-10 rounded-full bg-sky-800/40 flex items-center justify-center mr-3">
-                  <Info className="h-5 w-5 text-sky-300" />
-                </div>
-                <p className="text-xl font-semibold text-white">
-                  {loading ? "Loading..." : kpis.find((k) => k.rowKey === "kstest")?.value || "N/A"}
-                </p>
-              </div>
-              <div className="mt-4 border-t border-sky-800/30 pt-4">
-                <h3 className="text-lg font-medium text-sky-300 mb-2">Wasserstein</h3>
-                <div className="flex items-center">
-                  <div className="w-10 h-10 rounded-full bg-sky-800/40 flex items-center justify-center mr-3">
-                    <Info className="h-5 w-5 text-sky-300" />
-                  </div>
-                  <p className="text-xl font-semibold text-white">
-                    {loading ? "Loading..." : kpis.find((k) => k.rowKey === "wasserstein")?.value || "N/A"}
-                  </p>
-                </div>
-                <button
-                  onClick={() => setActiveTooltip("wasserstein")}
-                  className="absolute bottom-2 right-2 text-sky-400 hover:text-sky-300 transition-colors"
-                  aria-label="Wasserstein Distance Information"
-                >
-                  <HelpCircle className="h-5 w-5" />
-                </button>
-              </div>
-            </div>
 
-            {/* MSE Metrics */}
-            <div className="bg-gradient-to-br from-sky-950/40 to-sky-900/20 p-4 rounded-lg border border-sky-800/30 shadow-md hover:shadow-sky-900/20 hover:border-sky-700/50 transition-all">
-              <h3 className="text-lg font-medium text-sky-300 mb-2">MSE Metrics</h3>
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-gray-400">Ref MSE:</span>
-                  <span className="text-sm font-medium text-white">
-                    {loading ? "Loading..." : kpis.find((k) => k.rowKey === "mseRef")?.value || "N/A"}
-                  </span>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {/* Distribution Tests */}
+            <div className="bg-gradient-to-br from-sky-950/40 to-sky-900/20 p-4 rounded-lg border border-sky-800/30 shadow-md">
+              <h3 className="text-lg font-medium text-sky-300 mb-4">Distribution Tests</h3>
+              <div className="space-y-6">
+                <div className="flex items-center">
+                  <Info className="h-5 w-5 text-sky-300 mr-3" />
+                  <div>
+                    <p className="text-sm text-gray-400">KS Statistic</p>
+                    <p className="text-xl font-semibold text-white">
+                      {loading ? "…" : kpis.find((k) => k.rowKey === "KS Statistic")?.value || "N/A"}
+                    </p>
+                  </div>
                 </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-gray-400">Curr MSE:</span>
-                  <span className="text-sm font-medium text-white">
-                    {loading ? "Loading..." : kpis.find((k) => k.rowKey === "mseCurrent")?.value || "N/A"}
-                  </span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-gray-400">Change:</span>
-                  <span
-                    className={`text-sm font-medium ${calculateMseChange().startsWith("+") ? "text-rose-400" : "text-emerald-400"}`}
-                  >
-                    {loading ? "Loading..." : calculateMseChange()}
-                  </span>
-                </div>
-                <div className="pt-2 border-t border-sky-800/30">
-                  <div className="flex items-center">
-                    <div className="w-10 h-10 rounded-full bg-sky-800/40 flex items-center justify-center mr-3">
-                      {getStatusIcon(kpis.find((k) => k.rowKey === "status")?.value)}
-                    </div>
-                    <p
-                      className={`text-xl font-semibold ${getStatusColor(kpis.find((k) => k.rowKey === "status")?.value)}`}
-                    >
-                      {loading ? "Loading..." : kpis.find((k) => k.rowKey === "status")?.value || "N/A"}
+                <div className="flex items-center">
+                  <Info className="h-5 w-5 text-sky-300 mr-3" />
+                  <div>
+                    <p className="text-sm text-gray-400">Wasserstein</p>
+                    <p className="text-xl font-semibold text-white">
+                      {loading ? "…" : kpis.find((k) => k.rowKey === "Wasserstein")?.value || "N/A"}
                     </p>
                   </div>
                 </div>
               </div>
             </div>
 
-            {/* Additional Metrics */}
-            <div className="bg-gradient-to-br from-sky-950/40 to-sky-900/20 p-4 rounded-lg border border-sky-800/30 shadow-md hover:shadow-sky-900/20 hover:border-sky-700/50 transition-all">
-              <h3 className="text-lg font-medium text-sky-300 mb-2">Error Metrics</h3>
+            {/* MSE Metrics */}
+            <div className="bg-gradient-to-br from-sky-950/40 to-sky-900/20 p-4 rounded-lg border border-sky-800/30 shadow-md">
+              <h3 className="text-lg font-medium text-sky-300 mb-4">MSE Metrics</h3>
               <div className="space-y-4">
-                {kpis
-                  .filter((k) =>
-                    [
-                      "Error Percentage Threshold",
-                      "Average Percentage Error (All)",
-                      "Average Percentage Error (Exceeding)",
-                      "Drift Detected",
-                    ].includes(k.rowKey),
-                  )
-                  .map((kpi, index) => (
-                    <div key={kpi.rowKey} className={index > 0 ? "pt-3 border-t border-sky-800/30" : ""}>
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm text-gray-400">{kpi.rowKey}:</span>
-                        <span
-                          className={`text-sm font-medium ${kpi.rowKey === "Drift Detected" ? (kpi.value === "Yes" ? "text-rose-400" : "text-emerald-400") : getStatusColor(kpi.status)}`}
-                        >
-                          {kpi.value}
-                        </span>
-                      </div>
-                    </div>
-                  ))}
-                {kpis
-                  .filter(
-                    (k) =>
-                      ![
-                        "kstest",
-                        "wasserstein",
-                        "mseRef",
-                        "mseCurrent",
-                        "status",
-                        "Error Percentage Threshold",
-                        "Average Percentage Error (All)",
-                        "Average Percentage Error (Exceeding)",
-                        "Drift Detected",
-                      ].includes(k.rowKey),
-                  )
-                  .map((kpi) => (
-                    <div key={kpi.rowKey} className="pt-3 border-t border-sky-800/30">
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm text-gray-400">{kpi.rowKey}:</span>
-                        <span className={`text-sm font-medium ${getStatusColor(kpi.status)}`}>{kpi.value}</span>
-                      </div>
-                    </div>
-                  ))}
+                <div className="flex justify-between">
+                  <span className="text-sm text-gray-400">Ref MSE:</span>
+                  <span className="text-sm font-medium text-white">
+                    {loading ? "…" : kpis.find((k) => k.rowKey === "Ref MSE")?.value || "N/A"}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-sm text-gray-400">Curr MSE:</span>
+                  <span className="text-sm font-medium text-white">
+                    {loading ? "…" : kpis.find((k) => k.rowKey === "Curr MSE")?.value || "N/A"}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-sm text-gray-400">Change:</span>
+                  <span
+                    className={`text-sm font-medium ${
+                      calculateMseChange().startsWith("+") ? "text-rose-400" : "text-emerald-400"
+                    }`}
+                  >
+                    {loading ? "…" : calculateMseChange()}
+                  </span>
+                </div>
+              </div>
+              <div className="pt-4 border-t border-sky-800/30 mt-4 flex items-center">
+                {getStatusIcon(kpis.find((k) => k.rowKey === "Status")?.status)}
+                <p
+                  className={`ml-3 text-xl font-semibold ${getStatusColor(
+                    kpis.find((k) => k.rowKey === "Status")?.status,
+                  )}`}
+                >
+                  {loading ? "…" : kpis.find((k) => k.rowKey === "Status")?.value || "N/A"}
+                </p>
+              </div>
+            </div>
+
+            {/* Error Metrics */}
+            <div className="bg-gradient-to-br from-sky-950/40 to-sky-900/20 p-4 rounded-lg border border-sky-800/30 shadow-md">
+              <h3 className="text-lg font-medium text-sky-300 mb-4">Error Metrics</h3>
+              <div className="space-y-3">
+                {[
+                  "Drift Detected",
+                  "Error Percentage Threshold",
+                  "Average Percentage Error (All)",
+                  "Average Percentage Error (Exceeding)",
+                ].map((label) => (
+                  <div key={label} className="flex justify-between">
+                    <span className="text-sm text-gray-400">{label}:</span>
+                    <span className="text-sm font-medium text-white">
+                      {loading ? "…" : (kpis.find((k) => k.rowKey === label)?.value ?? "N/A")}
+                    </span>
+                  </div>
+                ))}
               </div>
             </div>
           </div>

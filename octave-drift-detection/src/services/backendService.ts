@@ -38,8 +38,9 @@ export interface AllOutlets {
   y_true: number
 }
 
+// ← Changed: this now matches what your TSX expects
 export interface MSETrend {
-  MSE: number
+  MAPE: number
   time_period: string
 }
 
@@ -71,10 +72,10 @@ export interface FetchDataResult {
   error_percentage_threshold: number
   dashboardData: DashboardData
   all_outlets: AllOutlets[]
-  mse_trend: MSETrend[]
+  mse_trend: MSETrend[]            // ← still called `mse_trend`
   sorted_periods: string[]
   driftDetected: boolean
-  filtered_data?: any[]
+  filtered_data: any[]
   status_distribution: StatusDistribution
 }
 
@@ -83,11 +84,12 @@ export async function fetchData(
 ): Promise<FetchDataResult> {
   try {
     // 1. Fetch drift data
-    const resp = await fetch(`/api/mode1/data${runtime ? `?runtime=${runtime}` : ""}`, {
-      credentials: "include",
-    })
+    const resp = await fetch(
+      `/api/mode1/data${runtime ? `?runtime=${encodeURIComponent(runtime)}` : ""}`,
+      { credentials: "include" }
+    )
     if (!resp.ok) {
-      throw new Error(`HTTP error! Status: ${resp.status}`)
+      throw new Error(`HTTP error fetching drift data! Status: ${resp.status}`)
     }
     const rawData: any = await resp.json()
 
@@ -98,14 +100,34 @@ export async function fetchData(
     }
     const dashboardData: DashboardData = await dashResp.json()
 
-    // 3. Extract drift metrics
-    const driftMetrics = rawData.drift_state?.metrics || {}
-    const driftDetected = rawData.drift_state?.drift_detected ?? false
+    // 3. Core periods & threshold
     const sorted_periods: string[] = rawData.sorted_periods ?? []
-    const referencePeriod = sorted_periods.length > 0 ? sorted_periods[0] : "N/A"
+    const referencePeriod = sorted_periods[0] ?? "N/A"
+    const currentPeriod = rawData.current_period ?? "N/A"
+    const error_percentage_threshold: number = rawData.error_percentage_threshold ?? 0
 
-    // 4. Build KPI list
+    // 4. Drift state & metrics
+    const driftDetected: boolean = rawData.drift_state?.drift_detected ?? false
+    const driftMetrics = rawData.drift_state?.metrics ?? {}
+
+    // 5. Build KPI list exactly matching your TSX keys
     const kpis: KPI[] = [
+      {
+        rowKey: "Ref MSE",
+        value:
+          driftMetrics.mean_mse_reference != null
+            ? driftMetrics.mean_mse_reference.toFixed(3)
+            : "N/A",
+        status: "Normal",
+      },
+      {
+        rowKey: "Curr MSE",
+        value:
+          driftMetrics.mean_mse_current != null
+            ? driftMetrics.mean_mse_current.toFixed(3)
+            : "N/A",
+        status: driftDetected ? "Warning" : "Normal",
+      },
       {
         rowKey: "Drift Detected",
         value: driftDetected ? "Yes" : "No",
@@ -113,8 +135,18 @@ export async function fetchData(
       },
       {
         rowKey: "Error Percentage Threshold",
-        value: String(rawData.error_percentage_threshold ?? "N/A"),
+        value: error_percentage_threshold.toFixed(2),
         status: "Normal",
+      },
+      {
+        rowKey: "Total Outlets",
+        value: String(rawData.total_outlets ?? "N/A"),
+        status: "Normal",
+      },
+      {
+        rowKey: "Exceeding Count",
+        value: String(rawData.outlets_exceeding_threshold_count ?? "N/A"),
+        status: "Alert",
       },
       {
         rowKey: "Average Percentage Error (All)",
@@ -133,75 +165,66 @@ export async function fetchData(
         status: "Alert",
       },
       {
-        rowKey: "kstest",
+        rowKey: "KS Statistic",
         value: driftMetrics.ks_statistic?.toFixed(3) ?? "N/A",
         status: "Normal",
       },
       {
-        rowKey: "wasserstein",
+        rowKey: "KS p-value",
+        value: driftMetrics.ks_p_value?.toFixed(3) ?? "N/A",
+        status: "Normal",
+      },
+      {
+        rowKey: "Wasserstein",
         value: driftMetrics.wasserstein_distance?.toFixed(3) ?? "N/A",
         status: "Normal",
       },
       {
-        rowKey: "mseRef",
-        value: driftMetrics.mean_mse_reference?.toFixed(3) ?? "N/A",
-        status: "Normal",
-      },
-      {
-        rowKey: "mseCurrent",
-        value: driftMetrics.mean_mse_current?.toFixed(3) ?? "N/A",
-        status: "Normal",
-      },
-      {
-        rowKey: "status",
+        rowKey: "Status",
         value: driftDetected ? "Warning" : "Normal",
         status: driftDetected ? "Warning" : "Normal",
       },
     ]
 
-    // 5. Map filtered_data => tableData
+    // 6. Plot-data
+    const plotData: PlotDataPoint[] = (rawData.id_error ?? []).map((item: any) => ({
+      x: item.time_period ?? "",
+      y: item.Mean_Prediction_Error ?? 0,
+      exceedsThreshold:
+        Math.abs(item.Mean_Prediction_Error ?? 0) > error_percentage_threshold,
+    }))
+
+    // 7. Table-data
     const filtered_data = rawData.filtered_data ?? []
     const tableData: TableDataPoint[] = filtered_data.map((item: any) => {
-      const abs_curr_per = item.abs_curr_per ?? 0
-      const abs_ref_per = item.abs_ref_per ?? 0
-      const diff = abs_curr_per - abs_ref_per
+      const abs_curr = item.abs_curr_per ?? 0
+      const abs_ref = item.abs_ref_per ?? 0
+      const diff = item.abs_diff ?? abs_curr - abs_ref
       return {
         id: String(item.id ?? ""),
-        timePeriod: item.period ?? "",
-        abs_curr_per,
-        abs_ref_per,
+        timePeriod: item.time_period ?? "",
+        abs_curr_per: abs_curr,
+        abs_ref_per: abs_ref,
         difference: diff,
-        status: diff > 0 ? "Alert" : "Normal",
+        status: diff > error_percentage_threshold ? "Alert" : "Normal",
       }
     })
 
-    // 6. Build errors object
-    const errors = {
-      plotData: (rawData.id_error ?? []).map((item: any) => ({
-        x: String(item.id ?? ""),
-        y: item.Mean_Prediction_Error ?? 0,
-        exceedsThreshold:
-          Math.abs(item.Mean_Prediction_Error ?? 0) >
-          (rawData.error_percentage_threshold ?? 0),
-      })),
-      tableData:
-        tableData.length > 0
-          ? tableData
-          : (rawData.id_error ?? []).map((item: any) => ({
-              id: String(item.id ?? ""),
-              timePeriod: item.time_period ?? "",
-              meanPrediction: item.Mean_Prediction_Error ?? 0,
-              error: item.Mean_Prediction_Error ?? 0,
-              percentageError: Math.abs(item.Mean_Prediction_Error ?? 0),
-              status:
-                Math.abs(item.Mean_Prediction_Error ?? 0) >
-                (rawData.error_percentage_threshold ?? 0)
-                  ? "Alert"
-                  : "Normal",
-            })),
-    }
+    // 8. Fallback if no filtered_data
+    const fallbackTable: TableDataPoint[] = (rawData.id_error ?? []).map((item: any) => {
+      const err = item.Mean_Prediction_Error ?? 0
+      return {
+        id: String(item.id ?? ""),
+        timePeriod: item.time_period ?? "",
+        meanPrediction: err,
+        error: err,
+        percentageError: Math.abs(err),
+        status:
+          Math.abs(err) > error_percentage_threshold ? "Alert" : "Normal",
+      }
+    })
 
-    // 7. Outlets exceeding threshold
+    // 9–10. Outlets lists
     const outletsExceedingThreshold: OutletsExceedingThreshold[] =
       (rawData.outlets_exceeding_threshold ?? []).map((item: any) => ({
         id: String(item.id ?? ""),
@@ -210,64 +233,57 @@ export async function fetchData(
         percentage_error: item.percentage_error ?? 0,
       }))
 
-    // 8. MSE trend
+    const allOutlets: AllOutlets[] =
+      (rawData.all_outlets ?? []).map((item: any) => ({
+        id: Number(item.id ?? 0),
+        y_true: item.y_true ?? 0,
+        y_pred: item.y_pred ?? 0,
+        percentage_error: item.percentage_error ?? 0,
+      }))
+
+    // 11. MSE trend → now emits `MAPE` so your TSX’s `.map(d=>d.MAPE)` works
     const mse_trend: MSETrend[] = (rawData.mse_trend ?? []).map((item: any) => ({
-      MSE:
-        typeof item.MSE === "number"
-          ? item.MSE
-          : typeof item.mse === "number"
-          ? item.mse
-          : 0,
-      time_period: item.time_period ?? item.timePeriod ?? "",
+      MAPE: item.MAPE ?? 0,
+      time_period: item.time_period ?? "",
     }))
 
-    // 9. XAI explanation and periods
-    const xaiExplanation = rawData.explanation ?? "No explanation available"
-    const currentPeriod = rawData.current_period ?? rawData.currentPeriod ?? "N/A"
-    const error_percentage_threshold = rawData.error_percentage_threshold ?? 0
+    // 12. XAI HTML
+    const xaiExplanation: string = rawData.explanation ?? ""
 
-    // 10. Compute status distribution for pie chart
+    // 13. Status‐distribution (for your pie chart)
     const threshold = error_percentage_threshold
-    const warningThreshold = threshold * 0.8
-    let goodCount = 0
-    let warningCount = 0
-    let errorCount = 0
-
-    const allTableRows = errors.tableData
-    interface TableRowWithDifference {
-      difference?: number
-      percentageError?: number
-    }
-
-    (allTableRows as TableRowWithDifference[]).forEach((row: TableRowWithDifference) => {
-      const errVal =
-      Math.abs(row.difference ?? row.percentageError ?? 0)
-      if (errVal >= threshold) {
-      errorCount++
-      } else if (errVal >= warningThreshold) {
-      warningCount++
-      } else {
-      goodCount++
-      }
+    const warnTh = threshold * 0.8
+    let goodCount = 0, warningCount = 0, errorCount = 0
+    const sourceTable = tableData.length > 0 ? tableData : fallbackTable
+    sourceTable.forEach(r => {
+      const val = Math.abs(r.difference ?? r.percentageError ?? 0)
+      if (val >= threshold) errorCount++
+      else if (val >= warnTh) warningCount++
+      else goodCount++
     })
-
     const total = Math.max(goodCount + warningCount + errorCount, 1)
-    const good = Math.round((goodCount / total) * 100)
-    const warning = Math.round((warningCount / total) * 100)
-    const error = 100 - good - warning
-
-    const status_distribution: StatusDistribution = { good, warning, error }
+    const status_distribution: StatusDistribution = {
+      good: Math.round((goodCount / total) * 100),
+      warning: Math.round((warningCount / total) * 100),
+      error:
+        100 -
+        Math.round((goodCount / total) * 100) -
+        Math.round((warningCount / total) * 100),
+    }
 
     return {
       kpis,
-      errors,
+      errors: {
+        plotData,
+        tableData: tableData.length > 0 ? tableData : fallbackTable,
+      },
       outletsExceedingThreshold,
       xaiExplanation,
       currentPeriod,
       referencePeriod,
       error_percentage_threshold,
       dashboardData,
-      all_outlets: rawData.all_outlets ?? [],
+      all_outlets: allOutlets,
       mse_trend,
       sorted_periods,
       driftDetected,

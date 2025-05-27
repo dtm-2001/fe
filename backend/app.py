@@ -2,6 +2,34 @@ import json
 import os
 from flask import Flask, jsonify, send_from_directory, Response
 from flask_cors import CORS
+# ---------------------------------------------------------------#
+# mode selection
+# ---------------------------------------------------------------#
+import pyodbc
+import os
+import pandas as pd
+ 
+# Reconnect to the DB
+server = os.environ.get("SQL_SERVER")
+database = os.environ.get("SQL_DATABASE")
+username = os.environ.get("SQL_USERNAME")
+password = os.environ.get("SQL_PASSWORD")
+ 
+server = "ccs-octave-metadatastore.database.windows.net"
+database = "metadatadb"
+username = "octave_admin"
+password = "Oct#2022_ccs"
+ 
+conn_str = f"DRIVER={{ODBC Driver 17 for SQL Server}};SERVER={server};DATABASE={database};UID={username};PWD={password}"
+conn = pyodbc.connect(conn_str)
+ 
+# Read all rows from the table
+query = "SELECT * FROM case_table"
+df = pd.read_sql(query, conn)
+ 
+# Convert to JSON
+json_result = df.to_json(orient='records', indent=4)
+# ---------------------------------------------------------------#
 
 app = Flask(__name__)
 
@@ -22,7 +50,7 @@ MODE1_JSON = os.path.join(BASE_DIR, "mode1.json")
 MODE2_JSON = os.path.join(BASE_DIR, "mode2.json")
 MODE3_JSON = os.path.join(BASE_DIR, "mode3.json")
 MODE4_JSON = os.path.join(BASE_DIR, "mode4.json")
-MODE_SELECTION_JSON = os.path.join(BASE_DIR, "modeSelectionData.json")
+# MODE_SELECTION_JSON = os.path.join(BASE_DIR, "modeSelectionData.json")
 ENTRIES_TABLE_JSON = os.path.join(BASE_DIR, "entries_table.json")
 
 def load_json(path: str):
@@ -69,7 +97,7 @@ def mode4_data():
 
 @app.route("/mode-selection-data", methods=["GET"])
 def mode_selection_data():
-    data = load_json(MODE_SELECTION_JSON)
+    data = json_result
     if data is None:
         return jsonify({"detail": "modeSelectionData.json not found or invalid"}), 404
     return jsonify(data)
